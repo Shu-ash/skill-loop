@@ -1,6 +1,7 @@
+// src/components/Navbar.jsx
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-
 export default function Navbar() {
 
     // State to manage the visibility of the notifications panel
@@ -20,48 +21,48 @@ export default function Navbar() {
   };
 
   return (
-    <header class="navbar">
+    <header className="navbar">
         
         {/* Brand logo and name */}
-      <Link class="brand-logo" to="/">
-        <div class="brand-icon">
-          <span class="circle-violet"></span>
-          <span class="circle-mint"></span>
+      <Link className="brand-logo" to="/">
+        <div className="brand-icon">
+          <span className="circle-violet"></span>
+          <span className="circle-mint"></span>
         </div>
-        <span class="brand-name">Skill<span>Loop</span></span>
+        <span className="brand-name">Skill<span>Loop</span></span>
       </Link>
 
         {/* Navigation links */}
-      <ul class="nav-links">
-        <li><Link class="nav-item" to="/browse">Explore</Link></li>
-        <li><a class="nav-item" href="#how-it-works">How it works</a></li>
-        <li><Link class="nav-item" to="/credits">Credits</Link></li>
-        <li><Link class="nav-item" to="/leaderboard">Community</Link></li>
+      <ul className="nav-links">
+        <li><Link className="nav-item" to="/browse">Explore</Link></li>
+        <li><a className="nav-item" href="#how-it-works">How it works</a></li>
+        <li><Link className="nav-item" to="/credits">Credits</Link></li>
+        <li><Link className="nav-item" to="/leaderboard">Community</Link></li>
       </ul>
 
         {/* Notification bell and user action buttons */}
-      <div class="nav-actions">
+      <div className="nav-actions">
         <button 
-          class="nav-notification-btn" 
+          className="nav-notification-btn" 
           id="notif-bell-btn" 
           title="Notifications" 
           onClick={toggleNotifications}
         >
           🔔
-          {notifications.some(n => !n.read) && <span class="notification-badge"></span>}
+          {notifications.some(n => !n.read) && <span className="notification-badge"></span>}
         </button>
-        <Link class="btn btn-secondary btn-pill-sm" to="/login">Log in</Link>
-        <Link class="btn btn-primary btn-pill-sm" to="/onboarding">Get started</Link>
+        <Link className="btn btn-secondary btn-pill-sm" to="/login">Log in</Link>
+        <Link className="btn btn-primary btn-pill-sm" to="/onboarding">Get started</Link>
       </div>
 
         {/* Notifications panel */}
       {showNotifs && (
-        <div class="notifications-panel glass-panel show" id="notifications-dropdown">
-          <div class="notif-header">
+        <div className="notifications-panel glass-panel show" id="notifications-dropdown">
+          <div className="notif-header">
             <h4>Notifications</h4>
             <span style={{ cursor: 'pointer' }} onClick={markAllRead}>Mark all read</span>
           </div>
-          <div class="notif-list">
+          <div className="notif-list">
             {notifications.map(n => (
               <div key={n.id} className={`notif-item ${!n.read ? 'unread' : ''}`}>
                 <p>{n.text}</p>
