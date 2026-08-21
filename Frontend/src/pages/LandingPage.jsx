@@ -11,10 +11,10 @@ export default function LandingPage() {
   return (
     <>
       {/* Dynamic Animated Liquid Background */}
-      <div class="liquid-bg">
-        <div class="liquid-blob blob-1"></div>
-        <div class="liquid-blob blob-2"></div>
-        <div class="liquid-blob blob-3"></div>
+      <div className="liquid-bg">
+        <div className="liquid-blob blob-1"></div>
+        <div className="liquid-blob blob-2"></div>
+        <div className="liquid-blob blob-3"></div>
       </div>
 
       <Navbar />
@@ -22,7 +22,7 @@ export default function LandingPage() {
 
       {/* Main content stack: Steps, Categories, CTA */}
 
-      <div class="landing-body-stack" id="how-it-works">
+      <div className="landing-body-stack" id="how-it-works">
         <StepsSection />
         <CategoriesSection />
         <CtaSection />

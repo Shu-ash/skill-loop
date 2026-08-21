@@ -1,4 +1,5 @@
 // src/pages/BrowsePage.jsx
+
 import React, { useState } from 'react';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
@@ -8,11 +9,11 @@ import MemberCard from '../components/MemberCard';
 
 // Sample member data
 const MEMBERS_DATA = [
-  { id: "mbr_301", name: "Sara Park", avatar: "SP", avatarBg: "var(--violet-primary)", title: "UI Animation · San Diego", rating: "★★★★★", skills: ["Figma", "After Effects"], category: "Design" },
-  { id: "mbr_302", name: "Theo Nakamura", avatar: "TN", avatarBg: "var(--gold-primary)", title: "Piano Basics · Remote", rating: "★★★★★", skills: ["Piano", "Music Theory"], category: "Music" },
-  { id: "mbr_303", name: "Riya Anand", avatar: "RA", avatarBg: "var(--mint-primary)", title: "Python for Beginners · Remote", rating: "★★★★☆", skills: ["Python", "Pandas"], category: "Code & Data" },
-  { id: "mbr_304", name: "Lena Kim", avatar: "LK", avatarBg: "var(--coral-primary)", title: "Conversational Spanish · Austin", rating: "★★★★★", skills: ["Spanish", "Travel Prep"], category: "Languages" },
-  { id: "mbr_305", name: "Marcus Johnson", avatar: "MJ", avatarBg: "var(--deep-violet)", title: "Sourdough Baking · Seattle", rating: "★★★★★", skills: ["Baking", "Cooking"], category: "Cooking" }
+  { id: "mbr_301", name: "Harsh Vishwakarma", avatar: "HV", avatarBg: "var(--violet-primary)", title: "Frontend Developer - Remote", rating: "★★★★★", skills: ["Frontend Developer", "Video Editing"], categories: ["Design", "Code & Data"] },
+  { id: "mbr_302", name: "Sujit Bauna", avatar: "SS", avatarBg: "var(--gold-primary)", title: "AI Specialist · Remote", rating: "★★★★★", skills: ["AI user", "Backend Developer"], categories: ["Code & Data"] },
+  { id: "mbr_303", name: "Debosmita Laha", avatar: "DL", avatarBg: "var(--mint-primary)", title: "Python for Beginners · Remote", rating: "★★★★☆", skills: ["Python", "Pandas"], categories: ["Code & Data"] },
+  { id: "mbr_304", name: "Milon Hackathon", avatar: "MH", avatarBg: "var(--coral-primary)", title: "Mongo DB & Express.js · Remote", rating: "★★★★★", skills: ["Mongo DB", "Express.js"], categories: ["Code & Data"] },
+  { id: "mbr_305", name: "Sample 1", avatar: "S", avatarBg: "var(--deep-violet)", title: "Test Sample - Under development", rating: "★★★★★", skills: ["Conversation", "English"], categories: ["Languages"] }
 ];
 
 export default function BrowsePage() {
@@ -21,7 +22,7 @@ export default function BrowsePage() {
 
   // Filter members by category and search
   const filteredMembers = MEMBERS_DATA.filter((m) => {
-    const matchesCategory = selectedCategory === 'All categories' || m.category === selectedCategory;
+    const matchesCategory = selectedCategory === 'All categories' || m.categories.includes(selectedCategory);
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch = m.name.toLowerCase().includes(searchLower) ||
       m.title.toLowerCase().includes(searchLower) ||

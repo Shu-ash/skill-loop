@@ -1,20 +1,28 @@
 // src/components/CtaSection.jsx
+import React from 'react';
 import { Link } from 'react-router-dom';
 
 export default function CtaSection() {
   return (
-    /* Section content */
     <section className="cta-section">
-      {/* Call to action box */}
-      <div className="glass-panel cta-box">
-        <h2>Your first swap is one click away.</h2>
-        <p>Bring one skill. Leave with a new one.</p>
+      <div className="glass-panel cta-box clay-card-3d">
+        <div className="cta-community-illustration">
+          <div className="avatar-stack">
+            <span className="community-avatar avatar-1">👨‍💻</span>
+            <span className="community-avatar avatar-2">👩‍🎨</span>
+            <span className="community-avatar avatar-3">👨‍🎓</span>
+            <span className="community-avatar avatar-4">👩‍🔬</span>
+          </div>
+          <span className="pill-badge pill-violet">Join 10,000+ happy learners &amp; teachers</span>
+        </div>
 
-        {/* Profile Creation Button */}
-        <Link className="btn btn-primary" to="/login">
-          Create your profile &rarr;
+        <h2>Ready to Start Your Journey?</h2>
+        <p>Join SkillLoop today and be part of our amazing peer-to-peer community.</p>
+
+        <Link className="btn btn-primary btn-clay-primary" to="/login">
+          Get started for free &rarr;
         </Link>
       </div>
     </section>
   );
-}
+}
