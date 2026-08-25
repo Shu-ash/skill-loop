@@ -1,0 +1,300 @@
+/* Basic Simple Admin Styling */
+
+.admin-page-container {
+  min-height: 100vh;
+  background-color: #f4f6f9;
+  color: #333333;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Header Navbar */
+.admin-navbar {
+  height: 60px;
+  background: #ffffff;
+  border-bottom: 1px solid #dddddd;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.admin-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #2c3e50;
+  text-decoration: none;
+}
+
+.brand-icon {
+  width: 24px;
+  height: 24px;
+  position: relative;
+}
+
+.brand-icon span {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+
+.circle-violet { background: #6c5ce7; top: 0; left: 0; }
+.circle-mint { background: #10b981; bottom: 0; right: 0; opacity: 0.8; }
+
+.brand-name span { color: #6c5ce7; }
+
+.admin-tag {
+  background: #6c5ce7;
+  color: #ffffff;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: bold;
+  margin-left: 5px;
+}
+
+.admin-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.system-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #555555;
+  background: #eeeeee;
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2ecc71;
+}
+
+.admin-profile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #6c5ce7;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 13px;
+}
+
+.admin-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-name { font-size: 13px; font-weight: bold; }
+.admin-role { font-size: 11px; color: #777777; }
+
+/* Main Admin Layout */
+.admin-layout {
+  display: flex;
+  min-height: calc(100vh - 60px);
+}
+
+/* Sticky Sidebar */
+.admin-sidebar {
+  width: 200px;
+  background: #ffffff;
+  border-right: 1px solid #dddddd;
+  padding: 15px 10px;
+  position: sticky;
+  top: 60px;
+  height: calc(100vh - 60px);
+  flex-shrink: 0;
+}
+
+.sidebar-header-row {
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #eeeeee;
+}
+
+.sidebar-title {
+  font-size: 11px;
+  font-weight: bold;
+  color: #888888;
+}
+
+.admin-menu {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.menu-item-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: #444444;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.admin-sidebar.collapsed .menu-item-btn {
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.menu-item-btn:hover {
+  background: #eef2f5;
+  color: #3498db;
+}
+
+.menu-item-btn.active {
+  background: #3498db;
+  color: #ffffff;
+}
+
+.menu-item-btn .icon { font-size: 16px; }
+
+/* Main Content Area */
+.admin-main-content {
+  flex: 1;
+  padding: 20px;
+}
+
+.page-header {
+  margin-bottom: 20px;
+}
+
+.page-header h2 {
+  font-size: 22px;
+  color: #2c3e50;
+}
+
+.page-header p {
+  font-size: 13px;
+  color: #666666;
+  margin-top: 4px;
+}
+
+/* Metric Cards Grid */
+.admin-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.metric-card {
+  background: #ffffff;
+  border: 1px solid #dddddd;
+  border-radius: 6px;
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.metric-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.metric-icon.violet { background: #f0edff; }
+.metric-icon.mint { background: #e6fffa; }
+.metric-icon.gold { background: #fef3c7; }
+.metric-icon.coral { background: #ffeaea; }
+
+.metric-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-label { font-size: 12px; color: #666666; }
+.metric-value { font-size: 20px; font-weight: bold; color: #2c3e50; margin-top: 2px; }
+
+/* Table Container */
+.admin-table-card {
+  background: #ffffff;
+  border: 1px solid #dddddd;
+  border-radius: 6px;
+  padding: 15px;
+}
+
+.table-header-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 12px;
+  color: #2c3e50;
+}
+
+.admin-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.admin-data-table th,
+.admin-data-table td {
+  padding: 10px;
+  border: 1px solid #eeeeee;
+  font-size: 13px;
+}
+
+.admin-data-table th {
+  background: #f8f9fa;
+  font-weight: bold;
+  color: #555555;
+}
+
+.pill {
+  font-size: 11px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.pill-active { background: #2ecc71; color: #ffffff; }
+.pill-admin { background: #9b59b6; color: #ffffff; }
+.pill-user { background: #95a5a6; color: #ffffff; }
+
+.action-btn {
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #cccccc;
+  background: #ffffff;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.action-btn:hover {
+  background: #eeeeee;
+}
