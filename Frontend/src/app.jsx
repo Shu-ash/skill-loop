@@ -14,6 +14,7 @@ import HowItWorksPage from './pages/HowItWorksPage';
 import AdminDashboardPage from './admin/pages/AdminDashboardPage';
 import AdminUsersPage from './admin/pages/AdminUsersPage';
 import AdminCategoriesPage from './admin/pages/AdminCategoriesPage';
+import AdminSessionsPage from './admin/pages/AdminSessionsPage';
 import AdminCreditsPage from './admin/pages/AdminCreditsPage';
 import AdminReportsPage from './admin/pages/AdminReportsPage';
 import './index.css';
@@ -37,6 +38,7 @@ function App() {
         <Route path="/admin" element={<AdminDashboardPage />} />
         <Route path="/admin/users" element={<AdminUsersPage />} />
         <Route path="/admin/categories" element={<AdminCategoriesPage />} />
+        <Route path="/admin/sessions" element={<AdminSessionsPage />} />
         <Route path="/admin/credits" element={<AdminCreditsPage />} />
         <Route path="/admin/reports" element={<AdminReportsPage />} />
       </Routes>

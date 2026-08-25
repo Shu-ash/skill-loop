@@ -1,14 +1,16 @@
 // src/admin/components/AdminSidebar.jsx
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function AdminSidebar({ activeTab = 'dashboard', onSelectTab }) {
+  const navigate = useNavigate();
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard' },
-    { id: 'users', label: 'Users' },
-    { id: 'categories', label: 'Categories' },
-    { id: 'sessions', label: 'Sessions' },
-    { id: 'credits', label: 'Credits' },
-    { id: 'reports', label: 'Reports' }
+    { id: 'dashboard', label: 'Dashboard', path : '/admin' },
+    { id: 'users', label: 'Users', path : '/admin/users' },
+    { id: 'categories', label: 'Categories', path : '/admin/categories' },
+    { id: 'sessions', label: 'Sessions', path : '/admin/sessions' },
+    { id: 'credits', label: 'Credits', path : '/admin/credits' },
+    { id: 'reports', label: 'Reports', path : '/admin/reports' }
   ];
 
   return (
@@ -23,7 +25,7 @@ export default function AdminSidebar({ activeTab = 'dashboard', onSelectTab }) {
             <button 
               type="button" 
               className={`menu-item-btn ${activeTab === item.id ? 'active' : ''}`}
-              onClick={() => onSelectTab && onSelectTab(item.id)}
+              onClick={() => navigate(item.path)}
             >
               <span className="menu-text">{item.label}</span>
             </button>
