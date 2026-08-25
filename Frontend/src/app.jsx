@@ -11,6 +11,7 @@ import SessionsPage from './pages/SessionsPage';
 import CreditsPage from './pages/CreditsPage';
 import LeaderboardPage from './pages/LeaderboardPage';
 import HowItWorksPage from './pages/HowItWorksPage';
+import AdminDashboardPage from './admin/pages/AdminDashboardPage';
 import './index.css';
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
         <Route path="/leaderboard" element={<LeaderboardPage />} />
         <Route path="/how-it-works" element={<HowItWorksPage />} />
         <Route path="/howitworks" element={<HowItWorksPage />} />
+        <Route path="/admin" element={<AdminDashboardPage />} />
       </Routes>
     </div>
   );
