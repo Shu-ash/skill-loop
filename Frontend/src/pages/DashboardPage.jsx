@@ -46,39 +46,98 @@ export default function DashboardPage() {
   const navigate = useNavigate();
 
   const [user, setUser] = useState({
-    name: 'Harsh',
-    username: '@harsh',
-    teachSkills: ['HTML', 'CSS'],
-    learnSkills: ['Photoshop'],
-    credits: 3
+    name: '',
+    username: '',
+    teachSkills: [],
+    learnSkills: [],
+    credits: 0
   });
 
   const [greeting, setGreeting] = useState('Good evening');
 
   useEffect(() => {
-    // Determine dynamic time-of-day greeting
     const hour = new Date().getHours();
-    if (hour < 12) setGreeting('Good morning');
-    else if (hour < 18) setGreeting('Good afternoon');
-    else setGreeting('Good evening');
 
-    // Read stored user profile if available
-    const stored = localStorage.getItem('skillloop_user');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setUser({
-          name: parsed.name || 'Harsh',
-          username: parsed.username || '@harsh',
-          teachSkills: parsed.teachSkills?.length ? parsed.teachSkills : ['HTML', 'CSS'],
-          learnSkills: parsed.learnSkills?.length ? parsed.learnSkills : ['Photoshop'],
-          credits: parsed.credits || 3
-        });
-      } catch (err) {
-        console.error('Error parsing stored user profile:', err);
-      }
+    if (hour < 12) {
+      setGreeting('Good morning');
+    } else if (hour < 18) {
+      setGreeting('Good afternoon');
+    } else {
+      setGreeting('Good evening');
     }
-  }, []);
+
+    const fetchUser = async () => {
+      const accessToken =
+        localStorage.getItem('accessToken');
+
+      if (!accessToken) {
+        navigate('/login');
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          'http://localhost:5000/api/users/me',
+          {
+            method: 'GET',
+
+            headers: {
+              Authorization: `Bearer ${accessToken}`
+            },
+
+            credentials: 'include'
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message || 'Failed to load user'
+          );
+        }
+
+        const backendUser =
+          data?.data?.user || data?.data;
+
+        setUser({
+          name:
+            backendUser.name ||
+            `${backendUser.firstName || ''} ${backendUser.lastName || ''}`.trim(),
+
+          username:
+            backendUser.username
+              ? `@${backendUser.username.replace(/^@/, '')}`
+              : '@user',
+
+          teachSkills:
+            backendUser.skillsCanTeach || [],
+
+          learnSkills:
+            backendUser.skillsWantToLearn || [],
+
+          credits:
+            backendUser.credits ?? 0
+        });
+
+        localStorage.setItem(
+          'skillloop_user',
+          JSON.stringify({
+            ...backendUser,
+            onboardingCompleted: true
+          })
+        );
+
+      } catch (error) {
+        console.error(
+          'Failed to fetch dashboard user:',
+          error
+        );
+      }
+    };
+
+    fetchUser();
+  }, [navigate]);
 
   const handleRequestSwap = (matchUser) => {
     navigate('/browse');
@@ -96,40 +155,40 @@ export default function DashboardPage() {
         <Navbar />
 
         <div className="app-layout">
-          <Sidebar 
-            user={{ 
-              name: user.name, 
-              credits: user.credits, 
-              avatar: user.name.slice(0, 2).toUpperCase() 
-            }} 
+          <Sidebar
+            user={{
+              name: user.name,
+              credits: user.credits,
+              avatar: user.name.slice(0, 2).toUpperCase()
+            }}
           />
 
           <main className="main-content">
             {/* Component 1: Welcome Greeting Banner */}
-            <WelcomeBanner 
-              greeting={greeting} 
-              name={user.name} 
-              onNewSwapClick={() => navigate('/browse')} 
+            <WelcomeBanner
+              greeting={greeting}
+              name={user.name}
+              onNewSwapClick={() => navigate('/browse')}
             />
 
             {/* Component 2: Your Skill Loop Summary */}
-            <SkillLoopSummaryCard 
-              teachSkills={user.teachSkills} 
-              learnSkills={user.learnSkills} 
+            <SkillLoopSummaryCard
+              teachSkills={user.teachSkills}
+              learnSkills={user.learnSkills}
             />
 
             {/* Component 3: KPI Metrics Grid */}
-            <KpiStatsGrid 
-              credits={user.credits} 
-              activeSwaps={4} 
-              rating="4.9" 
-              sessionsTaught={12} 
+            <KpiStatsGrid
+              credits={user.credits}
+              activeSwaps={4}
+              rating="4.9"
+              sessionsTaught={12}
             />
 
             {/* Component 4: Recommended Matches Section & Match Cards */}
-            <RecommendedMatchesSection 
-              matches={RECOMMENDED_MATCHES} 
-              onRequestSwap={handleRequestSwap} 
+            <RecommendedMatchesSection
+              matches={RECOMMENDED_MATCHES}
+              onRequestSwap={handleRequestSwap}
             />
           </main>
         </div>
