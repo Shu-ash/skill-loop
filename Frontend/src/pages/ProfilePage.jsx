@@ -1,5 +1,6 @@
 // src/pages/ProfilePage.jsx
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import MobileNav from '../components/MobileNav';
@@ -10,6 +11,7 @@ import EditProfileModal from '../components/EditProfileModal';
 
 // ProfilePage: Main user profile page to view and update bio, availability & skill tags
 export default function ProfilePage() {
+  const navigate = useNavigate();
   const [user, setUser] = useState({
     name: 'Harsh',
     username: '@harsh_dev',
@@ -55,20 +57,108 @@ export default function ProfilePage() {
     setAvailability((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleSaveChanges = () => {
-    const updatedUser = { ...user, onboardingCompleted: true };
-    localStorage.setItem('skillloop_user', JSON.stringify(updatedUser));
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 3000);
+  const handleSaveChanges = async () => {
+    await handleSaveModalData(user);
   };
 
-  const handleSaveModalData = (updatedFields) => {
-    const updatedUser = { ...user, ...updatedFields };
-    setUser(updatedUser);
-    localStorage.setItem('skillloop_user', JSON.stringify(updatedUser));
-    setIsEditModalOpen(false);
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 3000);
+  const handleSaveModalData = async (updatedFields) => {
+    const accessToken = localStorage.getItem('accessToken');
+
+    if (!accessToken) {
+      navigate('/login');
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        'http://localhost:5000/api/users/me',
+        {
+          method: 'PATCH',
+
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`
+          },
+
+          credentials: 'include',
+
+          body: JSON.stringify({
+            username: updatedFields.username,
+            profilePhotoUrl: updatedFields.avatarUrl,
+            bio: updatedFields.bio,
+            headline: updatedFields.headline,
+            skillsCanTeach: updatedFields.teachSkills,
+            skillsWantToLearn: updatedFields.learnSkills,
+            skillLevel: updatedFields.skillLevel
+          })
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || 'Profile update failed'
+        );
+      }
+
+      const updatedUserFromServer = data.data.user;
+
+      const updatedUser = {
+        ...user,
+        ...updatedFields,
+
+        username:
+          updatedUserFromServer.username || '',
+
+        avatarUrl:
+          updatedUserFromServer.profilePhotoUrl || '',
+
+        bio:
+          updatedUserFromServer.bio || '',
+
+        headline:
+          updatedUserFromServer.headline || '',
+
+        teachSkills:
+          updatedUserFromServer.skillsCanTeach || [],
+
+        learnSkills:
+          updatedUserFromServer.skillsWantToLearn || [],
+
+        skillLevel:
+          updatedUserFromServer.skillLevel || 'beginner',
+
+        credits:
+          updatedUserFromServer.credits ?? 0
+      };
+
+      setUser(updatedUser);
+
+      localStorage.setItem(
+        'skillloop_user',
+        JSON.stringify(updatedUser)
+      );
+
+      setIsEditModalOpen(false);
+
+      setSavedSuccess(true);
+
+      setTimeout(() => {
+        setSavedSuccess(false);
+      }, 3000);
+
+    } catch (error) {
+      console.error(
+        'Profile update error:',
+        error
+      );
+
+      alert(
+        error.message ||
+        'Unable to update profile.'
+      );
+    }
   };
 
   return (
@@ -103,9 +193,9 @@ export default function ProfilePage() {
             )}
 
             {/* Component 1: Header Profile Card */}
-            <ProfileHeaderCard 
-              user={user} 
-              onEditCover={() => alert('Change cover photo clicked')} 
+            <ProfileHeaderCard
+              user={user}
+              onEditCover={() => alert('Change cover photo clicked')}
               onEditProfile={() => setIsEditModalOpen(true)}
             />
 
