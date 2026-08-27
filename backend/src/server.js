@@ -19,12 +19,15 @@ import {
   errorHandler
 } from "./middleware/error.middleware.js";
 
+import authRoutes from "./routes/auth.routes.js";
+
+
 const app = express();
 
 app.disable("x-powered-by");
 
 
-// Security
+// SECURITY
 
 app.use(
   helmet()
@@ -38,7 +41,7 @@ app.use(
 );
 
 
-// Request parsing
+// REQUEST PARSING
 
 app.use(
   express.json({
@@ -58,20 +61,21 @@ app.use(
 );
 
 
-// MongoDB injection protection
+// MONGODB INJECTION PROTECTION
 
-app.use(
+/*app.use(
   mongoSanitize()
-);
+);*/
 
 
-// Rate limiting
+// RATE LIMITING
 
 app.use(
   globalLimiter
 );
 
-// Logging
+
+// LOGGIN
 
 if (env.NODE_ENV !== "test") {
   app.use(
@@ -84,7 +88,7 @@ if (env.NODE_ENV !== "test") {
 }
 
 
-// Health check
+// HEALTH CHECK
 
 app.get(
   "/api/health",
@@ -99,17 +103,26 @@ app.get(
 );
 
 
-// 404
+// AUTHENTICATION ROUTES
+
+app.use(
+  "/api/auth",
+  authRoutes
+);
+
+
+
+// 404 HANDLER
 
 app.use(notFound);
 
--
-// Error handler
 
+// GLOBAL ERROR HANDLER
 app.use(errorHandler);
 
 
-// Start server
+
+// START SERVER
 
 const startServer = async () => {
   await connectDB();
@@ -129,6 +142,9 @@ const startServer = async () => {
     }
   );
 
+
+  // GRACEFUL SHUTDOWN
+
   const shutdown = async (signal) => {
     console.log(
       `${signal} received. Shutting down...`
@@ -143,6 +159,7 @@ const startServer = async () => {
     });
   };
 
+
   process.once(
     "SIGINT",
     () => shutdown("SIGINT")
@@ -153,6 +170,9 @@ const startServer = async () => {
     () => shutdown("SIGTERM")
   );
 };
+
+
+// SERVER START ERROR
 
 startServer().catch((error) => {
   console.error(

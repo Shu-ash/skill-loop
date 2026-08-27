@@ -12,20 +12,70 @@ export default function SignupForm({ onSwitchToLogin }) {
   const [showPassword, setShowPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!agreeTerms) {
       alert('Please agree to Terms of Service & Privacy Policy.');
       return;
     }
-    // Save user basic info & navigate to onboarding for first-time profile setup
-    const initialUser = {
-      name: `${firstName} ${lastName}`.trim() || 'Harsh',
-      email: email,
-      onboardingCompleted: false
-    };
-    localStorage.setItem('skillloop_user', JSON.stringify(initialUser));
-    navigate('/onboarding');
+
+    try {
+      const response = await fetch(
+        'http://localhost:5000/api/auth/register',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            email: email.trim(),
+            password,
+            termsAccepted: agreeTerms
+          })
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || `Registration failed (${response.status})`);
+      }
+
+      console.log('Registration successful:', data);
+
+      // Save access token if your backend returns one
+      if (data.data?.accessToken) {
+        localStorage.setItem(
+          'accessToken',
+          data.data.accessToken
+        );
+      }
+
+      // Save user information for frontend
+      if (data.data?.user) {
+        localStorage.setItem(
+          'skillloop_user',
+          JSON.stringify({
+            ...data.data.user,
+            onboardingCompleted: false,
+          })
+        );
+      }
+
+      // Registration succeeded
+      navigate('/onboarding');
+
+    } catch (error) {
+      console.error('Registration error:', error);
+
+      alert(
+        error.message || 'Unable to connect to the server.'
+      );
+    }
   };
 
   return (
@@ -119,4 +169,4 @@ export default function SignupForm({ onSwitchToLogin }) {
       )}
     </form>
   );
-}
+}

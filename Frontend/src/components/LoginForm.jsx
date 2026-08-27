@@ -10,9 +10,60 @@ export default function LoginForm({ onSwitchToSignup }) {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    navigate('/dashboard');
+
+    try {
+      const response = await fetch(
+        'http://localhost:5000/api/auth/login',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            email: email.trim(),
+            password,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || `Login failed (${response.status})`
+        );
+      }
+
+      console.log('Login successful:', data);
+
+      // Save access token
+      if (data.data?.accessToken) {
+        localStorage.setItem(
+          'accessToken',
+          data.data.accessToken
+        );
+      }
+
+      // Save user information
+      if (data.data?.user) {
+        localStorage.setItem(
+          'skillloop_user',
+          JSON.stringify(data.data.user)
+        );
+      }
+
+      navigate('/dashboard');
+
+    } catch (error) {
+      console.error('Login error:', error);
+
+      alert(
+        error.message || 'Unable to connect to the server.'
+      );
+    }
   };
 
   return (
@@ -89,4 +140,4 @@ export default function LoginForm({ onSwitchToSignup }) {
       )}
     </form>
   );
-}
+}
