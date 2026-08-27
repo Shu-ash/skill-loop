@@ -23,6 +23,8 @@ import authRoutes from "./routes/auth.routes.js";
 
 import userRoutes from "./routes/user.routes.js";
 
+import matchRoutes from "./routes/match.routes.js";
+
 
 const app = express();
 
@@ -110,6 +112,12 @@ app.get(
 app.use(
   "/api/auth",
   authRoutes
+);
+
+//  MATCH ROUTES
+app.use(
+  "/api/matches",
+  matchRoutes
 );
 
 // USER ROUTES
