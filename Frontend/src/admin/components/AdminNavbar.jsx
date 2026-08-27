@@ -1,8 +1,11 @@
 // src/admin/components/AdminNavbar.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function AdminNavbar() {
+  const { theme, toggleTheme } = useTheme();
+
   return (
     <header className="admin-navbar">
       {/* Brand logo and admin badge */}
@@ -14,8 +17,19 @@ export default function AdminNavbar() {
         <span className="brand-name">Skill<span>Loop</span> <span className="admin-tag">ADMIN</span></span>
       </Link>
 
-      {/* System Status & Admin Profile */}
+      {/* System Status, Theme Toggle & Admin Profile */}
       <div className="admin-nav-right">
+        {/* Theme Toggle Button */}
+        <button 
+          type="button"
+          className="theme-toggle-btn"
+          onClick={toggleTheme}
+          title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          aria-label="Toggle Theme"
+        >
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
+
         <div className="system-status">
           <span className="status-dot"></span>
           <span>System Healthy</span>

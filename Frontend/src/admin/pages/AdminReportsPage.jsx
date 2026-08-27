@@ -2,34 +2,36 @@
 import React, { useState } from 'react';
 import AdminNavbar from '../components/AdminNavbar';
 import AdminSidebar from '../components/AdminSidebar';
+import AdminReportsTable from '../components/AdminReportsTable';
 import '../admin.css';
 
 export default function AdminReportsPage() {
   const [activeTab, setActiveTab] = useState('reports');
 
   return (
-    <div className="admin-page-container">
-      {/* Top Navbar */}
-      <AdminNavbar />
-
-      <div className="admin-layout">
-        {/* Simple Fixed Sidebar */}
-        <AdminSidebar activeTab={activeTab} onSelectTab={setActiveTab} />
-
-        {/* Main Reports Content */}
-        <main className="admin-main-content">
-          <div className="page-header">
-            <h2>Moderation Queue</h2>
-            <p>Review user reports and flagged content.</p>
-          </div>
-
-          {/* Reports Card */}
-          <div className="admin-table-card">
-            <h3 className="table-header-title">Pending Reports</h3>
-            <p style={{ color: '#666666', marginTop: '10px' }}>No active reports found in queue.</p>
-          </div>
-        </main>
+    <>
+      <div className="liquid-bg">
+        <div className="liquid-blob blob-1"></div>
+        <div className="liquid-blob blob-2"></div>
+        <div className="liquid-blob blob-3"></div>
       </div>
-    </div>
+
+      <div className="admin-page-container">
+        <AdminNavbar />
+
+        <div className="admin-layout">
+          <AdminSidebar activeTab={activeTab} onSelectTab={setActiveTab} />
+
+          <main className="admin-main-content">
+            <div className="page-header">
+              <h2>Moderation Queue</h2>
+              <p>Review user reports and flagged content.</p>
+            </div>
+
+            <AdminReportsTable reports={[]} title="Pending Moderation Queue" />
+          </main>
+        </div>
+      </div>
+    </>
   );
 }
