@@ -88,8 +88,8 @@ export default function ProfilePage() {
             profilePhotoUrl: updatedFields.avatarUrl,
             bio: updatedFields.bio,
             headline: updatedFields.headline,
-            skillsCanTeach: updatedFields.teachSkills,
-            skillsWantToLearn: updatedFields.learnSkills,
+            skillsCanTeach: updatedFields.skillsCanTeach,
+            skillsWantToLearn: updatedFields.skillsWantToLearn,
             skillLevel: updatedFields.skillLevel
           })
         }
