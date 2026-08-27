@@ -9,38 +9,6 @@ import SkillLoopSummaryCard from '../components/SkillLoopSummaryCard';
 import KpiStatsGrid from '../components/KpiStatsGrid';
 import RecommendedMatchesSection from '../components/RecommendedMatchesSection';
 
-const RECOMMENDED_MATCHES = [
-  {
-    id: 'm1',
-    name: 'Harsh Vishwakarma',
-    avatar: 'HV',
-    avatarBg: 'var(--violet-primary)',
-    title: 'UI & Photoshop Expert',
-    teachSkills: ['Photoshop', 'Figma'],
-    learnSkills: ['HTML', 'CSS'],
-    rating: '5.0 ★'
-  },
-  {
-    id: 'm2',
-    name: 'Sujit Bauna',
-    avatar: 'SB',
-    avatarBg: 'var(--gold-primary)',
-    title: 'AI Specialist & Backend Developer',
-    teachSkills: ['React', 'CSS'],
-    learnSkills: ['AI', 'Video Editing'],
-    rating: '4.9 ★'
-  },
-  {
-    id: 'm3',
-    name: 'Debosmita Laha',
-    avatar: 'DL',
-    avatarBg: 'var(--mint-primary)',
-    title: 'Python & Data Science',
-    teachSkills: ['Python', 'Pandas'],
-    learnSkills: ['JavaScript', 'HTML'],
-    rating: '4.8 ★'
-  }
-];
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -52,6 +20,8 @@ export default function DashboardPage() {
     learnSkills: [],
     credits: 0
   });
+
+  const [recommendations, setRecommendations] = useState([]);
 
   const [greeting, setGreeting] = useState('Good evening');
 
@@ -136,7 +106,89 @@ export default function DashboardPage() {
       }
     };
 
+    const fetchRecommendations = async () => {
+      const accessToken = localStorage.getItem('accessToken');
+
+      if (!accessToken) {
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          'http://localhost:5000/api/matches/recommendations',
+          {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${accessToken}`
+            },
+            credentials: 'include'
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message || 'Failed to load recommendations'
+          );
+        }
+
+        const backendRecommendations =
+          data?.data?.recommendations || [];
+
+        const formattedRecommendations =
+          backendRecommendations.map((match) => {
+            const matchUser = match.user || match;
+
+            const name =
+              matchUser.name ||
+              `${matchUser.firstName || ''} ${matchUser.lastName || ''}`.trim() ||
+              'Skill Loop User';
+
+            return {
+              id: matchUser._id || matchUser.id,
+
+              name,
+
+              avatar: name
+                .split(' ')
+                .map((part) => part[0])
+                .join('')
+                .slice(0, 2)
+                .toUpperCase(),
+
+              avatarBg: 'var(--violet-primary)',
+
+              title:
+                matchUser.headline ||
+                'Skill Loop Member',
+
+              teachSkills:
+                matchUser.skillsCanTeach || [],
+
+              learnSkills:
+                matchUser.skillsWantToLearn || [],
+
+              rating:
+                `${matchUser.rating ?? 0} ★`
+            };
+          });
+
+        setRecommendations(formattedRecommendations);
+
+      } catch (error) {
+        console.error(
+          'Failed to fetch recommendations:',
+          error
+        );
+
+        setRecommendations([]);
+      }
+    };
+
+
     fetchUser();
+    fetchRecommendations();
   }, [navigate]);
 
   const handleRequestSwap = (matchUser) => {
@@ -187,7 +239,7 @@ export default function DashboardPage() {
 
             {/* Component 4: Recommended Matches Section & Match Cards */}
             <RecommendedMatchesSection
-              matches={RECOMMENDED_MATCHES}
+              matches={recommendations}
               onRequestSwap={handleRequestSwap}
             />
           </main>
