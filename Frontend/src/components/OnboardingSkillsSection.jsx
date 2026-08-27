@@ -126,14 +126,19 @@ export default function OnboardingSkillsSection({
         <label className="form-label">Skill Level</label>
 
         <div className="level-pills-row">
-          {['Beginner', 'Intermediate', 'Advanced'].map((lvl) => (
+          {[
+            { label: 'Beginner', value: 'beginner' },
+            { label: 'Intermediate', value: 'intermediate' },
+            { label: 'Advanced', value: 'advanced' }
+          ].map((level) => (
             <button
-              key={lvl}
+              key={level.value}
               type="button"
-              className={`level-pill-btn ${skillLevel === lvl ? 'active' : ''}`}
-              onClick={() => setSkillLevel(lvl)}
+              className={`level-pill-btn ${skillLevel === level.value ? 'active' : ''
+                }`}
+              onClick={() => setSkillLevel(level.value)}
             >
-              {lvl}
+              {level.label}
             </button>
           ))}
         </div>

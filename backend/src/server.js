@@ -21,6 +21,8 @@ import {
 
 import authRoutes from "./routes/auth.routes.js";
 
+import userRoutes from "./routes/user.routes.js";
+
 
 const app = express();
 
@@ -108,6 +110,13 @@ app.get(
 app.use(
   "/api/auth",
   authRoutes
+);
+
+// USER ROUTES
+
+app.use(
+  "/api/users",
+  userRoutes
 );
 
 
