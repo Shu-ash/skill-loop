@@ -1,10 +1,15 @@
 // src/components/Sidebar.jsx
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
-// Sidebar component transformed into a full-width horizontal navigation sub-bar
 export default function Sidebar({ user = { name: "User Account", credits: 3, avatar: "UA" } }) {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // Read initial collapsed state from localStorage so state persists across page transitions
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    return localStorage.getItem('user_sidebar_collapsed') === 'true';
+  });
 
   const menuItems = [
     { label: 'Dashboard', icon: '🏠', path: '/dashboard' },
@@ -16,31 +21,73 @@ export default function Sidebar({ user = { name: "User Account", credits: 3, ava
     { label: 'My profile', icon: '👤', path: '/profile' },
   ];
 
-  return (
-    <aside className="fullwidth-subnav-bar glass-panel">
-      <ul className="subnav-menu-list">
-        {menuItems.map((item) => (
-          <li key={item.path}>
-            <Link 
-              className={`subnav-pill-link ${location.pathname === item.path ? 'active' : ''}`} 
-              to={item.path}
-            >
-              <span>{item.icon}</span>
-              <span>{item.label}</span>
-              {item.badge && <span className="subnav-badge-count">{item.badge}</span>}
-            </Link>
-          </li>
-        ))}
-      </ul>
+  // Manual toggle handler for sliding collapse/expand
+  const handleToggleSidebar = () => {
+    const nextState = !isCollapsed;
+    setIsCollapsed(nextState);
+    localStorage.setItem('user_sidebar_collapsed', String(nextState));
+  };
 
-      {/* User Info Credit Chip */}
-      <Link className="subnav-user-chip" to="/profile">
-        <div className="subnav-avatar">{user.avatar}</div>
-        <div className="subnav-user-text">
-          <span className="subnav-user-name">{user.name}</span>
-          <span className="subnav-user-credits">🪙 {user.credits} credits</span>
+  // Click handler for menu items: navigate directly without altering collapse state
+  const handleMenuClick = (path) => {
+    navigate(path);
+  };
+
+  return (
+    <aside className={`user-sidebar ${isCollapsed ? 'collapsed' : ''}`}>
+      <div>
+        {/* Sidebar Header with Collapse Toggle */}
+        <div className="sidebar-header-row">
+          <span className="sidebar-title">NAVIGATION</span>
+          <button 
+            type="button" 
+            className="toggle-btn" 
+            onClick={handleToggleSidebar}
+            title="Toggle Sidebar Width"
+          >
+            {isCollapsed ? '▶' : '◀'}
+          </button>
         </div>
-      </Link>
+
+        {/* Navigation Menu List */}
+        <ul className="user-sidebar-menu">
+          {menuItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            return (
+              <li key={item.path}>
+                <button
+                  type="button"
+                  className={`user-menu-item-btn ${isActive ? 'active' : ''}`}
+                  onClick={() => handleMenuClick(item.path)}
+                  title={item.label}
+                >
+                  <span className="sidebar-icon-wrapper">
+                    <span className="icon">{item.icon}</span>
+                    {isCollapsed && item.badge && (
+                      <span className="collapsed-badge-dot">{item.badge}</span>
+                    )}
+                  </span>
+                  <span className="menu-text">{item.label}</span>
+                  {!isCollapsed && item.badge && (
+                    <span className="subnav-badge-count">{item.badge}</span>
+                  )}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+
+      {/* Bottom User Info & Credit Chip */}
+      <div className="user-sidebar-bottom">
+        <Link className="user-chip-link" to="/profile" title="View Profile">
+          <div className="subnav-avatar">{user.avatar}</div>
+          <div className="subnav-user-text">
+            <span className="subnav-user-name">{user.name}</span>
+            <span className="subnav-user-credits">🪙 {user.credits} credits</span>
+          </div>
+        </Link>
+      </div>
     </aside>
   );
-}
+}

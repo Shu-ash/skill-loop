@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import BrowsePage from './pages/BrowsePage';
 import LoginPage from './pages/LoginPage';
@@ -17,11 +17,13 @@ import AdminCategoriesPage from './admin/pages/AdminCategoriesPage';
 import AdminSessionsPage from './admin/pages/AdminSessionsPage';
 import AdminCreditsPage from './admin/pages/AdminCreditsPage';
 import AdminReportsPage from './admin/pages/AdminReportsPage';
+import ScrollToTop from './components/ScrollToTop';
 import './index.css';
 
 function App() {
   return (
     <div id="app">
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/browse" element={<BrowsePage />} />
