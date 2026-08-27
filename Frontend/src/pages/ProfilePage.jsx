@@ -83,6 +83,7 @@ export default function ProfilePage() {
           credentials: 'include',
 
           body: JSON.stringify({
+            name: updatedFields.name,
             username: updatedFields.username,
             profilePhotoUrl: updatedFields.avatarUrl,
             bio: updatedFields.bio,

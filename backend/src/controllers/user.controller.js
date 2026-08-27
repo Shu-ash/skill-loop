@@ -217,6 +217,7 @@ export const updateMyProfile = async (
 ) => {
     try {
         const allowedFields = [
+            "name",
             "username",
             "profilePhotoUrl",
             "bio",
