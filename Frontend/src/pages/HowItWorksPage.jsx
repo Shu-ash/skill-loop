@@ -35,7 +35,7 @@ export default function HowItWorksPage() {
           <FaqAccordion />
 
           {/* Section 5: CTA Banner */}
-          <div style={{ marginTop: '3rem' }}>
+          <div className="how-it-works-bottom">
             <CtaSection />
           </div>
         </main>

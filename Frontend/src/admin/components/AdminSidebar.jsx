@@ -107,11 +107,11 @@ export default function AdminSidebar({ activeTab = 'dashboard' }) {
                 ✕
               </button>
             </div>
-            <div className="modal-body" style={{ marginTop: '0.8rem' }}>
-              <p style={{ color: 'var(--slate-600, #475569)', fontSize: '0.92rem' }}>
+            <div className="modal-body modal-body-padded">
+              <p className="logout-modal-text">
                 Are you sure you want to log out of the Admin Control Panel?
               </p>
-              <div className="modal-action-buttons" style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+              <div className="modal-action-buttons">
                 <button 
                   type="button" 
                   className="action-btn" 

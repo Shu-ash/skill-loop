@@ -14,14 +14,14 @@ export default function MemberCard({ member }) {
           <span className="rating-text">{member.rating}</span>
         </div>
         <h4>{member.name}</h4>
-        <p className="text-subtle margin-bottom-xs" style={{ fontSize: '0.8rem', color: 'var(--slate-500)' }}>
+        <p className="text-subtle margin-bottom-xs member-headline">
           {member.title}
         </p>
 
         {/* Member Skills section */}
-        <div className="tag-picker margin-bottom" style={{ margin: '0.5rem 0 1rem' }}>
+        <div className="tag-picker margin-bottom member-tags">
           {member.skills.map((skill, idx) => (
-            <span key={idx} className="pill-badge pill-violet" style={{ marginRight: '0.3rem' }}>
+            <span key={idx} className="pill-badge pill-violet tag-margin-right">
               {skill}
             </span>
           ))}

@@ -74,7 +74,7 @@ export default function LoginForm({ onSwitchToSignup }) {
         </a>
       </div>
 
-      <button type="submit" className="btn btn-primary btn-full" style={{ marginTop: '1.2rem' }}>
+      <button type="submit" className="btn btn-primary btn-full btn-auth-submit">
         Log in to SkillLoop &rarr;
       </button>
 

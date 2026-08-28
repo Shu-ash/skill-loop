@@ -40,7 +40,7 @@ export default function AdminUsersTable({ users, title = "User List", showRole =
                 </td>
               )}
               <td>
-                <span className="pill pill-active">{u.status}</span>
+                <span className={`pill ${u.status === 'Active' ? 'pill-earned' : 'pill-spent'}`}>{u.status}</span>
               </td>
               <td>
                 <button type="button" className="action-btn">Edit</button>

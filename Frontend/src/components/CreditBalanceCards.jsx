@@ -14,15 +14,14 @@ export default function CreditBalanceCards({ balance = 3, earned = 12, spent = 9
 
       {/* TOTAL EARNED */}
       <div className="glass-panel credit-summary-card total-earned-card">
-        <span className="summary-label">TOTAL EARNED</span>
-        <h2 style={{ color: 'var(--mint-primary)' }}>+{earned}</h2>
-        <p className="summary-sub">{earned} sessions taught</p>
+        <span className="card-label">Earned Credits</span>
+        <h2 className="credit-earned-num">+{earned}</h2>
+        <p className="card-desc">From teaching sessions</p>
       </div>
 
-      {/* TOTAL SPENT */}
-      <div className="glass-panel credit-summary-card total-spent-card">
-        <span className="summary-label">TOTAL SPENT</span>
-        <h2 style={{ color: 'var(--coral-primary)' }}>-{spent}</h2>
+      <div className="glass-panel credit-summary-card">
+        <span className="card-label">Spent Credits</span>
+        <h2 className="credit-spent-num">-{spent}</h2>
         <p className="summary-sub">{spent} sessions learned</p>
       </div>
     </div>

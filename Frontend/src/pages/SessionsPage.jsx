@@ -55,7 +55,7 @@ export default function SessionsPage() {
             </div>
 
             {/* Component 1: Progress Stepper */}
-            <div className="glass-panel" style={{ padding: '1.5rem 1.8rem', borderRadius: '24px' }}>
+            <div className="glass-panel sessions-glass-box">
               <SessionProgressStepper currentStep={currentStep} />
             </div>
 

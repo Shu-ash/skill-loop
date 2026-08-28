@@ -46,7 +46,7 @@ export default function SessionCard({ session, onJoinCall, onMarkComplete }) {
         </div>
         <div className="meta-item">
           <span>Credit Reward</span>
-          <strong style={{ color: 'var(--mint-primary)' }}>+1 Credit to {partnerName}</strong>
+          <strong className="session-credit-earn">+1 Credit to {partnerName}</strong>
         </div>
       </div>
 

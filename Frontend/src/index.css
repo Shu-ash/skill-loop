@@ -3790,6 +3790,8 @@ html[data-theme="dark"] .pill-coral {
 }
 
 html[data-theme="dark"] .pill-white,
+html[data-theme="dark"] .pill-user,
+html[data-theme="dark"] .filter-chip,
 html[data-theme="dark"] .skill-tag-btn {
   background: rgba(30, 41, 59, 0.8) !important;
   color: #e2e8f0 !important;
@@ -3919,4 +3921,89 @@ html[data-theme="dark"] .auth-switch-prompt button {
 html[data-theme="dark"] .auth-form-side h2,
 html[data-theme="dark"] .auth-form-side h3 {
   color: #ffffff !important;
+}
+
+/* Clean Utility Classes for User Panel Components */
+.btn-auth-submit {
+  margin-top: 1.2rem;
+}
+
+.profile-save-banner {
+  background: var(--mint-subtle);
+  color: var(--mint-primary);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.session-credit-earn {
+  color: var(--mint-primary);
+}
+
+.session-link-banner {
+  background: var(--mint-subtle);
+  color: var(--mint-primary);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.credit-earned-num {
+  color: var(--mint-primary);
+}
+
+.credit-spent-num {
+  color: var(--coral-primary);
+}
+
+.step-num-mint {
+  background: var(--mint-primary);
+}
+
+.form-group-padded {
+  margin-top: 1.5rem;
+}
+
+.form-group-spaced {
+  margin-top: 1rem;
+}
+
+.empty-browse-state {
+  padding: 2rem;
+  color: var(--slate-500);
+}
+
+.how-it-works-bottom {
+  margin-top: 3rem;
+}
+
+.leaderboard-tab-nav {
+  width: 220px;
+  margin: 0;
+}
+
+.empty-requests-card {
+  padding: 2.5rem;
+  text-align: center;
+  color: var(--slate-500);
+}
+
+.sessions-glass-box {
+  padding: 1.5rem 1.8rem;
+  border-radius: 24px;
+}
+
+.member-headline {
+  font-size: 0.8rem;
+  color: var(--slate-500);
+}
+
+.member-tags {
+  margin: 0.5rem 0 1rem;
+}
+
+.tag-margin-right {
+  margin-right: 0.3rem;
+}
+
+html[data-theme="dark"] .empty-browse-state,
+html[data-theme="dark"] .empty-requests-card,
+html[data-theme="dark"] .member-headline {
+  color: #cbd5e1 !important;
 }

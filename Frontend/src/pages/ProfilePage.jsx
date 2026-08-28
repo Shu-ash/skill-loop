@@ -52,18 +52,30 @@ export default function ProfilePage() {
   }, []);
 
   const toggleAvailability = (key) => {
-    setAvailability((prev) => ({ ...prev, [key]: !prev[key] }));
+    const updatedAvail = { ...availability, [key]: !availability[key] };
+    setAvailability(updatedAvail);
   };
 
-  const handleSaveChanges = () => {
-    const updatedUser = { ...user, onboardingCompleted: true };
+  const handleUpdateBio = (newBio) => {
+    const updatedUser = { ...user, bio: newBio, onboardingCompleted: true };
+    setUser(updatedUser);
     localStorage.setItem('skillloop_user', JSON.stringify(updatedUser));
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 3000);
+  };
+
+  const handleUpdateTeachSkills = (newTeachSkills) => {
+    const updatedUser = { ...user, teachSkills: newTeachSkills, onboardingCompleted: true };
+    setUser(updatedUser);
+    localStorage.setItem('skillloop_user', JSON.stringify(updatedUser));
+  };
+
+  const handleUpdateLearnSkills = (newLearnSkills) => {
+    const updatedUser = { ...user, learnSkills: newLearnSkills, onboardingCompleted: true };
+    setUser(updatedUser);
+    localStorage.setItem('skillloop_user', JSON.stringify(updatedUser));
   };
 
   const handleSaveModalData = (updatedFields) => {
-    const updatedUser = { ...user, ...updatedFields };
+    const updatedUser = { ...user, ...updatedFields, onboardingCompleted: true };
     setUser(updatedUser);
     localStorage.setItem('skillloop_user', JSON.stringify(updatedUser));
     setIsEditModalOpen(false);
@@ -91,13 +103,10 @@ export default function ProfilePage() {
                 <h2>My Profile &amp; Skills</h2>
                 <p>This is what other members see when they find you on SkillLoop.</p>
               </div>
-              <button type="button" className="btn btn-primary" onClick={handleSaveChanges}>
-                Save changes
-              </button>
             </div>
 
             {savedSuccess && (
-              <div className="onboarding-error-banner" style={{ background: 'var(--mint-subtle)', color: 'var(--mint-primary)', borderColor: 'rgba(16, 185, 129, 0.3)' }}>
+              <div className="onboarding-error-banner profile-save-banner">
                 ✓ Profile changes saved successfully!
               </div>
             )}
@@ -114,7 +123,7 @@ export default function ProfilePage() {
               {/* Component 2: About & Availability */}
               <ProfileDetailsEditor
                 bio={user.bio}
-                setBio={(bio) => setUser({ ...user, bio })}
+                setBio={handleUpdateBio}
                 availability={availability}
                 toggleAvailability={toggleAvailability}
                 profileStrength={85}
@@ -123,9 +132,9 @@ export default function ProfilePage() {
               {/* Component 3: Skills Editor */}
               <ProfileSkillsTagsCard
                 teachSkills={user.teachSkills}
-                setTeachSkills={(teachSkills) => setUser({ ...user, teachSkills })}
+                setTeachSkills={handleUpdateTeachSkills}
                 learnSkills={user.learnSkills}
-                setLearnSkills={(learnSkills) => setUser({ ...user, learnSkills })}
+                setLearnSkills={handleUpdateLearnSkills}
               />
             </div>
           </main>
@@ -145,4 +154,3 @@ export default function ProfilePage() {
     </>
   );
 }
-

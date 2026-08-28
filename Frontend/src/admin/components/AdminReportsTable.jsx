@@ -9,7 +9,7 @@ export default function AdminReportsTable({ reports, title = "Pending Reports" }
     <div className="admin-table-card">
       <h3 className="table-header-title">{title}</h3>
       {list.length === 0 ? (
-        <p style={{ color: 'var(--slate-500)', marginTop: '10px' }}>
+        <p className="empty-reports-msg">
           ✓ No active reports found in moderation queue.
         </p>
       ) : (
@@ -32,7 +32,7 @@ export default function AdminReportsTable({ reports, title = "Pending Reports" }
                 <td>{r.target}</td>
                 <td>{r.reason}</td>
                 <td>
-                  <span className="pill pill-user">{r.status}</span>
+                  <span className={`pill ${r.status === 'Resolved' ? 'pill-earned' : 'pill-spent'}`}>{r.status}</span>
                 </td>
                 <td>
                   <button type="button" className="action-btn">Resolve</button>

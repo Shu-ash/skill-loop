@@ -91,8 +91,8 @@ export default function Navbar() {
           )}
         </div>
 
-        <Link className="btn btn-secondary btn-pill-sm desktop-only-btn" to="/login">Log in</Link>
-        <Link className="btn btn-primary btn-pill-sm desktop-only-btn" to="/onboarding">Get started</Link>
+        <Link className="btn btn-secondary btn-pill-sm desktop-only-btn" to="/login" state={{ mode: 'login' }}>Log in</Link>
+        <Link className="btn btn-primary btn-pill-sm desktop-only-btn" to="/login?mode=signup" state={{ mode: 'signup' }}>Get started</Link>
 
         {/* Mobile Hamburger Toggle Button */}
         <button 
@@ -140,12 +140,12 @@ export default function Navbar() {
             </li>
             <li className="mobile-drawer-divider"></li>
             <li>
-              <Link className="btn btn-secondary btn-full-mobile" to="/login" onClick={closeMobileMenu}>
+              <Link className="btn btn-secondary btn-full-mobile" to="/login" state={{ mode: 'login' }} onClick={closeMobileMenu}>
                 Log in
               </Link>
             </li>
             <li>
-              <Link className="btn btn-primary btn-full-mobile" to="/onboarding" onClick={closeMobileMenu}>
+              <Link className="btn btn-primary btn-full-mobile" to="/login?mode=signup" state={{ mode: 'signup' }} onClick={closeMobileMenu}>
                 Get started
               </Link>
             </li>

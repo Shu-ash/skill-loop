@@ -29,7 +29,7 @@ export default function AdminCreditsLedgerTable({ transactions, title = "Transac
               <td>{tx.sender}</td>
               <td>{tx.receiver}</td>
               <td>
-                <span className={`pill ${tx.amount.startsWith('+') ? 'pill-active' : 'pill-user'}`}>
+                <span className={`pill ${tx.amount.startsWith('+') ? 'pill-earned' : 'pill-spent'}`}>
                   {tx.amount}
                 </span>
               </td>

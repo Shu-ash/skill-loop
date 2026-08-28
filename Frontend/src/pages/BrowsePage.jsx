@@ -69,7 +69,7 @@ export default function BrowsePage() {
                   <MemberCard key={member.id} member={member} />
                 ))
               ) : (
-                <div style={{ padding: '2rem', color: 'var(--slate-500)' }}>
+                <div className="empty-browse-state">
                   No members found.
                 </div>
               )}

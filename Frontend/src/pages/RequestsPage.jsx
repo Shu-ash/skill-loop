@@ -135,7 +135,7 @@ export default function RequestsPage() {
                   />
                 ))
               ) : (
-                <div className="glass-panel" style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--slate-500)' }}>
+                <div className="glass-panel empty-requests-card">
                   <p>No requests found in this tab.</p>
                 </div>
               )}

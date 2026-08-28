@@ -68,7 +68,7 @@ export default function ProfileSkillsTagsCard({
       </div>
 
       {/* SKILLS I WANT TO LEARN */}
-      <div className="skills-edit-group" style={{ marginTop: '1.5rem' }}>
+      <div className="skills-edit-group form-group-padded">
         <label className="form-label">Skills I Want to Learn</label>
         <div className="profile-tags-wrapper">
           {learnSkills.map((skill) => (

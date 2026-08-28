@@ -23,7 +23,7 @@ export default function HeroSection() {
 
         {/* Call-to-action buttons */}
         <div className="hero-btns">
-          <Link className="btn btn-primary" to="/login">Join the loop →</Link>
+          <Link className="btn btn-primary" to="/login?mode=signup" state={{ mode: 'signup' }}>Join the loop →</Link>
           <a className="btn btn-secondary" href="#how-it-works">See how it works</a>
         </div>
 
