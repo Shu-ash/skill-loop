@@ -77,10 +77,18 @@ const sessionSchema = new mongoose.Schema(
                 "scheduled",
                 "in_progress",
                 "completed",
-                "cancelled"
+                "cancelled",
+                "disputed"
             ],
             default: "pending",
             required: true
+        },
+
+        disputeDetails: {
+            reason: { type: String, default: "" },
+            resolution: { type: String, default: "" },
+            resolvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+            resolvedAt: { type: Date }
         },
 
         completedAt: {
