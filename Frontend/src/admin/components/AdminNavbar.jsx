@@ -1,13 +1,19 @@
 // src/admin/components/AdminNavbar.jsx
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 
 export default function AdminNavbar() {
   const { theme, toggleTheme } = useTheme();
+  const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  // Close drawer when route changes
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   const closeMobileMenu = () => {
     setMobileMenuOpen(false);
@@ -18,6 +24,15 @@ export default function AdminNavbar() {
     localStorage.removeItem('admin_sidebar_collapsed');
     navigate('/login');
   };
+
+  const navLinks = [
+    { label: 'Admin Dashboard', icon: '📊', path: '/admin' },
+    { label: 'User Management', icon: '👥', path: '/admin/users' },
+    { label: 'Skill Categories', icon: '🏷️', path: '/admin/categories' },
+    { label: 'Sessions & Disputes', icon: '📅', path: '/admin/sessions' },
+    { label: 'Credit Audit Ledger', icon: '🪙', path: '/admin/credits' },
+    { label: 'Moderation Reports', icon: '🚨', path: '/admin/reports' }
+  ];
 
   return (
     <>
@@ -45,7 +60,7 @@ export default function AdminNavbar() {
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
 
-          <div className="system-status">
+          <div className="system-status desktop-only-btn">
             <span className="status-dot"></span>
             <span>System Healthy</span>
           </div>
@@ -58,7 +73,7 @@ export default function AdminNavbar() {
             </div>
           </div>
 
-          {/* Mobile Hamburger Toggle Button (3-line option) */}
+          {/* Mobile Hamburger Toggle Button */}
           <button 
             type="button" 
             className="mobile-menu-btn"
@@ -71,47 +86,43 @@ export default function AdminNavbar() {
 
         {/* Glassmorphic Mobile Drawer Menu */}
         {mobileMenuOpen && (
-          <div className="mobile-menu-drawer glass-panel">
+          <div className="mobile-menu-drawer glass-panel clay-card-3d">
+            <div className="mobile-drawer-header">
+              <div className="admin-profile mobile-drawer-profile">
+                <div className="admin-avatar">SA</div>
+                <div className="admin-details">
+                  <span className="admin-name">Super Admin</span>
+                  <span className="admin-role">System Moderator</span>
+                </div>
+              </div>
+              <button 
+                type="button" 
+                className="theme-toggle-btn"
+                onClick={toggleTheme}
+                title="Toggle Theme"
+              >
+                {theme === 'dark' ? '☀️' : '🌙'}
+              </button>
+            </div>
+
             <ul className="mobile-nav-list">
-              <li>
-                <button 
-                  type="button" 
-                  className="mobile-nav-link mobile-theme-btn" 
-                  onClick={() => { toggleTheme(); closeMobileMenu(); }}
-                >
-                  <span>{theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode'}</span>
-                </button>
-              </li>
-              <li>
-                <Link className="mobile-nav-link" to="/admin" onClick={closeMobileMenu}>
-                  📊 Admin Dashboard
-                </Link>
-              </li>
-              <li>
-                <Link className="mobile-nav-link" to="/admin/users" onClick={closeMobileMenu}>
-                  👥 User Management
-                </Link>
-              </li>
-              <li>
-                <Link className="mobile-nav-link" to="/admin/categories" onClick={closeMobileMenu}>
-                  🏷️ Skill Categories
-                </Link>
-              </li>
-              <li>
-                <Link className="mobile-nav-link" to="/admin/sessions" onClick={closeMobileMenu}>
-                  📅 Sessions &amp; Disputes
-                </Link>
-              </li>
-              <li>
-                <Link className="mobile-nav-link" to="/admin/credits" onClick={closeMobileMenu}>
-                  🪙 Credit Audit Ledger
-                </Link>
-              </li>
-              <li>
-                <Link className="mobile-nav-link" to="/admin/reports" onClick={closeMobileMenu}>
-                  🚨 Moderation Reports
-                </Link>
-              </li>
+              {navLinks.map((item) => {
+                const isActive = location.pathname === item.path;
+                return (
+                  <li key={item.path}>
+                    <Link 
+                      className={`mobile-nav-link ${isActive ? 'active' : ''}`} 
+                      to={item.path} 
+                      onClick={closeMobileMenu}
+                    >
+                      <span className="mobile-nav-icon">{item.icon}</span>
+                      <span className="mobile-nav-label">{item.label}</span>
+                      {isActive && <span className="mobile-active-dot">●</span>}
+                    </Link>
+                  </li>
+                );
+              })}
+
               <li className="mobile-drawer-divider"></li>
               <li>
                 <button 
@@ -129,9 +140,9 @@ export default function AdminNavbar() {
 
       {/* Sleek Glassmorphic Confirmation Modal for Logout */}
       {showLogoutModal && (
-        <div className="modal-overlay" onClick={() => setShowLogoutModal(false)}>
+        <div className="modal-overlay full-viewport-blur-overlay" onClick={() => setShowLogoutModal(false)}>
           <div 
-            className="glass-panel logout-confirm-box clay-card-3d" 
+            className="glass-panel logout-confirm-box clay-card-3d admin-action-center-modal" 
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-header">

@@ -7,6 +7,7 @@ import HowItWorksSteps from '../components/HowItWorksSteps';
 import CreditsRuleSection from '../components/CreditsRuleSection';
 import FaqAccordion from '../components/FaqAccordion';
 import CtaSection from '../components/CtaSection';
+import Footer from '../components/Footer';
 
 // HowItWorksPage: Main page explaining the SkillLoop peer-to-peer concept
 export default function HowItWorksPage() {
@@ -40,6 +41,7 @@ export default function HowItWorksPage() {
           </div>
         </main>
 
+        <Footer />
         <MobileNav />
       </div>
     </>

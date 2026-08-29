@@ -1,19 +1,35 @@
 // src/admin/pages/AdminCreditsPage.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import AdminNavbar from '../components/AdminNavbar';
 import AdminSidebar from '../components/AdminSidebar';
 import AdminCreditsLedgerTable from '../components/AdminCreditsLedgerTable';
+import AdminSearchFilterBar from '../components/AdminSearchFilterBar';
+import AdminActionModal from '../components/AdminActionModal';
 import '../admin.css';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
 export default function AdminCreditsPage() {
   const [activeTab, setActiveTab] = useState('credits');
-  const [transactions, setTransactions] = useState([
-    { id: 'tx_901', sender: 'User 1', receiver: 'User 3', amount: '+1 Credit', date: 'Today' },
-    { id: 'tx_902', sender: 'User 2', receiver: 'User 1', amount: '-1 Credit', date: 'Today' }
-  ]);
+  const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedType, setSelectedType] = useState('All Types');
+
+  // Center Modal State
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    title: '',
+    icon: '🪙',
+    message: '',
+    confirmText: 'Close',
+    confirmType: 'primary',
+    details: null,
+    isDetailsOnly: true,
+    onConfirm: null,
+    loading: false
+  });
 
   useEffect(() => {
     const fetchCredits = async () => {
@@ -26,7 +42,7 @@ export default function AdminCreditsPage() {
           }
         });
         const data = await response.json();
-        if (data.success && data.data?.transactions?.length) {
+        if (data.success && data.data?.transactions) {
           setTransactions(data.data.transactions);
         }
       } catch (err) {
@@ -38,6 +54,49 @@ export default function AdminCreditsPage() {
 
     fetchCredits();
   }, []);
+
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter((tx) => {
+      const search = searchQuery.trim().toLowerCase();
+      const matchesSearch = !search ||
+        (tx.sender && tx.sender.toLowerCase().includes(search)) ||
+        (tx.receiver && tx.receiver.toLowerCase().includes(search)) ||
+        (tx.note && tx.note.toLowerCase().includes(search)) ||
+        (tx.description && tx.description.toLowerCase().includes(search)) ||
+        (tx.id && tx.id.toLowerCase().includes(search)) ||
+        (tx.displayId && tx.displayId.toLowerCase().includes(search));
+
+      const matchesType = selectedType === 'All Types' ||
+        (selectedType === 'Earned (+)' && (tx.amount?.includes('+') || tx.type === 'earned')) ||
+        (selectedType === 'Spent (-)' && (tx.amount?.includes('-') || tx.type === 'spent'));
+
+      return matchesSearch && matchesType;
+    });
+  }, [transactions, searchQuery, selectedType]);
+
+  const handleViewDetails = (tx) => {
+    setModalConfig({
+      isOpen: true,
+      title: '🪙 Credit Transaction Audit Details',
+      icon: '🪙',
+      message: `Complete transaction breakdown from MongoDB credit ledger.`,
+      isDetailsOnly: true,
+      details: {
+        'Transaction ID': tx.displayId || `#TX-${(tx.id || '').toString().slice(-6).toUpperCase()}`,
+        'Sender (Learner)': tx.sender,
+        'Receiver (Teacher)': tx.receiver,
+        'Credit Amount': tx.amount || '+1 Credit',
+        'Date & Time': tx.date || 'Recent',
+        'Description': tx.description || 'Skill swap session reward'
+      },
+      onConfirm: null
+    });
+  };
+
+  const handleClearFilters = () => {
+    setSearchQuery('');
+    setSelectedType('All Types');
+  };
 
   return (
     <>
@@ -56,13 +115,48 @@ export default function AdminCreditsPage() {
           <main className="admin-main-content">
             <div className="page-header">
               <h2>Credit Audit Ledger</h2>
-              <p>Inspect platform credit transactions and system circulation.</p>
+              <p>Search, inspect platform credit transactions, and audit system circulation from MongoDB.</p>
             </div>
 
-            <AdminCreditsLedgerTable transactions={transactions} title="Platform Credit Ledger" />
+            {/* Admin Search & Filter Bar */}
+            <AdminSearchFilterBar
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              placeholder="Search transactions by sender, receiver, note, or ID..."
+              filters={[
+                {
+                  label: 'Type',
+                  value: selectedType,
+                  onChange: setSelectedType,
+                  options: ['All Types', 'Earned (+)', 'Spent (-)']
+                }
+              ]}
+              onClearFilters={handleClearFilters}
+            />
+
+            <AdminCreditsLedgerTable 
+              transactions={filteredTransactions} 
+              title={`Platform Credit Ledger (${filteredTransactions.length})`} 
+              onViewDetails={handleViewDetails}
+            />
           </main>
         </div>
       </div>
+
+      {/* Center Screen Details Modal */}
+      <AdminActionModal
+        isOpen={modalConfig.isOpen}
+        onClose={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={modalConfig.onConfirm}
+        title={modalConfig.title}
+        icon={modalConfig.icon}
+        message={modalConfig.message}
+        confirmText={modalConfig.confirmText}
+        confirmType={modalConfig.confirmType}
+        details={modalConfig.details}
+        isDetailsOnly={modalConfig.isDetailsOnly}
+        loading={modalConfig.loading}
+      />
     </>
   );
 }

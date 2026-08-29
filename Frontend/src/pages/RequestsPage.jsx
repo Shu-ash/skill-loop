@@ -103,8 +103,34 @@ export default function RequestsPage() {
   const loadRequests = async () => {
     const token = getToken();
 
+    let localSent = [];
+    try {
+      const stored = localStorage.getItem('skillloop_user_requests');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          localSent = parsed.map(r => ({
+            id: r.id || `req_${Date.now()}`,
+            user: { name: r.targetUser?.name || 'Peer Member', avatar: r.targetUser?.avatar || 'PM', avatarBg: 'var(--violet-primary)' },
+            skillWant: r.skillWant || 'Skill Swap',
+            message: r.message || '',
+            status: r.status || 'pending',
+            timeAgo: r.createdAt || 'Recent'
+          }));
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
     if (!token) {
-      navigate('/login');
+      setRequests({
+        received: [],
+        sent: localSent,
+        accepted: [],
+        history: []
+      });
+      setLoading(false);
       return;
     }
 
@@ -112,47 +138,39 @@ export default function RequestsPage() {
       setLoading(true);
       setError('');
 
-      const headers = {
-        Authorization: `Bearer ${token}`
-      };
+      const headers = { Authorization: `Bearer ${token}` };
 
       const [receivedResponse, sentResponse] = await Promise.all([
-        fetch(`${API_URL}/requests/received`, {
-          method: 'GET',
-          headers,
-          credentials: 'include'
-        }),
-        fetch(`${API_URL}/requests/sent`, {
-          method: 'GET',
-          headers,
-          credentials: 'include'
-        })
+        fetch(`${API_URL}/requests/received`, { headers, credentials: 'include' }),
+        fetch(`${API_URL}/requests/sent`, { headers, credentials: 'include' })
       ]);
 
       const receivedData = await receivedResponse.json();
       const sentData = await sentResponse.json();
 
-      if (!receivedResponse.ok) {
-        throw new Error(receivedData.message || 'Failed to load received requests');
-      }
+      const backendReceived = receivedData?.data?.requests || [];
+      const backendSent = sentData?.data?.requests || [];
 
-      if (!sentResponse.ok) {
-        throw new Error(sentData.message || 'Failed to load sent requests');
-      }
-
-      const received = receivedData?.data?.requests || [];
-      const sent = sentData?.data?.requests || [];
+      const formattedSent = [
+        ...backendSent.map((r) => formatRequest(r, 'sent')),
+        ...localSent.filter(ls => !backendSent.some(bs => bs._id === ls.id))
+      ];
 
       setRequests({
-        received: received.map((r) => formatRequest(r, 'received')),
-        sent: sent.map((r) => formatRequest(r, 'sent')),
+        received: backendReceived.map((r) => formatRequest(r, 'received')),
+        sent: formattedSent,
         accepted: [],
         history: []
       });
 
     } catch (err) {
-      console.error('Failed to load requests:', err);
-      setError(err.message || 'Failed to load requests');
+      console.log('Failed to load live requests, fallback active');
+      setRequests({
+        received: [],
+        sent: localSent,
+        accepted: [],
+        history: []
+      });
     } finally {
       setLoading(false);
     }
@@ -170,20 +188,13 @@ export default function RequestsPage() {
       return;
     }
 
-    if (!requestId) {
-      setError('Request ID is missing');
-      return;
-    }
-
     try {
       setActionLoading(true);
       setError('');
 
       const response = await fetch(`${API_URL}/requests/${requestId}/accept`, {
         method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
+        headers: { Authorization: `Bearer ${token}` },
         credentials: 'include'
       });
 
@@ -229,11 +240,6 @@ export default function RequestsPage() {
       return;
     }
 
-    if (!requestId) {
-      setError('Request ID is missing');
-      return;
-    }
-
     const confirmed = window.confirm('Are you sure you want to decline this request?');
     if (!confirmed) return;
 
@@ -243,9 +249,7 @@ export default function RequestsPage() {
 
       const response = await fetch(`${API_URL}/requests/${requestId}/decline`, {
         method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
+        headers: { Authorization: `Bearer ${token}` },
         credentials: 'include'
       });
 

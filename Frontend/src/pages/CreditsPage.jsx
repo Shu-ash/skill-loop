@@ -1,5 +1,5 @@
 // src/pages/CreditsPage.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import MobileNav from '../components/MobileNav';
@@ -7,7 +7,8 @@ import CreditBalanceCards from '../components/CreditBalanceCards';
 import TransactionLedgerTable from '../components/TransactionLedgerTable';
 import CreditsHowItWorksCard from '../components/CreditsHowItWorksCard';
 
-// Sample transaction ledger history
+const API_BASE_URL = 'http://localhost:5000/api';
+
 const MOCK_TRANSACTIONS = [
   { id: 'tx_1', type: 'earned', title: 'Taught React Hooks to Devon Patel', date: 'Aug 10, 2026', sessionId: '0142', amount: 1 },
   { id: 'tx_2', type: 'spent', title: 'Learned Spanish from Lena Kim', date: 'Aug 7, 2026', sessionId: '0139', amount: -1 },
@@ -17,7 +18,50 @@ const MOCK_TRANSACTIONS = [
 ];
 
 export default function CreditsPage() {
-  const [transactions] = useState(MOCK_TRANSACTIONS);
+  const [balance, setBalance] = useState(3);
+  const [transactions, setTransactions] = useState(MOCK_TRANSACTIONS);
+
+  useEffect(() => {
+    const userStr = localStorage.getItem('skillloop_user');
+    if (userStr) {
+      try {
+        const u = JSON.parse(userStr);
+        if (u.credits !== undefined) setBalance(u.credits);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    const fetchLedger = async () => {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/credits/my-ledger`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await response.json();
+        if (data.success && data.data) {
+          if (data.data.credits !== undefined) setBalance(data.data.credits);
+          if (data.data.history?.length) {
+            const formatted = data.data.history.map(h => ({
+              id: h.id,
+              type: h.type,
+              title: `${h.type === 'earned' ? 'Taught to' : 'Learned from'} ${h.partnerName}`,
+              date: h.date,
+              sessionId: h.displayId,
+              amount: h.type === 'earned' ? 1 : -1
+            }));
+            setTransactions(formatted);
+          }
+        }
+      } catch (err) {
+        console.log('Credits ledger fallback active');
+      }
+    };
+
+    fetchLedger();
+  }, []);
 
   return (
     <>
@@ -31,7 +75,7 @@ export default function CreditsPage() {
         <Navbar />
 
         <div className="app-layout">
-          <Sidebar user={{ name: 'Harsh', credits: 3, avatar: 'HA' }} />
+          <Sidebar />
 
           <main className="main-content">
             <div className="page-title-row">
@@ -42,7 +86,7 @@ export default function CreditsPage() {
             </div>
 
             {/* Component 1: Credit Balance Summary Cards */}
-            <CreditBalanceCards balance={3} earned={12} spent={9} />
+            <CreditBalanceCards balance={balance} earned={12} spent={9} />
 
             {/* Grid Layout for Ledger & Explainer */}
             <div className="credits-body-grid">

@@ -11,6 +11,10 @@ import SessionsPage from './pages/SessionsPage';
 import CreditsPage from './pages/CreditsPage';
 import LeaderboardPage from './pages/LeaderboardPage';
 import HowItWorksPage from './pages/HowItWorksPage';
+import AboutPage from './pages/AboutPage';
+import ContactPage from './pages/ContactPage';
+import TermsPage from './pages/TermsPage';
+import PrivacyPage from './pages/PrivacyPage';
 import AdminDashboardPage from './admin/pages/AdminDashboardPage';
 import AdminUsersPage from './admin/pages/AdminUsersPage';
 import AdminCategoriesPage from './admin/pages/AdminCategoriesPage';
@@ -33,6 +37,13 @@ function App() {
         <Route path="/leaderboard" element={<LeaderboardPage />} />
         <Route path="/how-it-works" element={<HowItWorksPage />} />
         <Route path="/howitworks" element={<HowItWorksPage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/contact-us" element={<ContactPage />} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/terms-and-conditions" element={<TermsPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/privacy-policy" element={<PrivacyPage />} />
 
         {/* Protected Private User Routes */}
         <Route path="/onboarding" element={<RequireAuth pageTitle="Profile Onboarding" roleRequired="user"><OnboardingPage /></RequireAuth>} />
