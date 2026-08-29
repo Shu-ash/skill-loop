@@ -2,11 +2,12 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
+import { clearAuthSession } from '../utils/auth';
+
 export default function Sidebar({ user = { name: "User Account", credits: 3, avatar: "UA" } }) {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Read initial collapsed state from localStorage so state persists across page transitions
   const [isCollapsed, setIsCollapsed] = useState(() => {
     return localStorage.getItem('user_sidebar_collapsed') === 'true';
   });
@@ -23,21 +24,19 @@ export default function Sidebar({ user = { name: "User Account", credits: 3, ava
     { label: 'My profile', icon: '👤', path: '/profile' },
   ];
 
-  // Manual toggle handler for sliding collapse/expand
   const handleToggleSidebar = () => {
     const nextState = !isCollapsed;
     setIsCollapsed(nextState);
     localStorage.setItem('user_sidebar_collapsed', String(nextState));
   };
 
-  // Click handler for menu items: navigate directly without altering collapse state
   const handleMenuClick = (path) => {
     navigate(path);
   };
 
   const confirmLogout = () => {
     setShowLogoutModal(false);
-    localStorage.removeItem('skillloop_user');
+    clearAuthSession();
     navigate('/login');
   };
 
@@ -45,7 +44,6 @@ export default function Sidebar({ user = { name: "User Account", credits: 3, ava
     <>
       <aside className={`user-sidebar ${isCollapsed ? 'collapsed' : ''}`}>
         <div>
-          {/* Sidebar Header with Collapse Toggle */}
           <div className="sidebar-header-row">
             <span className="sidebar-title">NAVIGATION</span>
             <button 
@@ -58,7 +56,6 @@ export default function Sidebar({ user = { name: "User Account", credits: 3, ava
             </button>
           </div>
 
-          {/* Navigation Menu List */}
           <ul className="user-sidebar-menu">
             {menuItems.map((item) => {
               const isActive = location.pathname === item.path;
@@ -87,7 +84,6 @@ export default function Sidebar({ user = { name: "User Account", credits: 3, ava
           </ul>
         </div>
 
-        {/* Bottom User Info & Logout Button */}
         <div className="user-sidebar-bottom">
           <Link className="user-chip-link" to="/profile" title="View Profile">
             <div className="subnav-avatar">{user.avatar}</div>
@@ -110,7 +106,6 @@ export default function Sidebar({ user = { name: "User Account", credits: 3, ava
         </div>
       </aside>
 
-      {/* Glassmorphic Confirmation Modal for Logout */}
       {showLogoutModal && (
         <div className="modal-overlay" onClick={() => setShowLogoutModal(false)}>
           <div 

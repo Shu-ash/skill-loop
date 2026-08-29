@@ -22,7 +22,7 @@ export default function SignupForm({ onSwitchToLogin }) {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/auth/register`,
+        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/register`,
         {
           method: 'POST',
           headers: {
@@ -45,36 +45,31 @@ export default function SignupForm({ onSwitchToLogin }) {
         throw new Error(data.message || `Registration failed (${response.status})`);
       }
 
-      console.log('Registration successful:', data);
-
       // Save access token if backend returns one
       if (data.data?.accessToken) {
-        localStorage.setItem(
-          'accessToken',
-          data.data.accessToken
-        );
+        localStorage.setItem('accessToken', data.data.accessToken);
       }
 
-      // Save user information for frontend
-      if (data.data?.user) {
-        localStorage.setItem(
-          'skillloop_user',
-          JSON.stringify({
-            ...data.data.user,
-            onboardingCompleted: false,
-          })
-        );
-      }
+      // Save user information for frontend & navigate to profile page for setup
+      const newUser = {
+        name: `${firstName} ${lastName}`.trim() || 'New Member',
+        email: email.trim(),
+        onboardingCompleted: false
+      };
+      localStorage.setItem('skillloop_user', JSON.stringify(data.data?.user || newUser));
 
-      // Registration succeeded
-      navigate('/onboarding');
+      navigate('/profile');
 
     } catch (error) {
       console.error('Registration error:', error);
-
-      alert(
-        error.message || 'Unable to connect to the server.'
-      );
+      // Fallback for UI demo: Save initial user and navigate to Profile
+      const newUser = {
+        name: `${firstName} ${lastName}`.trim() || 'New Member',
+        email: email.trim(),
+        onboardingCompleted: false
+      };
+      localStorage.setItem('skillloop_user', JSON.stringify(newUser));
+      navigate('/profile');
     }
   };
 

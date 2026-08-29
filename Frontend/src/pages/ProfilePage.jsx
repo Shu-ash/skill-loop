@@ -20,7 +20,8 @@ export default function ProfilePage() {
     rating: '4.9',
     credits: 3,
     teachSkills: ['HTML', 'CSS', 'JavaScript', 'React'],
-    learnSkills: ['Photoshop', 'Figma', 'UI Animation']
+    learnSkills: ['Photoshop', 'Figma', 'UI Animation'],
+    onboardingCompleted: true
   });
 
   const [availability, setAvailability] = useState({
@@ -45,7 +46,8 @@ export default function ProfilePage() {
           bio: parsed.bio || prev.bio,
           teachSkills: parsed.teachSkills?.length ? parsed.teachSkills : prev.teachSkills,
           learnSkills: parsed.learnSkills?.length ? parsed.learnSkills : prev.learnSkills,
-          credits: parsed.credits || prev.credits
+          credits: parsed.credits || prev.credits,
+          onboardingCompleted: parsed.onboardingCompleted ?? prev.onboardingCompleted
         }));
       } catch (e) {
         console.error('Error parsing profile:', e);
@@ -138,7 +140,6 @@ export default function ProfilePage() {
 
     } catch (error) {
       console.error('Profile update error:', error);
-      // Fallback local update if backend error occurs
       const updatedUser = { ...user, ...updatedFields, onboardingCompleted: true };
       setUser(updatedUser);
       localStorage.setItem('skillloop_user', JSON.stringify(updatedUser));
@@ -169,6 +170,12 @@ export default function ProfilePage() {
                 <p>This is what other members see when they find you on SkillLoop.</p>
               </div>
             </div>
+
+            {!user.onboardingCompleted && (
+              <div className="glass-panel admin-access-notice" style={{ marginBottom: '1.2rem', padding: '1rem 1.25rem' }}>
+                🎉 <strong>Welcome to SkillLoop! Complete your profile below</strong> to start trading skills with community members.
+              </div>
+            )}
 
             {savedSuccess && (
               <div className="onboarding-error-banner profile-save-banner">

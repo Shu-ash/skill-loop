@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
+import { getAuthStatus } from '../utils/auth';
 
 export default function Navbar() {
   const location = useLocation();
@@ -13,6 +14,8 @@ export default function Navbar() {
     { id: 1, text: "New swap request received from Sujit!", read: false },
     { id: 2, text: "Debosmita accepted your skill swap!", read: false }
   ]);
+
+  const { isAuthenticated } = getAuthStatus();
 
   const toggleNotifications = () => {
     setShowNotifs(!showNotifs);
@@ -45,7 +48,7 @@ export default function Navbar() {
         <li><Link className={`nav-item ${location.pathname === '/leaderboard' ? 'active' : ''}`} to="/leaderboard">Community</Link></li>
       </ul>
 
-      {/* Theme toggle button, Notification bell, Auth buttons & Mobile Hamburger Toggle */}
+      {/* Theme toggle button, Notification bell, Auth CTA */}
       <div className="nav-actions">
         {/* Theme Toggle Button */}
         <button 
@@ -58,41 +61,50 @@ export default function Navbar() {
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
 
-        <div className="notif-wrapper">
-          <button 
-            className="nav-notification-btn" 
-            id="notif-bell-btn" 
-            title="Notifications" 
-            onClick={toggleNotifications}
-          >
-            🔔
-            {notifications.some(n => !n.read) && <span className="notification-badge"></span>}
-          </button>
+        {isAuthenticated && (
+          <div className="notif-wrapper">
+            <button 
+              className="nav-notification-btn" 
+              id="notif-bell-btn" 
+              title="Notifications" 
+              onClick={toggleNotifications}
+            >
+              🔔
+              {notifications.some(n => !n.read) && <span className="notification-badge"></span>}
+            </button>
 
-          {/* Floating Notifications Dropdown */}
-          {showNotifs && (
-            <div className="notifications-panel glass-panel show" id="notifications-dropdown">
-              <div className="notif-header">
-                <h4>🔔 Notifications</h4>
-                <span className="mark-read-btn" onClick={markAllRead}>Mark all read</span>
-              </div>
-              <div className="notif-list">
-                {notifications.map(n => (
-                  <div key={n.id} className={`notif-item ${!n.read ? 'unread' : ''}`}>
-                    <div className="notif-icon-circle">✨</div>
-                    <div className="notif-body">
-                      <p className="notif-text">{n.text}</p>
-                      <span className="notif-time">Just now</span>
+            {/* Floating Notifications Dropdown */}
+            {showNotifs && (
+              <div className="notifications-panel glass-panel show" id="notifications-dropdown">
+                <div className="notif-header">
+                  <h4>🔔 Notifications</h4>
+                  <span className="mark-read-btn" onClick={markAllRead}>Mark all read</span>
+                </div>
+                <div className="notif-list">
+                  {notifications.map(n => (
+                    <div key={n.id} className={`notif-item ${!n.read ? 'unread' : ''}`}>
+                      <div className="notif-icon-circle">✨</div>
+                      <div className="notif-body">
+                        <p className="notif-text">{n.text}</p>
+                        <span className="notif-time">Just now</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
-        <Link className="btn btn-secondary btn-pill-sm desktop-only-btn" to="/login" state={{ mode: 'login' }}>Log in</Link>
-        <Link className="btn btn-primary btn-pill-sm desktop-only-btn" to="/login?mode=signup" state={{ mode: 'signup' }}>Get started</Link>
+        {isAuthenticated ? (
+          <Link className="btn btn-secondary btn-pill-sm desktop-only-btn" to="/profile">
+            👤 My Profile
+          </Link>
+        ) : (
+          <Link className="btn btn-primary btn-pill-sm desktop-only-btn" to="/login?mode=signup">
+            Get started
+          </Link>
+        )}
 
         {/* Mobile Hamburger Toggle Button */}
         <button 
@@ -140,14 +152,15 @@ export default function Navbar() {
             </li>
             <li className="mobile-drawer-divider"></li>
             <li>
-              <Link className="btn btn-secondary btn-full-mobile" to="/login" state={{ mode: 'login' }} onClick={closeMobileMenu}>
-                Log in
-              </Link>
-            </li>
-            <li>
-              <Link className="btn btn-primary btn-full-mobile" to="/login?mode=signup" state={{ mode: 'signup' }} onClick={closeMobileMenu}>
-                Get started
-              </Link>
+              {isAuthenticated ? (
+                <Link className="btn btn-primary btn-full-mobile" to="/profile" onClick={closeMobileMenu}>
+                  👤 My Profile
+                </Link>
+              ) : (
+                <Link className="btn btn-primary btn-full-mobile" to="/login?mode=signup" onClick={closeMobileMenu}>
+                  Get started
+                </Link>
+              )}
             </li>
           </ul>
         </div>

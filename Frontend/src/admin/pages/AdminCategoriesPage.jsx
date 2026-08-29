@@ -1,18 +1,44 @@
 // src/admin/pages/AdminCategoriesPage.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminNavbar from '../components/AdminNavbar';
 import AdminSidebar from '../components/AdminSidebar';
 import AdminCategoriesTable from '../components/AdminCategoriesTable';
 import '../admin.css';
 
+const API_BASE_URL = 'http://localhost:5000/api';
+
 export default function AdminCategoriesPage() {
   const [activeTab, setActiveTab] = useState('categories');
-
-  const categories = [
+  const [categories, setCategories] = useState([
     { id: '1', name: 'Code and Data', count: 120, status: 'Active' },
     { id: '2', name: 'Design and UI', count: 80, status: 'Active' },
     { id: '3', name: 'Languages', count: 90, status: 'Active' }
-  ];
+  ]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const token = localStorage.getItem('accessToken');
+      try {
+        const response = await fetch(`${API_BASE_URL}/admin/categories`, {
+          headers: {
+            'Authorization': `Bearer ${token || ''}`,
+            'x-admin-token': 'admin2026'
+          }
+        });
+        const data = await response.json();
+        if (data.success && data.data?.categories?.length) {
+          setCategories(data.data.categories);
+        }
+      } catch (err) {
+        console.error('Failed to load admin categories:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   return (
     <>

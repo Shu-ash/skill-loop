@@ -100,6 +100,18 @@ const userSchema = new mongoose.Schema(
       min: 0
     },
 
+    role: {
+      type: String,
+      enum: ["user", "admin", "superadmin"],
+      default: "user"
+    },
+
+    status: {
+      type: String,
+      enum: ["active", "banned", "flagged"],
+      default: "active"
+    },
+
     rating: {
       type: Number,
       default: 0,

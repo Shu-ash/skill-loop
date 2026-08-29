@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { getAuthStatus } from '../utils/auth';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
 export default function MemberCard({ member }) {
+  const navigate = useNavigate();
   const {
     id,
     name,
@@ -17,13 +19,21 @@ export default function MemberCard({ member }) {
   const [selectedSkill, setSelectedSkill] = useState(skills[0] || '');
   const [message, setMessage] = useState('');
   const [showRequestForm, setShowRequestForm] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
 
+  const { isAuthenticated } = getAuthStatus();
+
   const handleOpenRequest = () => {
     setSuccess('');
     setError('');
+
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
 
     if (skills.length === 0) {
       setError('This member has no teaching skills available.');
@@ -37,8 +47,8 @@ export default function MemberCard({ member }) {
   const handleSendRequest = async () => {
     const accessToken = localStorage.getItem('accessToken');
 
-    if (!accessToken) {
-      setError('Please login before sending a swap request.');
+    if (!isAuthenticated || !accessToken) {
+      setShowAuthModal(true);
       return;
     }
 
@@ -123,7 +133,7 @@ export default function MemberCard({ member }) {
         </div>
       </div>
 
-      {!showRequestForm && (
+      {!showRequestForm && !showAuthModal && (
         <div className="member-card-actions">
           <button
             type="button"
@@ -134,16 +144,50 @@ export default function MemberCard({ member }) {
             🔄 Request Skill Swap
           </button>
 
-          <Link
+          <button
+            type="button"
             className="btn btn-secondary btn-pill-sm btn-full"
-            to={`/requests?user=${id}`}
+            onClick={() => {
+              if (isAuthenticated) {
+                navigate(`/requests?user=${id}`);
+              } else {
+                setShowAuthModal(true);
+              }
+            }}
           >
             View requests
-          </Link>
+          </button>
         </div>
       )}
 
-      {showRequestForm && (
+      {/* Guest Auth Prompt Modal */}
+      {showAuthModal && (
+        <div className="glass-panel request-inline-form">
+          <h4>🔒 Login Required</h4>
+          <p className="text-subtle margin-bottom-xs">
+            Log in or create a free account to request a skill swap with <strong>{name}</strong>!
+          </p>
+          <div className="request-modal-btns">
+            <button
+              type="button"
+              className="btn btn-primary btn-full"
+              onClick={() => navigate('/login')}
+            >
+              Log In →
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary btn-full"
+              onClick={() => setShowAuthModal(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Authenticated Request Form */}
+      {showRequestForm && !showAuthModal && (
         <div className="glass-panel request-inline-form">
           <h4>Request Skill Swap</h4>
 
@@ -151,6 +195,7 @@ export default function MemberCard({ member }) {
             <label htmlFor={`skill-${id}`}>Skill you want</label>
             <select
               id={`skill-${id}`}
+              className="form-select-styled"
               value={selectedSkill}
               onChange={(event) => setSelectedSkill(event.target.value)}
               disabled={loading}
@@ -167,6 +212,7 @@ export default function MemberCard({ member }) {
             <label htmlFor={`message-${id}`}>Message</label>
             <textarea
               id={`message-${id}`}
+              className="form-textarea-styled"
               value={message}
               onChange={(event) => setMessage(event.target.value)}
               placeholder="Tell them what you would like to learn..."
@@ -183,7 +229,7 @@ export default function MemberCard({ member }) {
           )}
 
           {success && (
-            <div className="glass-panel request-success-banner">
+            <div className="request-success-banner">
               ✓ {success}
             </div>
           )}

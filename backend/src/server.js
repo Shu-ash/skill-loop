@@ -26,6 +26,7 @@ import userRoutes from "./routes/user.routes.js";
 import matchRoutes from "./routes/match.routes.js";
 
 import swapRequestRoutes from "./routes/swapRequest.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
 
 
 const app = express();
@@ -133,6 +134,13 @@ app.use(
 app.use(
   "/api/users",
   userRoutes
+);
+
+// ADMIN ROUTES
+
+app.use(
+  "/api/admin",
+  adminRoutes
 );
 
 

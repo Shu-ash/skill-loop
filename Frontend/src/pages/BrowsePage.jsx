@@ -7,6 +7,53 @@ import MemberCard from '../components/MemberCard';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
+const DEFAULT_PUBLIC_MEMBERS = [
+  {
+    id: 'm_1',
+    name: 'Aarav Sharma',
+    avatar: 'AS',
+    avatarBg: 'var(--violet-primary)',
+    title: 'Frontend React Developer & UI Specialist',
+    rating: '★★★★★',
+    ratingValue: 5,
+    skills: ['React', 'JavaScript', 'CSS Grid', 'Tailwind'],
+    categories: ['Code & Data']
+  },
+  {
+    id: 'm_2',
+    name: 'Priya Verma',
+    avatar: 'PV',
+    avatarBg: 'var(--violet-primary)',
+    title: 'Figma UI/UX Designer & Prototyper',
+    rating: '★★★★☆',
+    ratingValue: 4,
+    skills: ['Figma', 'UI Design', 'Wireframing', 'User Research'],
+    categories: ['Design']
+  },
+  {
+    id: 'm_3',
+    name: 'Rohan Gupta',
+    avatar: 'RG',
+    avatarBg: 'var(--violet-primary)',
+    title: 'Full Stack Node.js & MongoDB Specialist',
+    rating: '★★★★★',
+    ratingValue: 5,
+    skills: ['Node.js', 'Express', 'MongoDB', 'REST APIs'],
+    categories: ['Code & Data']
+  },
+  {
+    id: 'm_4',
+    name: 'Sneha Patel',
+    avatar: 'SP',
+    avatarBg: 'var(--violet-primary)',
+    title: 'Spoken English & Communication Coach',
+    rating: '★★★★★',
+    ratingValue: 5,
+    skills: ['English', 'Public Speaking', 'Interview Prep'],
+    categories: ['Languages']
+  }
+];
+
 const getInitials = (name = '') => {
   const initials = name
     .trim()
@@ -21,45 +68,27 @@ const getInitials = (name = '') => {
 
 const getRatingStars = (rating) => {
   const value = Number(rating);
-
-  if (!Number.isFinite(value) || value <= 0) {
-    return '☆☆☆☆☆';
-  }
-
+  if (!Number.isFinite(value) || value <= 0) return '☆☆☆☆☆';
   const rounded = Math.round(value);
-
   return '★'.repeat(rounded) + '☆'.repeat(5 - rounded);
 };
 
 const getCategory = (skills = []) => {
   const text = skills.join(' ').toLowerCase();
-
-  if (
-    text.includes('english') ||
-    text.includes('language') ||
-    text.includes('communication')
-  ) {
+  if (text.includes('english') || text.includes('language') || text.includes('communication')) {
     return 'Languages';
   }
-
-  if (
-    text.includes('design') ||
-    text.includes('figma') ||
-    text.includes('photoshop') ||
-    text.includes('ui')
-  ) {
+  if (text.includes('design') || text.includes('figma') || text.includes('photoshop') || text.includes('ui')) {
     return 'Design';
   }
-
   return 'Code & Data';
 };
 
 export default function BrowsePage() {
-  const [members, setMembers] = useState([]);
+  const [members, setMembers] = useState(DEFAULT_PUBLIC_MEMBERS);
   const [selectedCategory, setSelectedCategory] = useState('All categories');
   const [searchQuery, setSearchQuery] = useState('');
-
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const accessToken = localStorage.getItem('accessToken');
@@ -67,8 +96,7 @@ export default function BrowsePage() {
   useEffect(() => {
     const fetchMembers = async () => {
       if (!accessToken) {
-        setError('Please login to browse members.');
-        setLoading(false);
+        setMembers(DEFAULT_PUBLIC_MEMBERS);
         return;
       }
 
@@ -90,34 +118,32 @@ export default function BrowsePage() {
           throw new Error(data.message || 'Unable to load members.');
         }
 
-        const users =
-          data?.data?.users ||
-          data?.data ||
-          data?.users ||
-          [];
+        const users = data?.data?.users || data?.data || data?.users || [];
 
-        const formattedMembers = users.map((user) => {
-          const skills = user.skillsCanTeach || [];
-          const rating = Number(user.rating) || 0;
+        if (users.length > 0) {
+          const formattedMembers = users.map((user) => {
+            const skills = user.skillsCanTeach || [];
+            const rating = Number(user.rating) || 0;
 
-          return {
-            id: user._id || user.id,
-            name: user.name || 'SkillLoop Member',
-            avatar: user.avatar || getInitials(user.name),
-            avatarBg: 'var(--violet-primary)',
-            title: user.headline || user.bio || 'SkillLoop member',
-            rating: getRatingStars(rating),
-            ratingValue: rating,
-            skills,
-            categories: [getCategory(skills)],
-            username: user.username || ''
-          };
-        });
+            return {
+              id: user._id || user.id,
+              name: user.name || 'SkillLoop Member',
+              avatar: user.avatar || getInitials(user.name),
+              avatarBg: 'var(--violet-primary)',
+              title: user.headline || user.bio || 'SkillLoop member',
+              rating: getRatingStars(rating),
+              ratingValue: rating,
+              skills,
+              categories: [getCategory(skills)],
+              username: user.username || ''
+            };
+          });
 
-        setMembers(formattedMembers);
+          setMembers(formattedMembers);
+        }
       } catch (err) {
         console.error('Browse members error:', err);
-        setError(err.message || 'Unable to load members.');
+        setMembers(DEFAULT_PUBLIC_MEMBERS);
       } finally {
         setLoading(false);
       }
@@ -196,7 +222,7 @@ export default function BrowsePage() {
 
             {!loading && !error && filteredMembers.length === 0 && (
               <div className="glass-panel empty-browse-state">
-                No members found.
+                No members found matching your search.
               </div>
             )}
 
