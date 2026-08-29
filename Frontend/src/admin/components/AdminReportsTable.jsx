@@ -1,16 +1,19 @@
 // src/admin/components/AdminReportsTable.jsx
 import React from 'react';
 
-export default function AdminReportsTable({ reports, title = "Pending Reports" }) {
-  const defaultReports = [];
-  const list = reports || defaultReports;
+export default function AdminReportsTable({ reports, title = "Moderation Queue Reports", onResolveReport }) {
+  const defaultReports = [
+    { id: 'rep_1', displayId: '#REP-000001', reporterName: 'Aarav Sharma', reportedName: 'Spam Account', reason: 'Inappropriate message', status: 'Pending' }
+  ];
+
+  const list = reports?.length ? reports : defaultReports;
 
   return (
     <div className="admin-table-card">
       <h3 className="table-header-title">{title}</h3>
       {list.length === 0 ? (
-        <p className="empty-reports-msg">
-          ✓ No active reports found in moderation queue.
+        <p className="empty-reports-msg" style={{ padding: '1rem', color: 'var(--slate-500)' }}>
+          ✓ No active reports found in moderation queue. System is healthy!
         </p>
       ) : (
         <table className="admin-data-table">
@@ -18,27 +21,57 @@ export default function AdminReportsTable({ reports, title = "Pending Reports" }
             <tr>
               <th>Report ID</th>
               <th>Reported By</th>
-              <th>Target</th>
+              <th>Reported User</th>
               <th>Reason</th>
               <th>Status</th>
-              <th>Action</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {list.map((r) => (
-              <tr key={r.id}>
-                <td>{r.id}</td>
-                <td>{r.reportedBy}</td>
-                <td>{r.target}</td>
-                <td>{r.reason}</td>
-                <td>
-                  <span className={`pill ${r.status === 'Resolved' ? 'pill-earned' : 'pill-spent'}`}>{r.status}</span>
-                </td>
-                <td>
-                  <button type="button" className="action-btn">Resolve</button>
-                </td>
-              </tr>
-            ))}
+            {list.map((r) => {
+              const formattedId = r.displayId || `#REP-${(r.id || '').toString().slice(-6).toUpperCase()}`;
+              return (
+                <tr key={r.id}>
+                  <td>
+                    <span className="user-id-badge" title={`Full Report ID: ${r.id}`}>
+                      {formattedId}
+                    </span>
+                  </td>
+                  <td>{r.reporterName || 'User'}</td>
+                  <td><strong>{r.reportedName || 'Member'}</strong></td>
+                  <td>{r.reason}</td>
+                  <td>
+                    <span className={`pill ${r.status === 'Resolved' ? 'pill-earned' : 'pill-spent'}`}>
+                      {r.status || 'Pending'}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="table-actions-row">
+                      {onResolveReport && r.status !== 'Resolved' ? (
+                        <>
+                          <button 
+                            type="button" 
+                            className="action-btn"
+                            onClick={() => onResolveReport(r.id, 'resolved')}
+                          >
+                            ✓ Resolve
+                          </button>
+                          <button 
+                            type="button" 
+                            className="action-btn btn-danger-sm"
+                            onClick={() => onResolveReport(r.id, 'dismissed')}
+                          >
+                            Dismiss
+                          </button>
+                        </>
+                      ) : (
+                        <span className="text-subtle">Closed</span>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}

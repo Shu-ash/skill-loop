@@ -544,6 +544,37 @@
   box-shadow: 0 8px 20px rgba(239, 68, 68, 0.5);
 }
 
+.user-id-badge {
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.8rem;
+  background: rgba(108, 92, 231, 0.1);
+  color: var(--violet-primary, #6c5ce7);
+  padding: 0.2rem 0.55rem;
+  border-radius: 8px;
+  border: 1px solid rgba(108, 92, 231, 0.2);
+  display: inline-block;
+  letter-spacing: 0.5px;
+  cursor: help;
+}
+
+.table-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.btn-danger-sm {
+  background: rgba(239, 68, 68, 0.1) !important;
+  color: #ef4444 !important;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+}
+
+.btn-danger-sm:hover {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+}
+
 .modal-body-padded {
   margin-top: 0.8rem;
 }

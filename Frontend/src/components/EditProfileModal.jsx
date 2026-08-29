@@ -1,16 +1,13 @@
 // src/components/EditProfileModal.jsx
 import React, { useState } from 'react';
 
-// EditProfileModal: Glassmorphic popup modal to update display name, username, headline, and bio
+// EditProfileModal: Clean glassmorphic modal to update display name, handle, headline, and bio ONLY
 export default function EditProfileModal({ user, onClose, onSave }) {
   const [formData, setFormData] = useState({
     name: user.name || '',
     username: user.username || '',
     headline: user.headline || '',
-    bio: user.bio || '',
-    skillsCanTeach: user.skillsCanTeach || [],
-    skillsWantToLearn: user.skillsWantToLearn || [],
-    skillLevel: user.skillLevel || 'beginner'
+    bio: user.bio || ''
   });
 
   const handleChange = (e) => {
@@ -34,11 +31,12 @@ export default function EditProfileModal({ user, onClose, onSave }) {
           <div className="form-group">
             <label>Display Name *</label>
             <input
+              className="form-input"
               type="text"
               name="name"
               value={formData.name}
               onChange={handleChange}
-              placeholder="e.g. Harsh Vishwakarma"
+              placeholder="e.g. Rohan Gupta"
               required
             />
           </div>
@@ -46,11 +44,12 @@ export default function EditProfileModal({ user, onClose, onSave }) {
           <div className="form-group">
             <label>Username / Handle *</label>
             <input
+              className="form-input"
               type="text"
               name="username"
               value={formData.username}
               onChange={handleChange}
-              placeholder="e.g. @harsh_dev"
+              placeholder="e.g. @rohan_dev"
               required
             />
           </div>
@@ -58,83 +57,33 @@ export default function EditProfileModal({ user, onClose, onSave }) {
           <div className="form-group">
             <label>Short Headline</label>
             <input
+              className="form-input"
               type="text"
               name="headline"
               value={formData.headline}
               onChange={handleChange}
-              placeholder="e.g. Frontend developer & UI enthusiast"
+              placeholder="e.g. Full Stack React Developer & UI Enthusiast"
             />
           </div>
 
           <div className="form-group">
             <label>About Bio</label>
             <textarea
+              className="form-textarea-styled"
               name="bio"
               rows="3"
               value={formData.bio}
               onChange={handleChange}
-              placeholder="Share a short summary about your background and interests..."
+              placeholder="Tell the community about yourself and your learning goals..."
             />
           </div>
 
-          <div className="form-group">
-            <label>Skills I can teach</label>
-            <input
-              type="text"
-              name="skillsCanTeach"
-              value={formData.skillsCanTeach.join(', ')}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  skillsCanTeach: e.target.value
-                    .split(',')
-                    .map((skill) => skill.trim())
-                    .filter(Boolean)
-                })
-              }
-              placeholder="e.g. JavaScript, React, Node.js"
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Skills I want to learn</label>
-            <input
-              type="text"
-              name="skillsWantToLearn"
-              value={formData.skillsWantToLearn.join(', ')}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  skillsWantToLearn: e.target.value
-                    .split(',')
-                    .map((skill) => skill.trim())
-                    .filter(Boolean)
-                })
-              }
-              placeholder="e.g. Python, MongoDB, AWS"
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Skill Level</label>
-            <select
-              name="skillLevel"
-              value={formData.skillLevel}
-              onChange={handleChange}
-              className="form-input"
-            >
-              <option value="beginner">Beginner</option>
-              <option value="intermediate">Intermediate</option>
-              <option value="advanced">Advanced</option>
-            </select>
-          </div>
-
-          <div className="modal-actions">
+          <div className="modal-action-buttons" style={{ marginTop: '1.25rem' }}>
             <button type="button" className="btn btn-secondary" onClick={onClose}>
               Cancel
             </button>
             <button type="submit" className="btn btn-primary">
-              Save Profile
+              Save Profile Changes
             </button>
           </div>
         </form>

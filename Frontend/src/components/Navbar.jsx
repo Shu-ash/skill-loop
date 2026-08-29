@@ -15,7 +15,7 @@ export default function Navbar() {
     { id: 2, text: "Debosmita accepted your skill swap!", read: false }
   ]);
 
-  const { isAuthenticated } = getAuthStatus();
+  const { isAuthenticated, userType } = getAuthStatus();
 
   const toggleNotifications = () => {
     setShowNotifs(!showNotifs);
@@ -96,7 +96,11 @@ export default function Navbar() {
           </div>
         )}
 
-        {isAuthenticated ? (
+        {userType === 'admin' ? (
+          <Link className="btn btn-secondary btn-pill-sm desktop-only-btn" to="/admin">
+            🛡️ Admin Panel
+          </Link>
+        ) : userType === 'user' ? (
           <Link className="btn btn-secondary btn-pill-sm desktop-only-btn" to="/profile">
             👤 My Profile
           </Link>
@@ -152,7 +156,11 @@ export default function Navbar() {
             </li>
             <li className="mobile-drawer-divider"></li>
             <li>
-              {isAuthenticated ? (
+              {userType === 'admin' ? (
+                <Link className="btn btn-primary btn-full-mobile" to="/admin" onClick={closeMobileMenu}>
+                  🛡️ Admin Panel
+                </Link>
+              ) : userType === 'user' ? (
                 <Link className="btn btn-primary btn-full-mobile" to="/profile" onClick={closeMobileMenu}>
                   👤 My Profile
                 </Link>

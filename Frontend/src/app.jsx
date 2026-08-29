@@ -34,22 +34,22 @@ function App() {
         <Route path="/how-it-works" element={<HowItWorksPage />} />
         <Route path="/howitworks" element={<HowItWorksPage />} />
 
-        {/* Protected Private Routes */}
-        <Route path="/onboarding" element={<RequireAuth pageTitle="Profile Onboarding"><OnboardingPage /></RequireAuth>} />
-        <Route path="/dashboard" element={<RequireAuth pageTitle="your Dashboard"><DashboardPage /></RequireAuth>} />
-        <Route path="/profile" element={<RequireAuth pageTitle="your Profile"><ProfilePage /></RequireAuth>} />
-        <Route path="/requests" element={<RequireAuth pageTitle="Requests Inbox"><RequestsPage /></RequireAuth>} />
-        <Route path="/sessions" element={<RequireAuth pageTitle="Sessions"><SessionsPage /></RequireAuth>} />
-        <Route path="/schedule" element={<RequireAuth pageTitle="Sessions"><SessionsPage /></RequireAuth>} />
-        <Route path="/credits" element={<RequireAuth pageTitle="Credits Balance"><CreditsPage /></RequireAuth>} />
+        {/* Protected Private User Routes */}
+        <Route path="/onboarding" element={<RequireAuth pageTitle="Profile Onboarding" roleRequired="user"><OnboardingPage /></RequireAuth>} />
+        <Route path="/dashboard" element={<RequireAuth pageTitle="your Dashboard" roleRequired="user"><DashboardPage /></RequireAuth>} />
+        <Route path="/profile" element={<RequireAuth pageTitle="your Profile" roleRequired="user"><ProfilePage /></RequireAuth>} />
+        <Route path="/requests" element={<RequireAuth pageTitle="Requests Inbox" roleRequired="user"><RequestsPage /></RequireAuth>} />
+        <Route path="/sessions" element={<RequireAuth pageTitle="Sessions" roleRequired="user"><SessionsPage /></RequireAuth>} />
+        <Route path="/schedule" element={<RequireAuth pageTitle="Sessions" roleRequired="user"><SessionsPage /></RequireAuth>} />
+        <Route path="/credits" element={<RequireAuth pageTitle="Credits Balance" roleRequired="user"><CreditsPage /></RequireAuth>} />
 
         {/* Admin Restricted Routes */}
-        <Route path="/admin" element={<RequireAuth pageTitle="Admin Control Panel"><AdminDashboardPage /></RequireAuth>} />
-        <Route path="/admin/users" element={<RequireAuth pageTitle="Admin Users"><AdminUsersPage /></RequireAuth>} />
-        <Route path="/admin/categories" element={<RequireAuth pageTitle="Admin Categories"><AdminCategoriesPage /></RequireAuth>} />
-        <Route path="/admin/sessions" element={<RequireAuth pageTitle="Admin Sessions"><AdminSessionsPage /></RequireAuth>} />
-        <Route path="/admin/credits" element={<RequireAuth pageTitle="Admin Credits"><AdminCreditsPage /></RequireAuth>} />
-        <Route path="/admin/reports" element={<RequireAuth pageTitle="Admin Reports"><AdminReportsPage /></RequireAuth>} />
+        <Route path="/admin" element={<RequireAuth pageTitle="Admin Control Panel" roleRequired="admin"><AdminDashboardPage /></RequireAuth>} />
+        <Route path="/admin/users" element={<RequireAuth pageTitle="Admin Users" roleRequired="admin"><AdminUsersPage /></RequireAuth>} />
+        <Route path="/admin/categories" element={<RequireAuth pageTitle="Admin Categories" roleRequired="admin"><AdminCategoriesPage /></RequireAuth>} />
+        <Route path="/admin/sessions" element={<RequireAuth pageTitle="Admin Sessions" roleRequired="admin"><AdminSessionsPage /></RequireAuth>} />
+        <Route path="/admin/credits" element={<RequireAuth pageTitle="Admin Credits" roleRequired="admin"><AdminCreditsPage /></RequireAuth>} />
+        <Route path="/admin/reports" element={<RequireAuth pageTitle="Admin Reports" roleRequired="admin"><AdminReportsPage /></RequireAuth>} />
       </Routes>
     </div>
   );

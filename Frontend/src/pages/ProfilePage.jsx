@@ -13,15 +13,15 @@ import EditProfileModal from '../components/EditProfileModal';
 export default function ProfilePage() {
   const navigate = useNavigate();
   const [user, setUser] = useState({
-    name: 'Harsh',
-    username: '@harsh_dev',
-    headline: 'Frontend developer & UI enthusiast who plays too much guitar 🎸',
-    bio: "I've been building React & web apps for 3 years. Happy to trade knowledge with anyone who can help me learn Photoshop or UI animation!",
-    rating: '4.9',
+    name: 'Member User',
+    username: '@user',
+    headline: 'SkillLoop Community Member 🚀',
+    bio: 'Tell the community about yourself and your skills!',
+    rating: '5.0',
     credits: 3,
-    teachSkills: ['HTML', 'CSS', 'JavaScript', 'React'],
-    learnSkills: ['Photoshop', 'Figma', 'UI Animation'],
-    onboardingCompleted: true
+    teachSkills: [],
+    learnSkills: [],
+    onboardingCompleted: false
   });
 
   const [availability, setAvailability] = useState({
@@ -33,27 +33,34 @@ export default function ProfilePage() {
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   useEffect(() => {
-    // Read local user profile if available
-    const stored = localStorage.getItem('skillloop_user');
-    if (stored) {
+    // If Admin session is active, redirect to /admin
+    const adminSession = localStorage.getItem('skillloop_admin');
+    const userSession = localStorage.getItem('skillloop_user');
+
+    if (adminSession && !userSession) {
+      navigate('/admin', { replace: true });
+      return;
+    }
+
+    if (userSession) {
       try {
-        const parsed = JSON.parse(stored);
-        setUser((prev) => ({
-          ...prev,
-          name: parsed.name || prev.name,
-          username: parsed.username || prev.username,
-          headline: parsed.headline || prev.headline,
-          bio: parsed.bio || prev.bio,
-          teachSkills: parsed.teachSkills?.length ? parsed.teachSkills : prev.teachSkills,
-          learnSkills: parsed.learnSkills?.length ? parsed.learnSkills : prev.learnSkills,
-          credits: parsed.credits || prev.credits,
-          onboardingCompleted: parsed.onboardingCompleted ?? prev.onboardingCompleted
-        }));
+        const parsed = JSON.parse(userSession);
+        setUser({
+          name: parsed.name || 'Member User',
+          username: parsed.username || `@${(parsed.email || 'user').split('@')[0]}`,
+          headline: parsed.headline || 'SkillLoop Community Member 🚀',
+          bio: parsed.bio || 'Tell the community about yourself and your skills!',
+          rating: parsed.rating || '5.0',
+          credits: parsed.credits ?? 3,
+          teachSkills: Array.isArray(parsed.teachSkills) ? parsed.teachSkills : [],
+          learnSkills: Array.isArray(parsed.learnSkills) ? parsed.learnSkills : [],
+          onboardingCompleted: parsed.onboardingCompleted ?? false
+        });
       } catch (e) {
         console.error('Error parsing profile:', e);
       }
     }
-  }, []);
+  }, [navigate]);
 
   const toggleAvailability = (key) => {
     const updatedAvail = { ...availability, [key]: !availability[key] };
@@ -161,7 +168,7 @@ export default function ProfilePage() {
         <Navbar />
 
         <div className="app-layout">
-          <Sidebar user={{ name: user.name, credits: user.credits, avatar: user.name.slice(0, 2).toUpperCase() }} />
+          <Sidebar user={{ name: user.name, credits: user.credits, avatar: (user.name || 'US').slice(0, 2).toUpperCase() }} />
 
           <main className="main-content">
             <div className="page-title-row">
@@ -198,7 +205,7 @@ export default function ProfilePage() {
                 setBio={handleUpdateBio}
                 availability={availability}
                 toggleAvailability={toggleAvailability}
-                profileStrength={85}
+                profileStrength={user.teachSkills.length > 0 ? 90 : 30}
               />
 
               {/* Component 3: Skills Editor */}

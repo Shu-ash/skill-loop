@@ -1,13 +1,9 @@
 // src/utils/auth.js
 
 export const getAuthStatus = () => {
-  const token = localStorage.getItem('accessToken');
-  const userStr = localStorage.getItem('skillloop_user');
   const adminStr = localStorage.getItem('skillloop_admin');
-
-  if (token) {
-    return { isAuthenticated: true, userType: 'user', token };
-  }
+  const userStr = localStorage.getItem('skillloop_user');
+  const token = localStorage.getItem('accessToken');
 
   if (adminStr) {
     try {
@@ -20,10 +16,14 @@ export const getAuthStatus = () => {
     }
   }
 
+  if (token) {
+    return { isAuthenticated: true, userType: 'user', token };
+  }
+
   if (userStr) {
     try {
       const user = JSON.parse(userStr);
-      if (user && !user.guest && (user.email || user._id || user.id) && user.name !== 'User Account') {
+      if (user && !user.guest && (user.email || user.name) && user.name !== 'User Account') {
         return { isAuthenticated: true, userType: 'user', user };
       }
     } catch (e) {
