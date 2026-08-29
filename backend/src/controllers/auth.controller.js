@@ -227,9 +227,7 @@ export const me = async (
     const user =
         await User.findById(
             req.user._id
-        )
-            .populate("skillsToTeach")
-            .populate("skillsToLearn");
+        );
 
     return res.status(200).json({
         success: true,

@@ -89,6 +89,10 @@ const userSchema = new mongoose.Schema(
       ],
       default: "beginner"
     },
+    onboardingCompleted: {
+  type: Boolean,
+  default: false
+},
 
     credits: {
       type: Number,
