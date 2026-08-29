@@ -1,49 +1,141 @@
-// src/components/RequestCard.jsx
 import React from 'react';
 
-// RequestCard: Individual swap request item card with status badge and inline actions
-export default function RequestCard({ request, onAccept, onDecline, onSchedule }) {
-  const { id, user, skillWant, message, timeAgo, status } = request;
+export default function RequestCard({
+  request,
+  direction,
+  onAccept,
+  onDecline,
+  onSchedule,
+  actionLoading = false
+}) {
+  const {
+    id,
+    user,
+    skillWant,
+    message,
+    timeAgo,
+    status
+  } = request;
+
+  const isReceived = direction === 'received';
+  const isSent = direction === 'sent';
 
   return (
     <div className="glass-panel request-card">
-      <div className="request-user-avatar" style={{ background: user.avatarBg || 'var(--violet-primary)' }}>
-        {user.avatar}
+
+      {/* Avatar */}
+      <div
+        className="request-user-avatar"
+        style={{
+          background:
+            user?.avatarBg ||
+            'var(--violet-primary)'
+        }}
+      >
+        {user?.avatar || 'SL'}
       </div>
 
+      {/* Request details */}
       <div className="request-details">
+
         <div className="request-title-line">
-          <h4>{user.name} <span>wants to learn</span> <strong>{skillWant}</strong></h4>
-          <span className="request-time">{timeAgo}</span>
+
+          <h4>
+            {user?.name || 'Skill Loop User'}
+
+            <span>
+              {' '}
+              {isReceived
+                ? 'wants to learn'
+                : 'wants you to learn'}
+              {' '}
+            </span>
+
+            <strong>
+              {skillWant || 'Unknown skill'}
+            </strong>
+          </h4>
+
+          <span className="request-time">
+            {timeAgo}
+          </span>
+
         </div>
-        <p className="request-message">"{message}"</p>
+
+        <p className="request-message">
+          "{message || ''}"
+        </p>
+
       </div>
 
+      {/* Actions */}
       <div className="request-actions">
-        {status === 'pending' && (
+
+        {/* RECEIVED REQUEST */}
+        {isReceived && status === 'pending' && (
           <>
-            <span className="pill-badge pill-gold">● PENDING</span>
-            <button type="button" className="btn btn-secondary btn-pill-sm" onClick={() => onDecline(id)}>
-              Decline
+            <span className="pill-badge pill-gold">
+              ● PENDING
+            </span>
+
+            <button
+              type="button"
+              className="btn btn-secondary btn-pill-sm"
+              onClick={() => onDecline(id)}
+              disabled={actionLoading}
+            >
+              {actionLoading
+                ? 'Please wait...'
+                : 'Decline'}
             </button>
-            <button type="button" className="btn btn-primary btn-pill-sm" onClick={() => onAccept(id)}>
-              Accept
+
+            <button
+              type="button"
+              className="btn btn-primary btn-pill-sm"
+              onClick={() => onAccept(id)}
+              disabled={actionLoading}
+            >
+              {actionLoading
+                ? 'Accepting...'
+                : 'Accept'}
             </button>
           </>
         )}
 
+        {/* SENT REQUEST */}
+        {isSent && status === 'pending' && (
+          <span className="pill-badge pill-gold">
+            ● PENDING
+          </span>
+        )}
+
+        {/* ACCEPTED */}
         {status === 'accepted' && (
           <>
-            <span className="pill-badge pill-mint">● ACCEPTED</span>
-            <button type="button" className="btn btn-primary btn-pill-sm" onClick={() => onSchedule(id)}>
-              Schedule session →
-            </button>
+            <span className="pill-badge pill-mint">
+              ● ACCEPTED
+            </span>
+
+            {isReceived && (
+              <button
+                type="button"
+                className="btn btn-primary btn-pill-sm"
+                onClick={() => onSchedule(request)}
+                disabled={actionLoading}
+              >
+                Schedule session →
+              </button>
+            )}
           </>
         )}
 
+        {/* DECLINED */}
         {status === 'declined' && (
-          <span className="pill-badge pill-coral">● DECLINED</span>
+          <span className="pill-badge pill-coral">
+            ● DECLINED
+          </span>
         )}
+
       </div>
     </div>
   );

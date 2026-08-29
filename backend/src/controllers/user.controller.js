@@ -339,3 +339,145 @@ export const updateMyProfile = async (
         next(error);
     }
 };
+
+
+/**
+ * GET /api/users
+ * Browse users
+ */
+/**
+ * GET /api/users
+ * Browse other users
+ */
+export const getUsers = async (
+    req,
+    res,
+    next
+) => {
+    try {
+        const {
+            skill,
+            search,
+            page = 1,
+            limit = 20
+        } = req.query;
+
+        const pageNumber = Math.max(
+            Number.parseInt(page, 10) || 1,
+            1
+        );
+
+        const limitNumber = Math.min(
+            Math.max(
+                Number.parseInt(limit, 10) || 20,
+                1
+            ),
+            50
+        );
+
+        // Never show the logged-in user
+        // in the Browse page.
+        const filter = {
+            _id: {
+                $ne: req.user._id
+            },
+
+            // A user must have at least
+            // one skill they can teach.
+            "skillsCanTeach.0": {
+                $exists: true
+            }
+        };
+
+        // Filter by teaching skill
+        if (skill?.trim()) {
+            filter.skillsCanTeach = {
+                $regex: skill.trim(),
+                $options: "i"
+            };
+        }
+
+        // Search by name, username,
+        // headline, bio or teaching skill.
+        if (search?.trim()) {
+            const searchRegex = {
+                $regex: search.trim(),
+                $options: "i"
+            };
+
+            filter.$or = [
+                {
+                    name: searchRegex
+                },
+                {
+                    username: searchRegex
+                },
+                {
+                    headline: searchRegex
+                },
+                {
+                    bio: searchRegex
+                },
+                {
+                    skillsCanTeach: searchRegex
+                }
+            ];
+        }
+
+        const skip =
+            (pageNumber - 1) *
+            limitNumber;
+
+        const [users, total] =
+            await Promise.all([
+                User.find(filter)
+                    .select(
+                        [
+                            "firstName",
+                            "lastName",
+                            "name",
+                            "username",
+                            "profilePhotoUrl",
+                            "bio",
+                            "headline",
+                            "skillsCanTeach",
+                            "skillsWantToLearn",
+                            "skillLevel",
+                            "rating",
+                            "ratingCount",
+                            "credits"
+                        ].join(" ")
+                    )
+                    .sort({
+                        createdAt: -1
+                    })
+                    .skip(skip)
+                    .limit(limitNumber)
+                    .lean(),
+
+                User.countDocuments(filter)
+            ]);
+
+        return res.status(200).json({
+            success: true,
+
+            data: {
+                users,
+
+                pagination: {
+                    page: pageNumber,
+                    limit: limitNumber,
+                    total,
+
+                    pages: Math.ceil(
+                        total /
+                        limitNumber
+                    )
+                }
+            }
+        });
+
+    } catch (error) {
+        next(error);
+    }
+};

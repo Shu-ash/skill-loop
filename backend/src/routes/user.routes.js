@@ -1,6 +1,7 @@
 import { Router } from "express";
 
 import {
+    getUsers,
     getMyProfile,
     completeOnboarding,
     updateMyProfile
@@ -9,6 +10,14 @@ import {
 import { protect } from "../middleware/auth.middleware.js";
 
 const router = Router();
+
+
+// Browse users
+router.get(
+    "/",
+    protect,
+    getUsers
+);
 
 
 // Get logged-in user's profile
@@ -33,6 +42,8 @@ router.patch(
     protect,
     updateMyProfile
 );
+
+
 
 
 export default router;

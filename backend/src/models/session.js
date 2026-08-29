@@ -1,0 +1,101 @@
+import mongoose from "mongoose";
+
+const sessionSchema = new mongoose.Schema(
+    {
+        swapRequest: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "SwapRequest",
+            required: true,
+            unique: true
+        },
+
+        teacher: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true
+        },
+
+        learner: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true
+        },
+
+        skill: {
+            type: String,
+            required: true,
+            trim: true
+        },
+
+        message: {
+            type: String,
+            trim: true,
+            default: ""
+        },
+
+        scheduledAt: {
+            type: Date,
+            default: null
+        },
+
+        duration: {
+            type: Number,
+            enum: [30, 45, 60, 90, 120],
+            default: 45,
+            required: true
+        },
+
+        mode: {
+            type: String,
+            enum: ["online", "in_person"],
+            default: "online"
+        },
+
+        meetLink: {
+            type: String,
+            trim: true,
+            default: ""
+        },
+
+        /*
+         * Session lifecycle:
+         *
+         * pending
+         *    ↓
+         * scheduled
+         *    ↓
+         * in_progress
+         *    ↓
+         * completed
+         *
+         * cancelled can happen before completion.
+         */
+        status: {
+            type: String,
+            enum: [
+                "pending",
+                "scheduled",
+                "in_progress",
+                "completed",
+                "cancelled"
+            ],
+            default: "pending",
+            required: true
+        },
+
+        completedAt: {
+            type: Date,
+            default: null
+        }
+    },
+    {
+        timestamps: true
+    }
+);
+
+const Session = mongoose.model(
+    "Session",
+    sessionSchema
+);
+
+export default Session;

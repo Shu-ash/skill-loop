@@ -1,5 +1,3 @@
-// src/pages/RequestsPage.jsx
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -11,54 +9,225 @@ import RequestCard from '../components/RequestCard';
 
 const API_URL = 'http://localhost:5000/api';
 
+const EMPTY_REQUESTS = {
+  received: [],
+  sent: [],
+  accepted: [],
+  history: []
+};
+
 export default function RequestsPage() {
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState('received');
 
-  const [requests, setRequests] = useState({
-    received: [],
-    sent: [],
-    accepted: [],
-    history: []
-  });
+  const [requests, setRequests] =
+    useState(EMPTY_REQUESTS);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] =
+    useState(true);
 
-  // GET RECEIVED + SENT REQUESTS
+  const [actionLoading, setActionLoading] =
+    useState(false);
 
-  const fetchRequests = async () => {
-    const accessToken = localStorage.getItem('accessToken');
+  const [error, setError] =
+    useState('');
 
-    if (!accessToken) {
+  // =========================
+  // GET AUTH TOKEN
+  // =========================
+
+  const getToken = () => {
+    return localStorage.getItem('accessToken');
+  };
+
+  // =========================
+  // FORMAT USER
+  // =========================
+
+  const formatUser = (user) => {
+    if (!user) {
+      return {
+        name: 'Skill Loop User',
+        avatar: 'SL',
+        avatarBg: 'var(--violet-primary)'
+      };
+    }
+
+    const name =
+      user.name ||
+      `${user.firstName || ''} ${user.lastName || ''}`.trim() ||
+      user.username ||
+      'Skill Loop User';
+
+    const avatar =
+      name
+        .split(' ')
+        .filter(Boolean)
+        .map((part) => part[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase() || 'SL';
+
+    return {
+      name,
+      avatar,
+      avatarBg: 'var(--violet-primary)',
+      profilePhotoUrl:
+        user.profilePhotoUrl || ''
+    };
+  };
+
+  // =========================
+  // FORMAT REQUEST
+  // =========================
+
+  const formatRequest = (
+    backendRequest,
+    direction
+  ) => {
+    const isReceived =
+      direction === 'received';
+
+    const partner = isReceived
+      ? backendRequest.sender
+      : backendRequest.receiver;
+
+    return {
+      // IMPORTANT:
+      // This is the REAL MongoDB request ID.
+      id: backendRequest._id,
+
+      requestId:
+        backendRequest._id,
+
+      user: formatUser(partner),
+
+      skillWant:
+        backendRequest.skillWant || '',
+
+      message:
+        backendRequest.message || '',
+
+      status:
+        backendRequest.status || 'pending',
+
+      createdAt:
+        backendRequest.createdAt,
+
+      timeAgo:
+        formatTimeAgo(
+          backendRequest.createdAt
+        )
+    };
+  };
+
+  // =========================
+  // TIME AGO
+  // =========================
+
+  const formatTimeAgo = (date) => {
+    if (!date) {
+      return '';
+    }
+
+    const created =
+      new Date(date).getTime();
+
+    if (Number.isNaN(created)) {
+      return '';
+    }
+
+    const diff =
+      Date.now() - created;
+
+    const minutes =
+      Math.floor(
+        diff / (1000 * 60)
+      );
+
+    if (minutes < 1) {
+      return 'Just now';
+    }
+
+    if (minutes < 60) {
+      return `${minutes}m ago`;
+    }
+
+    const hours =
+      Math.floor(minutes / 60);
+
+    if (hours < 24) {
+      return `${hours}h ago`;
+    }
+
+    const days =
+      Math.floor(hours / 24);
+
+    if (days < 7) {
+      return `${days}d ago`;
+    }
+
+    return new Date(
+      date
+    ).toLocaleDateString(
+      'en-IN',
+      {
+        day: 'numeric',
+        month: 'short'
+      }
+    );
+  };
+
+  // =========================
+  // LOAD REQUESTS
+  // =========================
+
+  const loadRequests = async () => {
+    const token = getToken();
+
+    if (!token) {
       navigate('/login');
       return;
     }
 
     try {
       setLoading(true);
+      setError('');
 
-      const [receivedResponse, sentResponse] =
-        await Promise.all([
-          fetch(`${API_URL}/requests/received`, {
+      const headers = {
+        Authorization:
+          `Bearer ${token}`
+      };
+
+      const [
+        receivedResponse,
+        sentResponse
+      ] = await Promise.all([
+        fetch(
+          `${API_URL}/requests/received`,
+          {
             method: 'GET',
-            headers: {
-              Authorization: `Bearer ${accessToken}`
-            },
+            headers,
             credentials: 'include'
-          }),
+          }
+        ),
 
-          fetch(`${API_URL}/requests/sent`, {
+        fetch(
+          `${API_URL}/requests/sent`,
+          {
             method: 'GET',
-            headers: {
-              Authorization: `Bearer ${accessToken}`
-            },
+            headers,
             credentials: 'include'
-          })
-        ]);
+          }
+        )
+      ]);
 
-      const receivedData = await receivedResponse.json();
-      const sentData = await sentResponse.json();
+      const receivedData =
+        await receivedResponse.json();
+
+      const sentData =
+        await sentResponse.json();
 
       if (!receivedResponse.ok) {
         throw new Error(
@@ -74,156 +243,102 @@ export default function RequestsPage() {
         );
       }
 
-      const receivedRequests =
+      const received =
         receivedData?.data?.requests || [];
 
-      const sentRequests =
+      const sent =
         sentData?.data?.requests || [];
 
-      // FORMAT BACKEND REQUEST
-
-      const formatRequest = (request) => {
-        const user =
-          request.sender ||
-          request.receiver ||
-          {};
-
-        const firstName =
-          user.firstName || '';
-
-        const lastName =
-          user.lastName || '';
-
-        const name =
-          user.name ||
-          `${firstName} ${lastName}`.trim() ||
-          'Skill Loop User';
-
-        return {
-          id: request._id,
-
-          user: {
-            name,
-
-            avatar:
-              name
-                .split(' ')
-                .map((part) => part[0])
-                .join('')
-                .slice(0, 2)
-                .toUpperCase(),
-
-            avatarBg:
-              'var(--violet-primary)'
-          },
-
-          skillWant:
-            request.skillWant || '',
-
-          message:
-            request.message || '',
-
-          timeAgo:
-            request.createdAt
-              ? new Date(
-                request.createdAt
-              ).toLocaleString()
-              : '',
-
-          status:
-            request.status || 'pending'
-        };
-      };
-
-      const formattedReceived =
-        receivedRequests.map(formatRequest);
-
-      const formattedSent =
-        sentRequests.map((request) => {
-          const formatted =
-            formatRequest(request);
-
-          return {
-            ...formatted,
-
-            user: {
-              ...formatted.user
-            }
-          };
-        });
-
-      // Accepted requests
-      const acceptedReceived =
-        formattedReceived.filter(
-          (request) =>
-            request.status === 'accepted'
-        );
-
-      const acceptedSent =
-        formattedSent.filter(
-          (request) =>
-            request.status === 'accepted'
-        );
-
-      const accepted = [
-        ...acceptedReceived,
-        ...acceptedSent
-      ];
-
       setRequests({
-        received: formattedReceived.filter(
-          (request) =>
-            request.status === 'pending'
-        ),
+        received:
+          received.map((request) =>
+            formatRequest(
+              request,
+              'received'
+            )
+          ),
 
-        sent: formattedSent,
+        sent:
+          sent.map((request) =>
+            formatRequest(
+              request,
+              'sent'
+            )
+          ),
 
-        accepted,
+        accepted: [],
 
         history: []
       });
 
-    } catch (error) {
+    } catch (err) {
       console.error(
-        'Failed to fetch requests:',
-        error
+        'Failed to load requests:',
+        err
       );
+
+      setError(
+        err.message ||
+        'Failed to load requests'
+      );
+
     } finally {
       setLoading(false);
     }
   };
 
-  // LOAD REQUESTS
+  // =========================
+  // INITIAL LOAD
+  // =========================
 
   useEffect(() => {
-    fetchRequests();
+    loadRequests();
   }, []);
 
-  // ACCEPT REQUES
+  // =========================
+  // ACCEPT REQUEST
+  // =========================
 
-  const handleAccept = async (reqId) => {
-    const accessToken =
-      localStorage.getItem('accessToken');
+  const handleAccept = async (
+    requestId
+  ) => {
+    const token = getToken();
 
-    if (!accessToken) {
+    if (!token) {
       navigate('/login');
       return;
     }
 
-    try {
-      const response = await fetch(
-        `${API_URL}/requests/${reqId}/accept`,
-        {
-          method: 'PATCH',
-
-          headers: {
-            Authorization:
-              `Bearer ${accessToken}`
-          },
-
-          credentials: 'include'
-        }
+    if (!requestId) {
+      setError(
+        'Request ID is missing'
       );
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      setError('');
+
+      console.log(
+        'Accepting request:',
+        requestId
+      );
+
+      const response =
+        await fetch(
+          `${API_URL}/requests/${requestId}/accept`,
+          {
+            method: 'PATCH',
+
+            headers: {
+              Authorization:
+                `Bearer ${token}`
+            },
+
+            credentials: 'include'
+          }
+        );
 
       const data =
         await response.json();
@@ -235,73 +350,119 @@ export default function RequestsPage() {
         );
       }
 
-      // Find accepted request
-      const target =
-        requests.received.find(
-          (request) =>
-            request.id === reqId
-        );
+      console.log(
+        'Request accepted:',
+        data
+      );
 
-      if (target) {
-        const acceptedRequest = {
-          ...target,
-          status: 'accepted'
-        };
+      const acceptedRequest =
+        data?.data?.request;
 
-        setRequests((previous) => ({
-          ...previous,
+      const createdSession =
+        data?.data?.session;
+
+      // Remove from received
+      // and add to accepted.
+      setRequests(
+        (current) => ({
+          ...current,
 
           received:
-            previous.received.filter(
+            current.received.filter(
               (request) =>
-                request.id !== reqId
+                request.id !== requestId
             ),
 
-          accepted: [
-            acceptedRequest,
-            ...previous.accepted
-          ]
-        }));
-      }
+          accepted:
+            acceptedRequest
+              ? [
+                {
+                  ...formatRequest(
+                    acceptedRequest,
+                    'received'
+                  ),
 
-    } catch (error) {
+                  status: 'accepted',
+
+                  sessionId:
+                    createdSession?._id ||
+                    ''
+                },
+
+                ...current.accepted
+              ]
+              : current.accepted
+        })
+      );
+
+      // Go directly to Sessions page
+      // after successful acceptance.
+      setActiveTab('accepted');
+
+    } catch (err) {
       console.error(
         'Accept request failed:',
-        error
+        err
       );
 
-      alert(
-        error.message ||
+      setError(
+        err.message ||
         'Failed to accept request'
       );
+
+    } finally {
+      setActionLoading(false);
     }
   };
 
+  // =========================
   // DECLINE REQUEST
+  // =========================
 
-  const handleDecline = async (reqId) => {
-    const accessToken =
-      localStorage.getItem('accessToken');
+  const handleDecline = async (
+    requestId
+  ) => {
+    const token = getToken();
 
-    if (!accessToken) {
+    if (!token) {
       navigate('/login');
       return;
     }
 
-    try {
-      const response = await fetch(
-        `${API_URL}/requests/${reqId}/decline`,
-        {
-          method: 'PATCH',
-
-          headers: {
-            Authorization:
-              `Bearer ${accessToken}`
-          },
-
-          credentials: 'include'
-        }
+    if (!requestId) {
+      setError(
+        'Request ID is missing'
       );
+      return;
+    }
+
+    const confirmed =
+      window.confirm(
+        'Are you sure you want to decline this request?'
+      );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      setError('');
+
+      const response =
+        await fetch(
+          `${API_URL}/requests/${requestId}/decline`,
+          {
+            method: 'PATCH',
+
+            headers: {
+              Authorization:
+                `Bearer ${token}`
+            },
+
+            credentials: 'include'
+          }
+        );
 
       const data =
         await response.json();
@@ -313,35 +474,60 @@ export default function RequestsPage() {
         );
       }
 
-      // Remove declined request
-      setRequests((previous) => ({
-        ...previous,
+      setRequests(
+        (current) => ({
+          ...current,
 
-        received:
-          previous.received.filter(
-            (request) =>
-              request.id !== reqId
-          )
-      }));
+          received:
+            current.received.filter(
+              (request) =>
+                request.id !== requestId
+            )
+        })
+      );
 
-    } catch (error) {
+    } catch (err) {
       console.error(
         'Decline request failed:',
-        error
+        err
       );
 
-      alert(
-        error.message ||
+      setError(
+        err.message ||
         'Failed to decline request'
       );
+
+    } finally {
+      setActionLoading(false);
     }
   };
 
+  // =========================
   // SCHEDULE
+  // =========================
 
-  const handleSchedule = (reqId) => {
-    navigate('/schedule');
+  const handleSchedule = (
+    request
+  ) => {
+    if (!request) {
+      return;
+    }
+
+    // Store the session ID so
+    // SessionsPage can use it if needed.
+    if (request.sessionId) {
+      localStorage.setItem(
+        'activeSessionId',
+        request.sessionId
+      );
+    }
+
+    navigate('/sessions');
   };
+
+  // =========================
+  // CURRENT LIST
+  // =========================
 
   const currentList =
     requests[activeTab] || [];
@@ -355,37 +541,46 @@ export default function RequestsPage() {
       </div>
 
       <div id="app">
-
         <Navbar />
 
         <div className="app-layout">
 
-          <Sidebar
-            user={{
-              name: 'Harsh',
-              credits: 3,
-              avatar: 'HA'
-            }}
-          />
+          <Sidebar />
 
           <main className="main-content">
 
             <div className="page-title-row">
               <div>
-                <h2>Swap requests inbox</h2>
+                <h2>
+                  Swap requests inbox
+                </h2>
 
                 <p>
-                  Manage everything you've
-                  sent and received from peers.
+                  Manage everything
+                  you've sent and
+                  received from peers.
                 </p>
               </div>
             </div>
 
-            {/* REQUEST TABS */}
+            {error && (
+              <div
+                className="glass-panel"
+                style={{
+                  padding: '1rem',
+                  marginBottom: '1rem',
+                  color: 'var(--coral-primary)'
+                }}
+              >
+                {error}
+              </div>
+            )}
 
             <RequestsTabNav
               activeTab={activeTab}
-              setActiveTab={setActiveTab}
+              setActiveTab={
+                setActiveTab
+              }
               counts={{
                 received:
                   requests.received.length,
@@ -398,8 +593,6 @@ export default function RequestsPage() {
               }}
             />
 
-            {/* REQUEST LIST */}
-
             <div className="requests-list-wrapper">
 
               {loading ? (
@@ -410,23 +603,43 @@ export default function RequestsPage() {
                     textAlign: 'center'
                   }}
                 >
-                  <p>
-                    Loading requests...
-                  </p>
+                  Loading requests...
                 </div>
               ) : currentList.length > 0 ? (
 
-                currentList.map((req) => (
+                currentList.map(
+                  (request) => (
+                    <RequestCard
+                      key={
+                        request.id
+                      }
 
-                  <RequestCard
-                    key={req.id}
-                    request={req}
-                    onAccept={handleAccept}
-                    onDecline={handleDecline}
-                    onSchedule={handleSchedule}
-                  />
+                      request={
+                        request
+                      }
 
-                ))
+                      direction={
+                        activeTab
+                      }
+
+                      onAccept={
+                        handleAccept
+                      }
+
+                      onDecline={
+                        handleDecline
+                      }
+
+                      onSchedule={
+                        handleSchedule
+                      }
+
+                      actionLoading={
+                        actionLoading
+                      }
+                    />
+                  )
+                )
 
               ) : (
 
@@ -440,7 +653,8 @@ export default function RequestsPage() {
                   }}
                 >
                   <p>
-                    No requests found in this tab.
+                    No requests found
+                    in this tab.
                   </p>
                 </div>
 
@@ -449,11 +663,9 @@ export default function RequestsPage() {
             </div>
 
           </main>
-
         </div>
 
         <MobileNav />
-
       </div>
     </>
   );

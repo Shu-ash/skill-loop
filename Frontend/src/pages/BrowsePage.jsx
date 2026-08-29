@@ -1,39 +1,216 @@
-// src/pages/BrowsePage.jsx
-
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import MobileNav from '../components/MobileNav';
 import BrowseSearch from '../components/BrowseSearch';
 import MemberCard from '../components/MemberCard';
 
-// Sample member data
-const MEMBERS_DATA = [
-  { id: "mbr_301", name: "Harsh Vishwakarma", avatar: "HV", avatarBg: "var(--violet-primary)", title: "Frontend Developer - Remote", rating: "★★★★★", skills: ["Frontend Developer", "Video Editing"], categories: ["Design", "Code & Data"] },
-  { id: "mbr_302", name: "Sujit Bauna", avatar: "SS", avatarBg: "var(--gold-primary)", title: "AI Specialist · Remote", rating: "★★★★★", skills: ["AI user", "Backend Developer"], categories: ["Code & Data"] },
-  { id: "mbr_303", name: "Debosmita Laha", avatar: "DL", avatarBg: "var(--mint-primary)", title: "Python for Beginners · Remote", rating: "★★★★☆", skills: ["Python", "Pandas"], categories: ["Code & Data"] },
-  { id: "mbr_304", name: "Milon Hackathon", avatar: "MH", avatarBg: "var(--coral-primary)", title: "Mongo DB & Express.js · Remote", rating: "★★★★★", skills: ["Mongo DB", "Express.js"], categories: ["Code & Data"] },
-  { id: "mbr_305", name: "Sample 1", avatar: "S", avatarBg: "var(--deep-violet)", title: "Test Sample - Under development", rating: "★★★★★", skills: ["Conversation", "English"], categories: ["Languages"] }
-];
+const API_BASE_URL = 'http://localhost:5000/api';
+
+const getInitials = (name = '') => {
+  const initials = name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase();
+
+  return initials || 'SL';
+};
+
+const getRatingStars = (rating) => {
+  const value = Number(rating);
+
+  if (!Number.isFinite(value) || value <= 0) {
+    return '☆☆☆☆☆';
+  }
+
+  const rounded = Math.round(value);
+
+  return '★'.repeat(rounded) + '☆'.repeat(5 - rounded);
+};
+
+const getCategory = (skills = []) => {
+  const text = skills.join(' ').toLowerCase();
+
+  if (
+    text.includes('english') ||
+    text.includes('language') ||
+    text.includes('communication')
+  ) {
+    return 'Languages';
+  }
+
+  if (
+    text.includes('design') ||
+    text.includes('figma') ||
+    text.includes('photoshop') ||
+    text.includes('ui')
+  ) {
+    return 'Design';
+  }
+
+  return 'Code & Data';
+};
 
 export default function BrowsePage() {
-  const [selectedCategory, setSelectedCategory] = useState('All categories');
+  const [members, setMembers] = useState([]);
+  const [selectedCategory, setSelectedCategory] =
+    useState('All categories');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Filter members by category and search
-  const filteredMembers = MEMBERS_DATA.filter((m) => {
-    const matchesCategory = selectedCategory === 'All categories' || m.categories.includes(selectedCategory);
-    const searchLower = searchQuery.toLowerCase();
-    const matchesSearch = m.name.toLowerCase().includes(searchLower) ||
-      m.title.toLowerCase().includes(searchLower) ||
-      m.skills.some(s => s.toLowerCase().includes(searchLower));
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-    return matchesCategory && matchesSearch;
-  });
+  const accessToken =
+    localStorage.getItem('accessToken');
+
+  useEffect(() => {
+    const fetchMembers = async () => {
+      if (!accessToken) {
+        setError('Please login to browse members.');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError('');
+
+        const response = await fetch(
+          `${API_BASE_URL}/users`,
+          {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${accessToken}`
+            },
+            credentials: 'include'
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ||
+            'Unable to load members.'
+          );
+        }
+
+        const users =
+          data?.data?.users ||
+          data?.data ||
+          data?.users ||
+          [];
+
+        const formattedMembers = users.map(
+          (user) => {
+            const skills =
+              user.skillsCanTeach || [];
+
+            const rating =
+              Number(user.rating) || 0;
+
+            return {
+              id: user._id || user.id,
+
+              name:
+                user.name ||
+                'SkillLoop Member',
+
+              avatar:
+                user.avatar ||
+                getInitials(user.name),
+
+              avatarBg:
+                'var(--violet-primary)',
+
+              title:
+                user.headline ||
+                user.bio ||
+                'SkillLoop member',
+
+              rating:
+                getRatingStars(rating),
+
+              ratingValue: rating,
+
+              skills,
+
+              categories: [
+                getCategory(skills)
+              ],
+
+              username:
+                user.username || ''
+            };
+          }
+        );
+
+        setMembers(formattedMembers);
+      } catch (err) {
+        console.error(
+          'Browse members error:',
+          err
+        );
+
+        setError(
+          err.message ||
+          'Unable to load members.'
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMembers();
+  }, [accessToken]);
+
+  const filteredMembers = useMemo(() => {
+    const searchLower =
+      searchQuery.trim().toLowerCase();
+
+    return members.filter((member) => {
+      const matchesCategory =
+        selectedCategory ===
+        'All categories' ||
+        member.categories.includes(
+          selectedCategory
+        );
+
+      if (!searchLower) {
+        return matchesCategory;
+      }
+
+      const matchesSearch =
+        member.name
+          .toLowerCase()
+          .includes(searchLower) ||
+
+        member.title
+          .toLowerCase()
+          .includes(searchLower) ||
+
+        member.skills.some((skill) =>
+          skill
+            .toLowerCase()
+            .includes(searchLower)
+        );
+
+      return (
+        matchesCategory &&
+        matchesSearch
+      );
+    });
+  }, [
+    members,
+    selectedCategory,
+    searchQuery
+  ]);
 
   return (
     <>
-      {/* Background animation */}
       <div className="liquid-bg">
         <div className="liquid-blob blob-1"></div>
         <div className="liquid-blob blob-2"></div>
@@ -47,37 +224,89 @@ export default function BrowsePage() {
           <Sidebar />
 
           <main className="main-content">
+
             <div className="page-title-row">
               <div>
-                <h2>Browse the loop</h2>
-                <p>2,140 members ready to trade knowledge.</p>
+                <h2>
+                  Browse the loop
+                </h2>
+
+                <p>
+                  {loading
+                    ? 'Finding members...'
+                    : `${members.length} members ready to trade knowledge.`}
+                </p>
               </div>
             </div>
 
-            {/* Search and filters */}
-            <BrowseSearch 
+            <BrowseSearch
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
-              selectedCategory={selectedCategory}
-              setSelectedCategory={setSelectedCategory}
+              selectedCategory={
+                selectedCategory
+              }
+              setSelectedCategory={
+                setSelectedCategory
+              }
             />
 
-            {/* Member cards */}
-            <div className="browse-grid">
-              {filteredMembers.length > 0 ? (
-                filteredMembers.map(member => (
-                  <MemberCard key={member.id} member={member} />
-                ))
-              ) : (
-                <div style={{ padding: '2rem', color: 'var(--slate-500)' }}>
+            {loading && (
+              <div
+                className="glass-panel"
+                style={{
+                  padding: '2rem',
+                  textAlign: 'center'
+                }}
+              >
+                Loading members...
+              </div>
+            )}
+
+            {!loading && error && (
+              <div
+                className="glass-panel"
+                style={{
+                  padding: '1.5rem',
+                  textAlign: 'center',
+                  color: 'var(--coral-primary)'
+                }}
+              >
+                {error}
+              </div>
+            )}
+
+            {!loading &&
+              !error &&
+              filteredMembers.length === 0 && (
+                <div
+                  className="glass-panel"
+                  style={{
+                    padding: '2rem',
+                    textAlign: 'center'
+                  }}
+                >
                   No members found.
                 </div>
               )}
-            </div>
+
+            {!loading &&
+              !error &&
+              filteredMembers.length > 0 && (
+                <div className="browse-grid">
+                  {filteredMembers.map(
+                    (member) => (
+                      <MemberCard
+                        key={member.id}
+                        member={member}
+                      />
+                    )
+                  )}
+                </div>
+              )}
+
           </main>
         </div>
 
-        {/* Mobile navigation */}
         <MobileNav />
       </div>
     </>
