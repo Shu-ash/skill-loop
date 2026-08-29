@@ -24,6 +24,12 @@ router.get(
     getMySessions
 );
 
+router.get(
+    "/my-sessions",
+    protect,
+    getMySessions
+);
+
 
 // =========================
 // GET ONE SESSION

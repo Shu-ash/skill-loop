@@ -52,8 +52,12 @@ const userSchema = new mongoose.Schema(
 
     profilePhotoUrl: {
       type: String,
-      trim: true,
-      maxlength: 500
+      trim: true
+    },
+
+    coverPhotoUrl: {
+      type: String,
+      trim: true
     },
 
     bio: {
@@ -90,9 +94,15 @@ const userSchema = new mongoose.Schema(
       default: "beginner"
     },
     onboardingCompleted: {
-  type: Boolean,
-  default: false
-},
+      type: Boolean,
+      default: false
+    },
+
+    availability: {
+      weekdayEvenings: { type: Boolean, default: true },
+      weekendMornings: { type: Boolean, default: false },
+      mode: { type: String, default: "Online Only" }
+    },
 
     credits: {
       type: Number,
