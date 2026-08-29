@@ -21,7 +21,7 @@ export default function OnboardingSkillsSection({
   return (
     <div className="onboarding-section">
       <div className="section-step-title">
-        <span className="step-num" style={{ background: 'var(--mint-primary)' }}>2</span>
+        <span className="step-num step-num-mint">2</span>
         <h3>Skills &amp; Expertise</h3>
       </div>
 
@@ -74,7 +74,7 @@ export default function OnboardingSkillsSection({
       </div>
 
       {/* Skills to learn */}
-      <div className="form-group" style={{ marginTop: '1.5rem' }}>
+      <div className="form-group form-group-padded">
         <label className="form-label">
           Want to Learn <span className="req-star">* (at least 1)</span>
         </label>
@@ -122,7 +122,7 @@ export default function OnboardingSkillsSection({
       </div>
 
       {/* Skill level */}
-      <div className="form-group" style={{ marginTop: '1.5rem' }}>
+      <div className="form-group form-group-padded">
         <label className="form-label">Skill Level</label>
 
         <div className="level-pills-row">

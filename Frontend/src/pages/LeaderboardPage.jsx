@@ -45,7 +45,7 @@ export default function LeaderboardPage() {
               </div>
 
               {/* Time Filter Toggle */}
-              <div className="sliding-tab-nav" style={{ width: '220px', margin: 0 }}>
+              <div className="sliding-tab-nav leaderboard-tab-nav">
                 <div 
                   className="sliding-glider"
                   style={{ transform: filterMode === 'month' ? 'translateX(0%)' : 'translateX(100%)' }}

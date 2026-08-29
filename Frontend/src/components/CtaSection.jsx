@@ -19,7 +19,7 @@ export default function CtaSection() {
         <h2>Ready to Start Your Journey?</h2>
         <p>Join SkillLoop today and be part of our amazing peer-to-peer community.</p>
 
-        <Link className="btn btn-primary btn-clay-primary" to="/login">
+        <Link className="btn btn-primary btn-clay-primary" to="/login?mode=signup" state={{ mode: 'signup' }}>
           Get started for free &rarr;
         </Link>
       </div>

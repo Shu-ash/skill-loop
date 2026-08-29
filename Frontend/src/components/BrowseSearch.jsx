@@ -1,13 +1,13 @@
 // src/components/BrowseSearch.jsx
 
 import React from 'react';
+
 export default function BrowseSearch({ 
   searchQuery, 
   setSearchQuery, 
   selectedCategory, 
   setSelectedCategory 
 }) {
-    // Categories for filtering
   const categories = ['All categories', 'Design', 'Code & Data', 'Languages', 'Music', 'Cooking'];
 
   return (
@@ -21,16 +21,15 @@ export default function BrowseSearch({
           onChange={(e) => setSearchQuery(e.target.value)}
         />
         <span className="text-subtle">📍 Online + In-person</span>
-        <button className="btn btn-primary btn-pill-sm">Search</button>
+        <button type="button" className="btn btn-primary btn-pill-sm">Search</button>
       </div>
 
       {/* Category filter */}
-      <div className="filter-chips" style={{ marginTop: '0.85rem' }}>
+      <div className="filter-chips form-group-spaced">
         {categories.map((cat) => (
           <span
             key={cat}
-            className={`pill-badge cursor-pointer ${selectedCategory === cat ? 'pill-violet' : 'pill-white'}`}
-            style={{ cursor: 'pointer', marginRight: '0.4rem' }}
+            className={`pill-badge tag-margin-right ${selectedCategory === cat ? 'pill-violet' : 'pill-white'}`}
             onClick={() => setSelectedCategory(cat)}
           >
             {cat}

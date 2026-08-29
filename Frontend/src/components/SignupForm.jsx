@@ -1,4 +1,4 @@
-//src/components/SignupForm.jsx
+// src/components/SignupForm.jsx
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -47,7 +47,7 @@ export default function SignupForm({ onSwitchToLogin }) {
 
       console.log('Registration successful:', data);
 
-      // Save access token if your backend returns one
+      // Save access token if backend returns one
       if (data.data?.accessToken) {
         localStorage.setItem(
           'accessToken',
@@ -154,7 +154,7 @@ export default function SignupForm({ onSwitchToLogin }) {
         </label>
       </div>
 
-      <button type="submit" className="btn btn-primary btn-full" style={{ marginTop: '1.2rem' }}>
+      <button type="submit" className="btn btn-primary btn-full btn-auth-submit">
         Create my account &rarr;
       </button>
 

@@ -5,9 +5,9 @@ import { Link } from 'react-router-dom';
 
 export default function HeroSection() {
   return (
-    <main className="landing-hero">
+    <section className="landing-hero">
 
-        {/* Left side: Hero text and stats */}
+      {/* Left side: Hero text and stats */}
       <div className="hero-left">
         <div className="hero-tag">
           <span className="pill-badge pill-violet">✦ No fees. No tutors. Just trade skills.</span>
@@ -23,7 +23,7 @@ export default function HeroSection() {
 
         {/* Call-to-action buttons */}
         <div className="hero-btns">
-          <Link className="btn btn-primary" to="/login">Join the loop →</Link>
+          <Link className="btn btn-primary" to="/login?mode=signup" state={{ mode: 'signup' }}>Join the loop →</Link>
           <a className="btn btn-secondary" href="#how-it-works">See how it works</a>
         </div>
 
@@ -44,8 +44,7 @@ export default function HeroSection() {
         </div>
       </div>
 
-
-        {/* Right side: Hero visual */}
+      {/* Right side: Hero visual */}
       <div className="hero-visual">
         <div className="hero-visual-card">
           <div className="orbit-container">
@@ -57,7 +56,6 @@ export default function HeroSection() {
                 <span className="loop-label">THE LOOP</span>
               </div>
             </div>
-
 
             {/* Orbit cards for teaching and learning */}
             <div className="orbit-card orbit-card-teach">
@@ -74,6 +72,6 @@ export default function HeroSection() {
           </div>
         </div>
       </div>
-    </main>
+    </section>
   );
 }

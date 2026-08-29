@@ -14,7 +14,7 @@ export default function ProfileDetailsEditor({
       <h3>About &amp; Availability</h3>
 
       {/* Bio Textarea */}
-      <div className="form-group" style={{ marginTop: '1rem' }}>
+      <div className="form-group form-group-spaced">
         <label className="form-label">About Me</label>
         <textarea
           className="form-input form-textarea"

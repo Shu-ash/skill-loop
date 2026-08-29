@@ -7,8 +7,19 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="/assets/index-FWRfkUEW.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-BVhg8nZE.css">
+  <script>
+    (function() {
+      try {
+        var saved = localStorage.getItem('skillloop_theme');
+        if (saved === 'dark') {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          document.documentElement.classList.add('dark-mode');
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <script type="module" crossorigin src="/assets/index-BfsRaM3Z.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-dyHz0b7M.css">
 </head>
 <body>
   <div id="root"></div>
