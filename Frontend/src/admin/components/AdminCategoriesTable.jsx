@@ -1,17 +1,8 @@
 // src/admin/components/AdminCategoriesTable.jsx
 import React from 'react';
 
-export default function AdminCategoriesTable({ categories, title = "Category List", onDeleteCategory, onViewDetails, loading = false }) {
-  const defaultCategories = [
-    { id: '1', displayId: '#CAT-000001', name: 'Code & Data', count: 140, status: 'Active' },
-    { id: '2', displayId: '#CAT-000002', name: 'Design & UI', count: 95, status: 'Active' },
-    { id: '3', displayId: '#CAT-000003', name: 'Languages', count: 80, status: 'Active' },
-    { id: '4', displayId: '#CAT-000004', name: 'AI & Data Science', count: 110, status: 'Active' },
-    { id: '5', displayId: '#CAT-000005', name: 'Marketing & Growth', count: 65, status: 'Active' },
-    { id: '6', displayId: '#CAT-000006', name: 'Music & Audio', count: 45, status: 'Active' }
-  ];
-
-  const list = (categories && categories.length > 0) ? categories : (!loading && categories !== undefined && categories.length === 0 ? [] : defaultCategories);
+export default function AdminCategoriesTable({ categories = [], title = "Category List", onDeleteCategory, onViewDetails, loading = false }) {
+  const list = Array.isArray(categories) ? categories : [];
 
   return (
     <div className="admin-table-card">
@@ -27,8 +18,12 @@ export default function AdminCategoriesTable({ categories, title = "Category Lis
           Loading skill categories from MongoDB...
         </div>
       ) : list.length === 0 ? (
-        <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--slate-500, #64748b)' }}>
-          No matching categories found.
+        <div style={{ padding: '3.5rem 1.5rem', textAlign: 'center', color: 'var(--slate-500, #64748b)' }}>
+          <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '0.5rem' }}>🏷️</span>
+          <h4 style={{ margin: '0 0 0.4rem 0', fontWeight: 700, color: 'var(--slate-800)' }}>No Categories in Database</h4>
+          <p style={{ margin: 0, fontSize: '0.9rem' }}>
+            Click <strong>"+ Add New Category"</strong> above to create your first skill category with custom emojis!
+          </p>
         </div>
       ) : (
         <table className="admin-data-table">
@@ -43,15 +38,16 @@ export default function AdminCategoriesTable({ categories, title = "Category Lis
           </thead>
           <tbody>
             {list.map((cat) => {
-              const formattedId = cat.displayId || `#CAT-${(cat.id || '').toString().slice(-6).toUpperCase()}`;
+              const formattedId = cat.displayId || `#CAT-${(cat.id || cat._id || '').toString().slice(-6).toUpperCase()}`;
               return (
-                <tr key={cat.id}>
+                <tr key={cat.id || cat._id}>
                   <td style={{ whiteSpace: 'nowrap' }}>
-                    <span className="user-id-badge" title={`Full ID: ${cat.id}`}>
+                    <span className="user-id-badge" title={`Full ID: ${cat.id || cat._id}`}>
                       {formattedId}
                     </span>
                   </td>
                   <td style={{ whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: '1.2rem', marginRight: '0.5rem' }}>{cat.icon || '⚡'}</span>
                     <strong>{cat.name}</strong>
                   </td>
                   <td>{cat.count || cat.memberCount || 0} Members</td>

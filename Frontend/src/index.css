@@ -4393,3 +4393,197 @@ html[data-theme="dark"] .form-textarea-styled {
   border-color: rgba(255, 255, 255, 0.15) !important;
   color: #ffffff !important;
 }
+
+/* Profile Details & Skills Theme Styles */
+.profile-bio-display-box {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  color: var(--slate-700);
+}
+
+.availability-item {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  color: var(--slate-800);
+}
+
+.profile-strength-card {
+  background: rgba(108, 92, 231, 0.05);
+  border: 1px solid rgba(108, 92, 231, 0.15);
+  color: var(--slate-800);
+}
+
+.empty-skills-notice {
+  background: rgba(241, 245, 249, 0.5);
+  color: var(--slate-500);
+}
+
+.teach-chip {
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.12) 0%, rgba(129, 140, 248, 0.18) 100%);
+  color: var(--violet-primary, #6c5ce7);
+  border: 1px solid rgba(108, 92, 231, 0.25);
+}
+
+.learn-chip {
+  background: linear-gradient(135deg, rgba(255, 118, 117, 0.12) 0%, rgba(254, 202, 87, 0.15) 100%);
+  color: #e056fd;
+  border: 1px solid rgba(224, 86, 253, 0.25);
+}
+
+/* Dark Mode Overrides for Profile & Controls */
+html[data-theme="dark"] .profile-bio-display-box,
+body.dark-mode .profile-bio-display-box {
+  background: rgba(15, 23, 42, 0.65) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #e2e8f0 !important;
+}
+
+html[data-theme="dark"] .profile-bio-display-box p,
+body.dark-mode .profile-bio-display-box p {
+  color: #cbd5e1 !important;
+}
+
+html[data-theme="dark"] .availability-item,
+body.dark-mode .availability-item {
+  background: rgba(15, 23, 42, 0.55) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: #f1f5f9 !important;
+}
+
+html[data-theme="dark"] .profile-strength-card,
+body.dark-mode .profile-strength-card {
+  background: rgba(108, 92, 231, 0.14) !important;
+  border: 1px solid rgba(108, 92, 231, 0.3) !important;
+  color: #f1f5f9 !important;
+}
+
+html[data-theme="dark"] .profile-strength-card .strength-tip,
+body.dark-mode .profile-strength-card .strength-tip {
+  color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .empty-skills-notice,
+body.dark-mode .empty-skills-notice {
+  background: rgba(15, 23, 42, 0.5) !important;
+  color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .teach-chip,
+body.dark-mode .teach-chip {
+  background: rgba(108, 92, 231, 0.24) !important;
+  color: #a29bfe !important;
+  border-color: rgba(108, 92, 231, 0.4) !important;
+}
+
+html[data-theme="dark"] .learn-chip,
+body.dark-mode .learn-chip {
+  background: rgba(255, 118, 117, 0.2) !important;
+  color: #ff9ff3 !important;
+  border-color: rgba(255, 118, 117, 0.4) !important;
+}
+
+html[data-theme="dark"] .emoji-picker-container,
+body.dark-mode .emoji-picker-container {
+  background: rgba(30, 41, 59, 0.95) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: #f1f5f9 !important;
+}
+
+/* Authentication Method Switcher (Password vs OTP) */
+.auth-method-switcher {
+  display: flex;
+  background: rgba(15, 23, 42, 0.05);
+  border: 1px solid var(--slate-200, #e2e8f0);
+  padding: 0.25rem;
+  border-radius: 12px;
+  margin-bottom: 1.15rem;
+  gap: 0.35rem;
+}
+
+.method-tab-btn {
+  flex: 1;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--slate-600, #64748b);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.method-tab-btn.active {
+  background: #ffffff;
+  color: var(--violet-primary, #6c5ce7);
+  box-shadow: 0 2px 8px rgba(108, 92, 231, 0.12);
+}
+
+.forgot-link {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--violet-primary, #6c5ce7);
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.forgot-link:hover {
+  text-decoration: underline;
+}
+
+/* Dark Mode Overrides for Auth Form & Inputs */
+html[data-theme="dark"] .auth-method-switcher,
+body.dark-mode .auth-method-switcher {
+  background: rgba(15, 23, 42, 0.65) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+html[data-theme="dark"] .method-tab-btn,
+body.dark-mode .method-tab-btn {
+  color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .method-tab-btn.active,
+body.dark-mode .method-tab-btn.active {
+  background: rgba(30, 41, 59, 0.95) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+}
+
+html[data-theme="dark"] .forgot-link,
+body.dark-mode .forgot-link {
+  color: #a29bfe !important;
+}
+
+html[data-theme="dark"] .form-input,
+body.dark-mode .form-input {
+  background: rgba(15, 23, 42, 0.75) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="dark"] .form-input:focus,
+body.dark-mode .form-input:focus {
+  border-color: var(--violet-primary, #6c5ce7) !important;
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.25) !important;
+}
+
+/* Fix browser autofill styling in Dark Mode */
+html[data-theme="dark"] .form-input:-webkit-autofill,
+html[data-theme="dark"] .form-input:-webkit-autofill:hover, 
+html[data-theme="dark"] .form-input:-webkit-autofill:focus,
+body.dark-mode .form-input:-webkit-autofill,
+body.dark-mode .form-input:-webkit-autofill:hover,
+body.dark-mode .form-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #ffffff !important;
+  -webkit-box-shadow: 0 0 0px 1000px #0f172a inset !important;
+  box-shadow: 0 0 0px 1000px #0f172a inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}

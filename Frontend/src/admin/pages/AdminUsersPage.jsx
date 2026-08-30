@@ -18,7 +18,10 @@ export default function AdminUsersPage() {
   const [selectedRole, setSelectedRole] = useState('All Roles');
   const [selectedStatus, setSelectedStatus] = useState('All Status');
 
-  // Modal State
+  // Password Reset Modal for User
+  const [passwordModal, setPasswordModal] = useState({ open: false, user: null, newPassword: '', loading: false, error: '', success: '' });
+
+  // Center Modal State
   const [modalConfig, setModalConfig] = useState({
     isOpen: false,
     title: '',
@@ -34,8 +37,6 @@ export default function AdminUsersPage() {
 
   const fetchUsers = async () => {
     const token = localStorage.getItem('accessToken');
-    let loadedUsers = [];
-
     try {
       const response = await fetch(`${API_BASE_URL}/admin/users`, {
         headers: {
@@ -44,43 +45,17 @@ export default function AdminUsersPage() {
         }
       });
       const data = await response.json();
-      if (data.success && data.data?.users?.length) {
-        loadedUsers = data.data.users;
+      if (data.success && Array.isArray(data.data?.users)) {
+        setUsers(data.data.users);
+      } else {
+        setUsers([]);
       }
     } catch (err) {
       console.error('Failed to load admin users from backend:', err);
+      setUsers([]);
+    } finally {
+      setLoading(false);
     }
-
-    // Check persistent registered users store and merge
-    const persistentUsersStr = localStorage.getItem('skillloop_registered_users');
-    if (persistentUsersStr) {
-      try {
-        const persistentUsers = JSON.parse(persistentUsersStr);
-        if (Array.isArray(persistentUsers)) {
-          persistentUsers.forEach(pu => {
-            const exists = loadedUsers.some(u => u.email?.toLowerCase() === pu.email?.toLowerCase());
-            if (!exists) {
-              loadedUsers.unshift({
-                id: pu.id || `usr_${Date.now()}`,
-                displayId: `#USR-${(pu.id || '').toString().slice(-6).toUpperCase()}`,
-                name: pu.name || 'Registered Member',
-                email: pu.email,
-                handle: pu.username || `@${pu.email.split('@')[0]}`,
-                skill: pu.teachSkills?.[0] || 'Member Skill',
-                role: 'User',
-                status: 'Active',
-                credits: pu.credits ?? 3
-              });
-            }
-          });
-        }
-      } catch (e) {
-        console.error('Error parsing persistent users store:', e);
-      }
-    }
-
-    setUsers(loadedUsers);
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -112,7 +87,7 @@ export default function AdminUsersPage() {
   }, [users, searchQuery, selectedRole, selectedStatus]);
 
   const handleRoleToggleClick = (user) => {
-    const isPromoting = user.role !== 'Admin';
+    const isPromoting = user.role !== 'Admin' && user.role !== 'admin';
     const targetRole = isPromoting ? 'admin' : 'user';
 
     setModalConfig({
@@ -127,7 +102,7 @@ export default function AdminUsersPage() {
       details: {
         'User Name': user.name,
         'Email Address': user.email || 'N/A',
-        'User ID': user.displayId || `#USR-${user.id.slice(-6).toUpperCase()}`,
+        'User ID': user.displayId || `#USR-${(user.id || user._id).slice(-6).toUpperCase()}`,
         'Current Role': user.role || 'User',
         'Target Role': isPromoting ? 'Admin' : 'User'
       },
@@ -135,8 +110,9 @@ export default function AdminUsersPage() {
       onConfirm: async () => {
         setModalConfig(prev => ({ ...prev, loading: true }));
         const token = localStorage.getItem('accessToken');
+        const userId = user.id || user._id;
         try {
-          await fetch(`${API_BASE_URL}/admin/users/${user.id}/role`, {
+          await fetch(`${API_BASE_URL}/admin/users/${userId}/role`, {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/json',
@@ -148,15 +124,16 @@ export default function AdminUsersPage() {
         } catch (err) {
           console.error('Failed to update role:', err);
         }
-        setUsers(prev => prev.map(u => u.id === user.id ? { ...u, role: isPromoting ? 'Admin' : 'User' } : u));
+        setUsers(prev => prev.map(u => (u.id || u._id) === userId ? { ...u, role: isPromoting ? 'Admin' : 'User' } : u));
         setModalConfig(prev => ({ ...prev, isOpen: false, loading: false }));
       }
     });
   };
 
   const handleStatusToggleClick = (user) => {
-    const isBanning = user.status === 'Active';
+    const isBanning = user.status === 'Active' || user.status === 'active';
     const targetStatus = isBanning ? 'banned' : 'active';
+    const userId = user.id || user._id;
 
     setModalConfig({
       isOpen: true,
@@ -170,7 +147,7 @@ export default function AdminUsersPage() {
       details: {
         'Member Name': user.name,
         'Email Address': user.email || 'N/A',
-        'User ID': user.displayId || `#USR-${user.id.slice(-6).toUpperCase()}`,
+        'User ID': user.displayId || `#USR-${userId.slice(-6).toUpperCase()}`,
         'Current Status': user.status,
         'Action': isBanning ? 'Ban & Revoke Access' : 'Restore Full Access'
       },
@@ -179,7 +156,7 @@ export default function AdminUsersPage() {
         setModalConfig(prev => ({ ...prev, loading: true }));
         const token = localStorage.getItem('accessToken');
         try {
-          await fetch(`${API_BASE_URL}/admin/users/${user.id}/status`, {
+          await fetch(`${API_BASE_URL}/admin/users/${userId}/status`, {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/json',
@@ -191,13 +168,65 @@ export default function AdminUsersPage() {
         } catch (err) {
           console.error('Failed to update status:', err);
         }
-        setUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: isBanning ? 'Banned' : 'Active' } : u));
+        setUsers(prev => prev.map(u => (u.id || u._id) === userId ? { ...u, status: isBanning ? 'Banned' : 'Active' } : u));
         setModalConfig(prev => ({ ...prev, isOpen: false, loading: false }));
       }
     });
   };
 
+  // Open Password Modal
+  const handleResetPasswordClick = (user) => {
+    setPasswordModal({
+      open: true,
+      user,
+      newPassword: '',
+      loading: false,
+      error: '',
+      success: ''
+    });
+  };
+
+  // Submit Password Change by Admin
+  const handleSaveUserPassword = async (e) => {
+    e.preventDefault();
+    if (!passwordModal.newPassword || passwordModal.newPassword.length < 6) {
+      setPasswordModal(prev => ({ ...prev, error: 'Password must be at least 6 characters long.' }));
+      return;
+    }
+
+    setPasswordModal(prev => ({ ...prev, loading: true, error: '' }));
+    const token = localStorage.getItem('accessToken');
+    const userId = passwordModal.user.id || passwordModal.user._id;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/password`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token || ''}`,
+          'x-admin-token': 'admin2026'
+        },
+        body: JSON.stringify({ password: passwordModal.newPassword })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to update user password.');
+      }
+
+      setPasswordModal(prev => ({ ...prev, success: `Password updated successfully for ${passwordModal.user.name}!`, loading: false }));
+      setTimeout(() => {
+        setPasswordModal({ open: false, user: null, newPassword: '', loading: false, error: '', success: '' });
+      }, 1500);
+
+    } catch (err) {
+      setPasswordModal(prev => ({ ...prev, error: err.message || 'Error updating password', loading: false }));
+    }
+  };
+
   const handleViewDetails = (user) => {
+    const userId = user.id || user._id;
     setModalConfig({
       isOpen: true,
       title: '👤 Member Profile Details',
@@ -207,12 +236,12 @@ export default function AdminUsersPage() {
       details: {
         'Full Name': user.name,
         'Email': user.email || 'N/A',
+        'Password Status': '🔒 Encrypted (Bcrypt Protected)',
         'Handle': user.handle || `@${user.name.toLowerCase().replace(/\s+/g, '')}`,
-        'System User ID': user.displayId || `#USR-${user.id.slice(-6).toUpperCase()}`,
-        'Primary Skill': user.skill || 'React / Web Development',
+        'System User ID': user.displayId || `#USR-${userId.slice(-6).toUpperCase()}`,
         'Role': user.role || 'User',
         'Account Status': user.status || 'Active',
-        'Skill Credits Balance': `${user.credits ?? 3} Credits`
+        'Skill Credits Balance': `${user.credits ?? 10} Credits`
       },
       onConfirm: null
     });
@@ -241,7 +270,7 @@ export default function AdminUsersPage() {
           <main className="admin-main-content">
             <div className="page-header">
               <h2>User Management</h2>
-              <p>Search, filter, and manage registered members, roles, and permissions.</p>
+              <p>Search, filter, and manage registered members, credentials, roles, and passwords.</p>
             </div>
 
             {/* Admin Search & Filter Bar */}
@@ -273,11 +302,68 @@ export default function AdminUsersPage() {
               showActions={true}
               onRoleToggle={handleRoleToggleClick}
               onStatusToggle={handleStatusToggleClick}
+              onResetPassword={handleResetPasswordClick}
               onViewDetails={handleViewDetails}
+              loading={loading}
             />
           </main>
         </div>
       </div>
+
+      {/* Admin Set / Reset Password Modal */}
+      {passwordModal.open && (
+        <div className="modal-overlay" onClick={() => setPasswordModal(prev => ({ ...prev, open: false }))}>
+          <div className="glass-panel clay-card-3d" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px', width: '92%', padding: '2rem 1.8rem', borderRadius: '24px' }}>
+            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: '1.25rem' }}>
+                🔑 Set User Password
+              </h3>
+              <button type="button" className="close-modal-btn" onClick={() => setPasswordModal(prev => ({ ...prev, open: false }))}>✕</button>
+            </div>
+
+            <p style={{ fontSize: '0.88rem', color: 'var(--slate-500)', margin: '0 0 1.2rem 0', lineHeight: '1.5' }}>
+              Update password credentials for: <br />
+              <strong>{passwordModal.user?.name}</strong> (<span style={{ color: 'var(--violet-primary)' }}>{passwordModal.user?.email}</span>)
+            </p>
+
+            {passwordModal.error && (
+              <div style={{ background: 'rgba(239, 68, 68, 0.12)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '12px', padding: '0.65rem 0.85rem', fontSize: '0.84rem', fontWeight: 600, marginBottom: '1rem' }}>
+                ⚠️ {passwordModal.error}
+              </div>
+            )}
+
+            {passwordModal.success && (
+              <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '12px', padding: '0.65rem 0.85rem', fontSize: '0.84rem', fontWeight: 600, marginBottom: '1rem' }}>
+                ✅ {passwordModal.success}
+              </div>
+            )}
+
+            <form onSubmit={handleSaveUserPassword}>
+              <div className="form-group" style={{ marginBottom: '1.2rem' }}>
+                <label className="form-label">New Password</label>
+                <input
+                  className="form-input"
+                  type="password"
+                  value={passwordModal.newPassword}
+                  onChange={(e) => setPasswordModal(prev => ({ ...prev, newPassword: e.target.value }))}
+                  placeholder="Enter new password (min 6 characters)"
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                <button type="button" className="action-btn" onClick={() => setPasswordModal(prev => ({ ...prev, open: false }))}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={passwordModal.loading} style={{ padding: '0.65rem 1.25rem', borderRadius: '12px', fontWeight: 700 }}>
+                  {passwordModal.loading ? 'Updating...' : 'Save New Password 🔒'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Center Screen Confirmation & Details Modal */}
       <AdminActionModal

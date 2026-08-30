@@ -5,6 +5,7 @@ import AdminSidebar from '../components/AdminSidebar';
 import AdminCategoriesTable from '../components/AdminCategoriesTable';
 import AdminSearchFilterBar from '../components/AdminSearchFilterBar';
 import AdminActionModal from '../components/AdminActionModal';
+import EmojiPickerMenu from '../../components/EmojiPickerMenu';
 import '../admin.css';
 
 const API_BASE_URL = 'http://localhost:5000/api';
@@ -19,7 +20,7 @@ export default function AdminCategoriesPage() {
   const [selectedStatus, setSelectedStatus] = useState('All Status');
 
   const [newCatName, setNewCatName] = useState('');
-  const [newCatIcon, setNewCatIcon] = useState('⚡');
+  const [newCatIcon, setNewCatIcon] = useState('💻');
   const [newCatDesc, setNewCatDesc] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -47,11 +48,14 @@ export default function AdminCategoriesPage() {
         }
       });
       const data = await response.json();
-      if (data.success && data.data?.categories) {
+      if (data.success && Array.isArray(data.data?.categories)) {
         setCategories(data.data.categories);
+      } else {
+        setCategories([]);
       }
     } catch (err) {
       console.error('Failed to load admin categories:', err);
+      setCategories([]);
     } finally {
       setLoading(false);
     }
@@ -102,6 +106,7 @@ export default function AdminCategoriesPage() {
       if (response.ok) {
         setNewCatName('');
         setNewCatDesc('');
+        setNewCatIcon('💻');
         setShowAddModal(false);
         fetchCategories();
       }
@@ -113,6 +118,7 @@ export default function AdminCategoriesPage() {
   };
 
   const handleDeleteCategoryClick = (cat) => {
+    const catId = cat.id || cat._id;
     setModalConfig({
       isOpen: true,
       title: '🗑️ Delete Skill Category',
@@ -122,7 +128,7 @@ export default function AdminCategoriesPage() {
       confirmType: 'danger',
       details: {
         'Category Name': `${cat.icon || '⚡'} ${cat.name}`,
-        'Category ID': cat.displayId || `#CAT-${(cat.id || '').toString().slice(-6).toUpperCase()}`,
+        'Category ID': cat.displayId || `#CAT-${(catId || '').toString().slice(-6).toUpperCase()}`,
         'Total Members': `${cat.count || cat.memberCount || 0} Members`,
         'Status': cat.status || 'Active'
       },
@@ -131,7 +137,7 @@ export default function AdminCategoriesPage() {
         setModalConfig(prev => ({ ...prev, loading: true }));
         const token = localStorage.getItem('accessToken');
         try {
-          const response = await fetch(`${API_BASE_URL}/admin/categories/${cat.id}`, {
+          const response = await fetch(`${API_BASE_URL}/admin/categories/${catId}`, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${token || ''}`,
@@ -140,7 +146,7 @@ export default function AdminCategoriesPage() {
           });
 
           if (response.ok) {
-            setCategories(prev => prev.filter(c => c.id !== cat.id));
+            setCategories(prev => prev.filter(c => (c.id || c._id) !== catId));
           }
         } catch (err) {
           console.error('Failed to delete category:', err);
@@ -151,6 +157,7 @@ export default function AdminCategoriesPage() {
   };
 
   const handleViewDetails = (cat) => {
+    const catId = cat.id || cat._id;
     setModalConfig({
       isOpen: true,
       title: '⚡ Skill Category Details',
@@ -159,7 +166,7 @@ export default function AdminCategoriesPage() {
       isDetailsOnly: true,
       details: {
         'Category Title': `${cat.icon || '⚡'} ${cat.name}`,
-        'Category ID': cat.displayId || `#CAT-${(cat.id || '').toString().slice(-6).toUpperCase()}`,
+        'Category ID': cat.displayId || `#CAT-${(catId || '').toString().slice(-6).toUpperCase()}`,
         'Description': cat.description || 'General skill exchange category',
         'Member & Skill Count': `${cat.count || cat.memberCount || 0} registered members`,
         'Status': cat.status || 'Active'
@@ -223,62 +230,75 @@ export default function AdminCategoriesPage() {
               title={`System Skill Categories (${filteredCategories.length})`} 
               onDeleteCategory={handleDeleteCategoryClick}
               onViewDetails={handleViewDetails}
+              loading={loading}
             />
           </main>
         </div>
       </div>
 
-      {/* Add New Category Glassmorphic Modal */}
+      {/* Add New Category Glassmorphic Modal with Smartphone Tabbed Emoji Picker */}
       {showAddModal && (
         <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div className="glass-panel logout-confirm-box clay-card-3d" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px' }}>
+          <div className="glass-panel logout-confirm-box clay-card-3d" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '480px', width: '92%' }}>
             <div className="modal-header">
-              <h3>⚡ Add New Category</h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <span style={{ fontSize: '1.4rem' }}>{newCatIcon}</span>
+                <h3 style={{ margin: 0 }}>Add New Category</h3>
+              </div>
               <button type="button" className="close-modal-btn" onClick={() => setShowAddModal(false)}>✕</button>
             </div>
 
             <form onSubmit={handleAddCategory} className="edit-profile-form">
-              <div className="form-group">
-                <label>Category Icon Emoji</label>
-                <input 
-                  className="form-input" 
-                  type="text" 
-                  value={newCatIcon} 
-                  onChange={(e) => setNewCatIcon(e.target.value)} 
-                  placeholder="e.g. 🤖, 📱, 🎨"
-                  required
+              {/* Category Emoji Picker Tab Menu */}
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                  <span style={{ fontWeight: 600, fontSize: '0.86rem', color: 'var(--slate-700)' }}>Category Icon Emoji *</span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--violet-primary, #6c5ce7)', fontWeight: 700 }}>
+                    Selected: <span style={{ fontSize: '1.3rem', verticalAlign: 'middle' }}>{newCatIcon}</span>
+                  </span>
+                </label>
+                
+                <EmojiPickerMenu 
+                  selectedEmoji={newCatIcon} 
+                  onSelectEmoji={(emoji) => setNewCatIcon(emoji)} 
                 />
               </div>
 
-              <div className="form-group">
-                <label>Category Name *</label>
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontWeight: 600, fontSize: '0.86rem', color: 'var(--slate-700)', marginBottom: '0.35rem' }}>
+                  Category Name *
+                </label>
                 <input 
                   className="form-input" 
                   type="text" 
                   value={newCatName} 
                   onChange={(e) => setNewCatName(e.target.value)} 
-                  placeholder="e.g. AI & Prompt Engineering"
+                  placeholder="e.g. AI & Prompt Engineering, Cooking, UI/UX"
                   required
+                  style={{ width: '100%', boxSizing: 'border-box' }}
                 />
               </div>
 
-              <div className="form-group">
-                <label>Description</label>
+              <div className="form-group" style={{ marginBottom: '1.2rem' }}>
+                <label style={{ display: 'block', fontWeight: 600, fontSize: '0.86rem', color: 'var(--slate-700)', marginBottom: '0.35rem' }}>
+                  Short Description
+                </label>
                 <input 
                   className="form-input" 
                   type="text" 
                   value={newCatDesc} 
                   onChange={(e) => setNewCatDesc(e.target.value)} 
-                  placeholder="e.g. Machine Learning, LLMs, ChatGPT"
+                  placeholder="e.g. Machine Learning, LLMs, Deep Learning, ChatGPT"
+                  style={{ width: '100%', boxSizing: 'border-box' }}
                 />
               </div>
 
-              <div className="modal-action-buttons" style={{ marginTop: '1rem' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setShowAddModal(false)}>
+              <div className="modal-action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                <button type="button" className="action-btn" onClick={() => setShowAddModal(false)}>
                   Cancel
                 </button>
                 <button type="submit" className="btn btn-primary" disabled={submitting}>
-                  {submitting ? 'Creating...' : 'Create Category →'}
+                  {submitting ? 'Creating...' : `Create Category ${newCatIcon} →`}
                 </button>
               </div>
             </form>

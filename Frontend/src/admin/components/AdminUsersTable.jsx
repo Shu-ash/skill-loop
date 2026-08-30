@@ -2,23 +2,18 @@
 import React from 'react';
 
 export default function AdminUsersTable({ 
-  users, 
+  users = [], 
   title = "User List", 
   showRole = true, 
-  showEmail = false, 
+  showEmail = true, 
   showActions = true, 
   onRoleToggle, 
   onStatusToggle,
+  onResetPassword,
   onViewDetails,
   loading = false
 }) {
-  const defaultUsers = [
-    { id: '1', displayId: '#USR-000001', name: 'Super Admin', handle: '@admin', email: 'admin@skillloop.com', skill: 'Platform', role: 'Super Admin', status: 'Active' },
-    { id: '2', displayId: '#USR-000002', name: 'Aarav Sharma', handle: '@aarav_dev', email: 'aarav@gmail.com', skill: 'React JS', role: 'User', status: 'Active' },
-    { id: '3', displayId: '#USR-000003', name: 'Priya Verma', handle: '@priya_design', email: 'priya@gmail.com', skill: 'UI Design', role: 'User', status: 'Active' }
-  ];
-
-  const userList = (users && users.length > 0) ? users : (!loading && users !== undefined && users.length === 0 ? [] : defaultUsers);
+  const userList = Array.isArray(users) ? users : [];
 
   return (
     <div className="admin-table-card">
@@ -34,46 +29,60 @@ export default function AdminUsersTable({
           Loading live members from MongoDB database...
         </div>
       ) : userList.length === 0 ? (
-        <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--slate-500, #64748b)' }}>
-          No matching members found.
+        <div style={{ padding: '3.5rem 1.5rem', textAlign: 'center', color: 'var(--slate-500, #64748b)' }}>
+          <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '0.5rem' }}>👥</span>
+          <h4 style={{ margin: '0 0 0.4rem 0', fontWeight: 700, color: 'var(--slate-800)' }}>No Members Found</h4>
+          <p style={{ margin: 0, fontSize: '0.9rem' }}>Registered community members will appear here in real-time.</p>
         </div>
       ) : (
         <table className="admin-data-table">
           <thead>
             <tr>
               <th style={{ whiteSpace: 'nowrap' }}>User ID</th>
-              <th>Name</th>
-              {showEmail ? <th>Email</th> : <th>Handle</th>}
-              {!showEmail && <th>Skill</th>}
+              <th>Name &amp; Handle</th>
+              <th>Email &amp; Password</th>
               {showRole && <th>Role</th>}
+              <th>Credits</th>
               <th>Status</th>
               {showActions && <th style={{ whiteSpace: 'nowrap' }}>Actions</th>}
             </tr>
           </thead>
           <tbody>
             {userList.map((u) => {
-              const formattedId = u.displayId || `#USR-${(u.id || '').toString().slice(-6).toUpperCase()}`;
+              const formattedId = u.displayId || `#USR-${(u.id || u._id || '').toString().slice(-6).toUpperCase()}`;
               const isSuperAdmin = u.role?.toLowerCase().includes('super') || u.email === 'admin@skillloop.com' || u.name === 'Super Admin';
 
               return (
-                <tr key={u.id}>
+                <tr key={u.id || u._id}>
                   <td style={{ whiteSpace: 'nowrap' }}>
-                    <span className="user-id-badge" title={`Full MongoDB ObjectId: ${u.id}`}>
+                    <span className="user-id-badge" title={`Full MongoDB ObjectId: ${u.id || u._id}`}>
                       {formattedId}
                     </span>
                   </td>
-                  <td style={{ whiteSpace: 'nowrap' }}><strong>{u.name}</strong></td>
-                  {showEmail ? <td>{u.email}</td> : <td>{u.handle}</td>}
-                  {!showEmail && <td>{u.skill}</td>}
+                  <td style={{ whiteSpace: 'nowrap' }}>
+                    <strong>{u.name}</strong>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--slate-500)' }}>{u.handle || `@${(u.email || '').split('@')[0]}`}</div>
+                  </td>
+                  <td>
+                    <div>{u.email}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--slate-500)', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.2rem' }}>
+                      <span>🔒</span> <span>Encrypted Password</span>
+                    </div>
+                  </td>
                   {showRole && (
                     <td style={{ whiteSpace: 'nowrap' }}>
-                      <span className={`pill ${isSuperAdmin ? 'pill-admin' : u.role === 'Admin' ? 'pill-admin' : 'pill-user'}`}>
+                      <span className={`pill ${isSuperAdmin ? 'pill-admin' : u.role === 'Admin' || u.role === 'admin' ? 'pill-admin' : 'pill-user'}`}>
                         {isSuperAdmin ? 'Super Admin' : (u.role || 'User')}
                       </span>
                     </td>
                   )}
+                  <td style={{ fontWeight: 700, color: 'var(--violet-primary, #6c5ce7)' }}>
+                    🪙 {u.credits ?? 10}
+                  </td>
                   <td>
-                    <span className={`pill ${u.status === 'Active' ? 'pill-earned' : 'pill-spent'}`}>{u.status}</span>
+                    <span className={`pill ${u.status === 'Active' || u.status === 'active' ? 'pill-earned' : 'pill-spent'}`}>
+                      {u.status || 'Active'}
+                    </span>
                   </td>
                   {showActions && (
                     <td style={{ whiteSpace: 'nowrap' }}>
@@ -89,9 +98,20 @@ export default function AdminUsersTable({
                           </button>
                         )}
 
+                        {onResetPassword && (
+                          <button
+                            type="button"
+                            className="action-btn"
+                            onClick={() => onResetPassword(u)}
+                            title="Set / Reset User Password"
+                          >
+                            🔑 Password
+                          </button>
+                        )}
+
                         {isSuperAdmin ? (
-                          <span className="text-subtle" style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--violet-primary, #6c5ce7)', whiteSpace: 'nowrap' }}>
-                            Root Admin
+                          <span className="text-subtle" style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--violet-primary, #6c5ce7)', whiteSpace: 'nowrap', padding: '0 0.5rem' }}>
+                            Protected Root
                           </span>
                         ) : (
                           <>
@@ -102,7 +122,7 @@ export default function AdminUsersTable({
                                 onClick={() => onRoleToggle(u)}
                                 title="Toggle Admin/User Role"
                               >
-                                {u.role === 'Admin' ? 'Make User' : 'Make Admin'}
+                                {u.role === 'Admin' || u.role === 'admin' ? 'Make User' : 'Make Admin'}
                               </button>
                             )}
                             {onStatusToggle && (
@@ -112,7 +132,7 @@ export default function AdminUsersTable({
                                 onClick={() => onStatusToggle(u)}
                                 title="Toggle Active/Banned Status"
                               >
-                                {u.status === 'Active' ? 'Ban' : 'Activate'}
+                                {u.status === 'Active' || u.status === 'active' ? 'Ban' : 'Activate'}
                               </button>
                             )}
                           </>

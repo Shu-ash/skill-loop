@@ -5,6 +5,7 @@ import {
   getAdminUsers,
   updateUserRole,
   updateUserStatus,
+  updateUserPasswordByAdmin,
   getAdminSessions,
   resolveSessionDispute,
   getAdminCreditsLedger,
@@ -23,10 +24,11 @@ router.use(protectAdmin);
 // KPI Metrics
 router.get("/metrics", getAdminMetrics);
 
-// User Management & Role/Status Control
+// User Management & Role/Status/Password Control
 router.get("/users", getAdminUsers);
 router.patch("/users/:userId/role", updateUserRole);
 router.patch("/users/:userId/status", updateUserStatus);
+router.patch("/users/:userId/password", updateUserPasswordByAdmin);
 
 // Session Monitoring & Dispute Resolution
 router.get("/sessions", getAdminSessions);

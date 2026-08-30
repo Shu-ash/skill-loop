@@ -3,6 +3,8 @@ import Session from "../models/session.js";
 import Category from "../models/category.js";
 import Report from "../models/report.js";
 import CreditLedger from "../models/creditLedger.js";
+import Notification from "../models/notification.js";
+import { hashPassword } from "../utils/password.js";
 
 // GET /api/admin/metrics - Real-time KPI Statistics
 export const getAdminMetrics = async (req, res) => {
@@ -159,6 +161,41 @@ export const updateUserStatus = async (req, res) => {
       success: true,
       message: `User status updated to ${targetUser.status}`,
       data: { user: targetUser }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// PATCH /api/admin/users/:userId/password - Reset User Password by Admin
+export const updateUserPasswordByAdmin = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { password } = req.body;
+
+    if (!password || password.length < 6) {
+      return res.status(400).json({ success: false, message: "Password must be at least 6 characters long." });
+    }
+
+    const targetUser = await User.findById(userId);
+    if (!targetUser) {
+      return res.status(404).json({ success: false, message: "User not found." });
+    }
+
+    targetUser.password = await hashPassword(password);
+    await targetUser.save();
+
+    await Notification.create({
+      user: targetUser._id,
+      title: "🔒 Password Updated by Administrator",
+      text: "Your account password was securely updated by a system administrator.",
+      type: "system",
+      link: "/profile"
+    });
+
+    res.status(200).json({
+      success: true,
+      message: `Password updated successfully for ${targetUser.name || targetUser.email}`
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

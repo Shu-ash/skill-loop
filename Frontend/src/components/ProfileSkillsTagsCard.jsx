@@ -44,9 +44,6 @@ export default function ProfileSkillsTagsCard({
                 key={skill} 
                 className="skill-chip teach-chip"
                 style={{
-                  background: 'linear-gradient(135deg, rgba(108, 92, 231, 0.12) 0%, rgba(129, 140, 248, 0.18) 100%)',
-                  color: 'var(--violet-primary, #6c5ce7)',
-                  border: '1px solid rgba(108, 92, 231, 0.25)',
                   padding: '0.45rem 0.95rem',
                   borderRadius: '12px',
                   fontWeight: 600,
@@ -61,7 +58,7 @@ export default function ProfileSkillsTagsCard({
             ))}
           </div>
         ) : (
-          <div style={{ padding: '1rem', background: 'rgba(241, 245, 249, 0.5)', borderRadius: '14px', textAlign: 'center', color: 'var(--slate-500, #64748b)', fontSize: '0.85rem' }}>
+          <div className="empty-skills-notice" style={{ padding: '1rem', borderRadius: '14px', textAlign: 'center', fontSize: '0.85rem' }}>
             No teaching skills added yet. Click <strong>"Manage Skills"</strong> to add what you can teach!
           </div>
         )}
@@ -80,9 +77,6 @@ export default function ProfileSkillsTagsCard({
                 key={skill} 
                 className="skill-chip learn-chip"
                 style={{
-                  background: 'linear-gradient(135deg, rgba(255, 118, 117, 0.12) 0%, rgba(254, 202, 87, 0.15) 100%)',
-                  color: '#e056fd',
-                  border: '1px solid rgba(224, 86, 253, 0.25)',
                   padding: '0.45rem 0.95rem',
                   borderRadius: '12px',
                   fontWeight: 600,
@@ -97,7 +91,7 @@ export default function ProfileSkillsTagsCard({
             ))}
           </div>
         ) : (
-          <div style={{ padding: '1rem', background: 'rgba(241, 245, 249, 0.5)', borderRadius: '14px', textAlign: 'center', color: 'var(--slate-500, #64748b)', fontSize: '0.85rem' }}>
+          <div className="empty-skills-notice" style={{ padding: '1rem', borderRadius: '14px', textAlign: 'center', fontSize: '0.85rem' }}>
             No learning goals added yet. Click <strong>"Manage Skills"</strong> to add skills you want to learn!
           </div>
         )}

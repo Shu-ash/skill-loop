@@ -26,19 +26,17 @@ export default function ProfileDetailsEditor({
         )}
       </div>
 
-      {/* Bio Display Quote Card */}
+      {/* Bio Display Quote Card with dynamic theme styling */}
       <div className="profile-bio-display-box" style={{
-        background: 'rgba(255, 255, 255, 0.7)',
         borderRadius: '16px',
         padding: '1.1rem 1.25rem',
-        border: '1px solid rgba(226, 232, 240, 0.8)',
         marginBottom: '1.4rem',
         position: 'relative'
       }}>
         <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--violet-primary, #6c5ce7)', display: 'block', marginBottom: '0.4rem' }}>
           About Me
         </span>
-        <p style={{ margin: 0, fontSize: '0.92rem', lineHeight: '1.6', color: 'var(--slate-700, #334155)', fontStyle: bio ? 'normal' : 'italic' }}>
+        <p style={{ margin: 0, fontSize: '0.92rem', lineHeight: '1.6', fontStyle: bio ? 'normal' : 'italic' }}>
           {bio || 'Tell the community about yourself, your learning goals, and what you love trading! Click "Edit" to customize.'}
         </p>
       </div>
@@ -50,8 +48,8 @@ export default function ProfileDetailsEditor({
         </span>
         
         <div className="availability-grid" style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-          <div className="availability-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.7rem 1rem', background: 'rgba(255, 255, 255, 0.6)', borderRadius: '14px', border: '1px solid rgba(226, 232, 240, 0.6)' }}>
-            <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--slate-800, #1e293b)' }}>
+          <div className="availability-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', borderRadius: '14px' }}>
+            <span style={{ fontSize: '0.88rem', fontWeight: 600 }}>
               🌙 Weekday evenings
             </span>
             <span className={`pill ${availability.weekdayEvenings ? 'pill-earned' : 'pill-spent'}`} style={{ fontSize: '0.78rem', padding: '0.25rem 0.65rem' }}>
@@ -59,8 +57,8 @@ export default function ProfileDetailsEditor({
             </span>
           </div>
 
-          <div className="availability-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.7rem 1rem', background: 'rgba(255, 255, 255, 0.6)', borderRadius: '14px', border: '1px solid rgba(226, 232, 240, 0.6)' }}>
-            <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--slate-800, #1e293b)' }}>
+          <div className="availability-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', borderRadius: '14px' }}>
+            <span style={{ fontSize: '0.88rem', fontWeight: 600 }}>
               ☀️ Weekend mornings
             </span>
             <span className={`pill ${availability.weekendMornings ? 'pill-earned' : 'pill-spent'}`} style={{ fontSize: '0.78rem', padding: '0.25rem 0.65rem' }}>
@@ -68,8 +66,8 @@ export default function ProfileDetailsEditor({
             </span>
           </div>
 
-          <div className="availability-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.7rem 1rem', background: 'rgba(255, 255, 255, 0.6)', borderRadius: '14px', border: '1px solid rgba(226, 232, 240, 0.6)' }}>
-            <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--slate-800, #1e293b)' }}>
+          <div className="availability-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', borderRadius: '14px' }}>
+            <span style={{ fontSize: '0.88rem', fontWeight: 600 }}>
               🎥 Preferred Session Mode
             </span>
             <span className="pill pill-user" style={{ fontSize: '0.78rem', padding: '0.25rem 0.65rem' }}>
@@ -80,12 +78,12 @@ export default function ProfileDetailsEditor({
       </div>
 
       {/* Profile Strength Progress Bar */}
-      <div className="profile-strength-card" style={{ background: 'rgba(108, 92, 231, 0.05)', border: '1px solid rgba(108, 92, 231, 0.15)', borderRadius: '16px', padding: '1rem 1.2rem' }}>
+      <div className="profile-strength-card" style={{ borderRadius: '16px', padding: '1rem 1.2rem' }}>
         <div className="strength-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-          <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--slate-800, #1e293b)' }}>Profile Strength</span>
+          <span style={{ fontSize: '0.84rem', fontWeight: 700 }}>Profile Strength</span>
           <span style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--violet-primary, #6c5ce7)' }}>{profileStrength}%</span>
         </div>
-        <div className="strength-bar-track" style={{ height: '8px', background: 'rgba(203, 213, 225, 0.5)', borderRadius: '9999px', overflow: 'hidden' }}>
+        <div className="strength-bar-track" style={{ height: '8px', borderRadius: '9999px', overflow: 'hidden' }}>
           <div 
             className="strength-bar-fill" 
             style={{ 
@@ -97,7 +95,7 @@ export default function ProfileDetailsEditor({
             }}
           />
         </div>
-        <p className="strength-tip" style={{ fontSize: '0.75rem', color: 'var(--slate-500, #64748b)', margin: '0.5rem 0 0 0' }}>
+        <p className="strength-tip" style={{ fontSize: '0.75rem', margin: '0.5rem 0 0 0' }}>
           💡 Complete your bio and skills to reach 100% profile strength!
         </p>
       </div>
