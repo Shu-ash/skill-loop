@@ -1,5 +1,5 @@
 // src/pages/CreditsPage.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import MobileNav from '../components/MobileNav';
@@ -9,17 +9,23 @@ import CreditsHowItWorksCard from '../components/CreditsHowItWorksCard';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
-const MOCK_TRANSACTIONS = [
-  { id: 'tx_1', type: 'earned', title: 'Taught React Hooks to Devon Patel', date: 'Aug 10, 2026', sessionId: '0142', amount: 1 },
-  { id: 'tx_2', type: 'spent', title: 'Learned Spanish from Lena Kim', date: 'Aug 7, 2026', sessionId: '0139', amount: -1 },
-  { id: 'tx_3', type: 'earned', title: 'Taught Guitar Basics to Nina Byrne', date: 'Aug 3, 2026', sessionId: '0133', amount: 1 },
-  { id: 'tx_4', type: 'spent', title: 'Learned Figma from Sara Park', date: 'Jul 29, 2026', sessionId: '0121', amount: -1 },
-  { id: 'tx_5', type: 'earned', title: 'Taught JavaScript to Riya Anand', date: 'Jul 24, 2026', sessionId: '0118', amount: 1 }
-];
-
 export default function CreditsPage() {
-  const [balance, setBalance] = useState(3);
-  const [transactions, setTransactions] = useState(MOCK_TRANSACTIONS);
+  const [balance, setBalance] = useState(10);
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Compute dynamic earned and spent amounts from actual transactions
+  const earnedTotal = useMemo(() => {
+    return transactions
+      .filter(t => t.type === 'earned' || Number(t.amount) > 0)
+      .reduce((acc, t) => acc + Math.abs(Number(t.amount) || 1), 0);
+  }, [transactions]);
+
+  const spentTotal = useMemo(() => {
+    return transactions
+      .filter(t => t.type === 'spent' || Number(t.amount) < 0)
+      .reduce((acc, t) => acc + Math.abs(Number(t.amount) || 1), 0);
+  }, [transactions]);
 
   useEffect(() => {
     const userStr = localStorage.getItem('skillloop_user');
@@ -34,16 +40,20 @@ export default function CreditsPage() {
 
     const fetchLedger = async () => {
       const token = localStorage.getItem('accessToken');
-      if (!token) return;
+      if (!token) {
+        setLoading(false);
+        return;
+      }
 
       try {
+        setLoading(true);
         const response = await fetch(`${API_BASE_URL}/credits/my-ledger`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await response.json();
         if (data.success && data.data) {
           if (data.data.credits !== undefined) setBalance(data.data.credits);
-          if (data.data.history?.length) {
+          if (Array.isArray(data.data.history)) {
             const formatted = data.data.history.map(h => ({
               id: h.id,
               type: h.type,
@@ -56,7 +66,9 @@ export default function CreditsPage() {
           }
         }
       } catch (err) {
-        console.log('Credits ledger fallback active');
+        console.log('Credits ledger live fetch error:', err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -81,12 +93,12 @@ export default function CreditsPage() {
             <div className="page-title-row">
               <div>
                 <h2>Skill Credits — Balance &amp; Ledger</h2>
-                <p>Teach to earn. Spend to learn. Always auditable.</p>
+                <p>Teach to earn. Spend to learn. 100% connected to MongoDB.</p>
               </div>
             </div>
 
-            {/* Component 1: Credit Balance Summary Cards */}
-            <CreditBalanceCards balance={balance} earned={12} spent={9} />
+            {/* Component 1: Credit Balance Summary Cards with Dynamic Earned/Spent */}
+            <CreditBalanceCards balance={balance} earned={earnedTotal} spent={spentTotal} />
 
             {/* Grid Layout for Ledger & Explainer */}
             <div className="credits-body-grid">

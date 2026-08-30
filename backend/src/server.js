@@ -18,6 +18,7 @@ import swapRequestRoutes from "./routes/swapRequest.routes.js";
 import sessionRoutes from "./routes/session.routes.js";
 import creditRoutes from "./routes/credit.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
+import notificationRoutes from "./routes/notification.routes.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -74,6 +75,7 @@ app.use("/api/sessions", sessionRoutes);
 app.use("/api/credits", creditRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // 404 & ERROR HANDLERS
 app.use(notFound);

@@ -1,32 +1,80 @@
 // src/components/Navbar.jsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { getAuthStatus } from '../utils/auth';
+
+const API_BASE_URL = 'http://localhost:5000/api';
 
 export default function Navbar() {
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
   const [showNotifs, setShowNotifs] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [notifications, setNotifications] = useState([
-    { id: 1, text: "New swap request received from Sujit!", read: false },
-    { id: 2, text: "Debosmita accepted your skill swap!", read: false }
-  ]);
+  const [notifications, setNotifications] = useState([]);
 
   const { isAuthenticated, userType } = getAuthStatus();
 
-  const toggleNotifications = () => {
-    setShowNotifs(!showNotifs);
+  const fetchNotifications = async () => {
+    const token = localStorage.getItem('accessToken');
+    if (!token || !isAuthenticated) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/notifications`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (data.success && data.data?.notifications) {
+        setNotifications(data.data.notifications);
+      }
+    } catch (err) {
+      console.log('Notifications fallback active');
+    }
   };
 
-  const markAllRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, read: true })));
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchNotifications();
+    }
+  }, [isAuthenticated, location.pathname]);
+
+  const toggleNotifications = () => {
+    setShowNotifs(!showNotifs);
+    if (!showNotifs) {
+      fetchNotifications();
+    }
+  };
+
+  const markAllRead = async () => {
+    const token = localStorage.getItem('accessToken');
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+
+    if (token) {
+      try {
+        await fetch(`${API_BASE_URL}/notifications/mark-all-read`, {
+          method: 'PATCH',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } catch (err) {
+        console.error('Error marking notifications as read:', err);
+      }
+    }
   };
 
   const closeMobileMenu = () => {
     setMobileMenuOpen(false);
+  };
+
+  const getNotifIcon = (type) => {
+    switch (type) {
+      case 'credit_earned': return '🪙';
+      case 'credit_spent': return '🎓';
+      case 'swap_request': return '📩';
+      case 'swap_accepted': return '🎉';
+      case 'session_completed': return '✅';
+      default: return '✨';
+    }
   };
 
   return (
@@ -75,21 +123,35 @@ export default function Navbar() {
 
             {/* Floating Notifications Dropdown */}
             {showNotifs && (
-              <div className="notifications-panel glass-panel show" id="notifications-dropdown">
+              <div className="notifications-panel glass-panel show" id="notifications-dropdown" style={{ maxHeight: '420px', overflowY: 'auto' }}>
                 <div className="notif-header">
                   <h4>🔔 Notifications</h4>
-                  <span className="mark-read-btn" onClick={markAllRead}>Mark all read</span>
+                  {notifications.some(n => !n.read) && (
+                    <span className="mark-read-btn" onClick={markAllRead} style={{ cursor: 'pointer' }}>Mark all read</span>
+                  )}
                 </div>
                 <div className="notif-list">
-                  {notifications.map(n => (
-                    <div key={n.id} className={`notif-item ${!n.read ? 'unread' : ''}`}>
-                      <div className="notif-icon-circle">✨</div>
-                      <div className="notif-body">
-                        <p className="notif-text">{n.text}</p>
-                        <span className="notif-time">Just now</span>
-                      </div>
+                  {notifications.length > 0 ? (
+                    notifications.map(n => (
+                      <Link 
+                        key={n.id} 
+                        to={n.link || '/dashboard'} 
+                        className={`notif-item ${!n.read ? 'unread' : ''}`}
+                        onClick={() => setShowNotifs(false)}
+                        style={{ textDecoration: 'none', color: 'inherit' }}
+                      >
+                        <div className="notif-icon-circle">{getNotifIcon(n.type)}</div>
+                        <div className="notif-body">
+                          <p className="notif-text" style={{ fontWeight: n.read ? 500 : 700 }}>{n.text || n.title}</p>
+                          <span className="notif-time">{n.time || 'Recent'}</span>
+                        </div>
+                      </Link>
+                    ))
+                  ) : (
+                    <div style={{ padding: '1.75rem 1rem', textAlign: 'center', color: 'var(--slate-500)', fontSize: '0.86rem' }}>
+                      No new notifications right now.
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             )}
@@ -146,7 +208,7 @@ export default function Navbar() {
             </li>
             <li>
               <Link className="mobile-nav-link" to="/credits" onClick={closeMobileMenu}>
-                🪙 Credits & Wallet
+                🪙 Credits &amp; Wallet
               </Link>
             </li>
             <li>

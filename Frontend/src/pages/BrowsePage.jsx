@@ -9,53 +9,6 @@ import MemberCard from '../components/MemberCard';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
-const DEFAULT_PUBLIC_MEMBERS = [
-  {
-    id: 'm_1',
-    name: 'Aarav Sharma',
-    avatar: 'AS',
-    avatarBg: 'var(--violet-primary)',
-    title: 'Frontend React Developer & UI Specialist',
-    rating: '⭐ 5.0 (24 reviews)',
-    ratingValue: 5,
-    skills: ['React', 'JavaScript', 'CSS Grid', 'Tailwind'],
-    categories: ['Code & Data']
-  },
-  {
-    id: 'm_2',
-    name: 'Priya Verma',
-    avatar: 'PV',
-    avatarBg: 'var(--violet-primary)',
-    title: 'Figma UI/UX Designer & Prototyper',
-    rating: '⭐ 4.8 (18 reviews)',
-    ratingValue: 4.8,
-    skills: ['Figma', 'UI Design', 'Wireframing', 'User Research'],
-    categories: ['Design']
-  },
-  {
-    id: 'm_3',
-    name: 'Rohan Gupta',
-    avatar: 'RG',
-    avatarBg: 'var(--violet-primary)',
-    title: 'Full Stack Node.js & MongoDB Specialist',
-    rating: '⭐ 5.0 (30 reviews)',
-    ratingValue: 5,
-    skills: ['Node.js', 'Express', 'MongoDB', 'REST APIs'],
-    categories: ['Code & Data']
-  },
-  {
-    id: 'm_4',
-    name: 'Sneha Patel',
-    avatar: 'SP',
-    avatarBg: 'var(--violet-primary)',
-    title: 'Spoken English & Communication Coach',
-    rating: '⭐ 4.9 (15 reviews)',
-    ratingValue: 4.9,
-    skills: ['English', 'Public Speaking', 'Interview Prep'],
-    categories: ['Languages']
-  }
-];
-
 const getInitials = (name = '') => {
   const initials = name
     .trim()
@@ -70,11 +23,14 @@ const getInitials = (name = '') => {
 
 const getCategory = (skills = []) => {
   const text = skills.join(' ').toLowerCase();
-  if (text.includes('english') || text.includes('language') || text.includes('communication')) {
+  if (text.includes('english') || text.includes('language') || text.includes('communication') || text.includes('spanish') || text.includes('french')) {
     return 'Languages';
   }
-  if (text.includes('design') || text.includes('figma') || text.includes('photoshop') || text.includes('ui')) {
+  if (text.includes('design') || text.includes('figma') || text.includes('photoshop') || text.includes('ui') || text.includes('ux')) {
     return 'Design';
+  }
+  if (text.includes('music') || text.includes('guitar') || text.includes('piano') || text.includes('vocal')) {
+    return 'Music';
   }
   return 'Code & Data';
 };
@@ -104,18 +60,19 @@ export default function BrowsePage() {
 
         const data = await response.json();
 
-        if (response.ok && data?.data?.users?.length) {
+        if (response.ok && Array.isArray(data?.data?.users)) {
           const formattedMembers = data.data.users.map((user) => {
             const skills = user.skillsCanTeach || [];
             return {
               id: user._id || user.id,
-              name: user.name || 'SkillLoop Member',
-              avatar: user.avatar || getInitials(user.name),
+              name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'SkillLoop Member',
+              avatar: user.profilePhotoUrl || getInitials(user.name),
+              profilePhotoUrl: user.profilePhotoUrl || '',
               avatarBg: 'var(--violet-primary)',
               title: user.headline || user.bio || 'SkillLoop Community Member 🚀',
-              rating: `⭐ ${user.rating || '5.0'} (12 reviews)`,
+              rating: `⭐ ${(user.rating || 5.0).toFixed(1)} (${user.ratingCount || 0} reviews)`,
               ratingValue: user.rating || 5,
-              skills: skills.length ? skills : ['React', 'JavaScript'],
+              skills: skills.length ? skills : ['General Mentorship'],
               categories: [getCategory(skills)],
               username: user.username || ''
             };
@@ -123,11 +80,11 @@ export default function BrowsePage() {
 
           setMembers(formattedMembers);
         } else {
-          setMembers(DEFAULT_PUBLIC_MEMBERS);
+          setMembers([]);
         }
       } catch (err) {
-        console.log('Using default public members fallback:', err);
-        setMembers(DEFAULT_PUBLIC_MEMBERS);
+        console.log('Error fetching live members from database:', err);
+        setMembers([]);
       } finally {
         setLoading(false);
       }
@@ -178,45 +135,44 @@ export default function BrowsePage() {
               <div>
                 <h2>Browse the loop</h2>
                 <p>
-                  {loading
-                    ? 'Finding members...'
-                    : `${members.length} members ready to trade knowledge.`}
+                  {members.length} {members.length === 1 ? 'member' : 'members'} ready to trade knowledge.
                 </p>
               </div>
             </div>
 
-            <BrowseSearch
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              selectedCategory={selectedCategory}
-              setSelectedCategory={setSelectedCategory}
-            />
-
-            {loading && (
-              <div className="glass-panel empty-browse-state">
-                Loading live members...
-              </div>
-            )}
-
-            {!loading && error && (
+            {error && (
               <div className="glass-panel onboarding-error-banner">
                 {error}
               </div>
             )}
 
-            {!loading && !error && filteredMembers.length === 0 && (
-              <div className="glass-panel empty-browse-state">
-                No members found matching your search.
-              </div>
-            )}
+            <BrowseSearch
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              selectedCategory={selectedCategory}
+              onCategorySelect={setSelectedCategory}
+            />
 
-            {!loading && !error && filteredMembers.length > 0 && (
-              <div className="browse-grid">
-                {filteredMembers.map((member) => (
+            <div className="browse-cards-grid">
+              {loading ? (
+                <div className="glass-panel empty-requests-card" style={{ gridColumn: '1 / -1', padding: '3rem 1rem', textAlign: 'center' }}>
+                  <span style={{ fontSize: '2rem', display: 'block', marginBottom: '0.5rem' }}>⏳</span>
+                  <p style={{ margin: 0, fontWeight: 600, color: 'var(--slate-600)' }}>Loading live community members from MongoDB...</p>
+                </div>
+              ) : filteredMembers.length > 0 ? (
+                filteredMembers.map((member) => (
                   <MemberCard key={member.id} member={member} />
-                ))}
-              </div>
-            )}
+                ))
+              ) : (
+                <div className="glass-panel empty-requests-card" style={{ gridColumn: '1 / -1', padding: '3.5rem 1.5rem', textAlign: 'center', borderRadius: '24px' }}>
+                  <span style={{ fontSize: '3rem', display: 'block', marginBottom: '0.75rem' }}>🔍</span>
+                  <h3 style={{ margin: '0 0 0.5rem 0', fontWeight: 700, color: 'var(--slate-800)' }}>No Members Found</h3>
+                  <p style={{ color: 'var(--slate-500)', fontSize: '0.92rem', maxWidth: '420px', margin: '0 auto', lineHeight: '1.6' }}>
+                    {searchQuery ? `No members matched "${searchQuery}". Try a different skill search.` : 'The database is currently clean. Be the first to register and teach a skill to the community!'}
+                  </p>
+                </div>
+              )}
+            </div>
           </main>
         </div>
 

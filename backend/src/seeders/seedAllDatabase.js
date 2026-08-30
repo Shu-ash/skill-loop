@@ -1,38 +1,32 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
-import dotenv from "dotenv";
-
 import User from "../models/user.js";
 import Session from "../models/session.js";
-import SwapRequest from "../models/swapRequest.js";
 import Category from "../models/category.js";
-import Report from "../models/report.js";
+import SwapRequest from "../models/swapRequest.js";
 import CreditLedger from "../models/creditLedger.js";
+import Report from "../models/report.js";
+import { connectDB } from "../config/db.js";
 
-dotenv.config();
-
-const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/skill-loop";
-
-const seedAll = async () => {
+export const seedAll = async () => {
   try {
-    console.log("🟢 Connecting to MongoDB at:", MONGO_URI);
-    await mongoose.connect(MONGO_URI);
-    console.log("🟢 MongoDB connected successfully!");
+    console.log("🟢 Connecting to MongoDB...");
+    await connectDB();
 
     console.log("🌱 Cleaning existing collections...");
     await Promise.all([
       User.deleteMany({}),
       Session.deleteMany({}),
-      SwapRequest.deleteMany({}),
       Category.deleteMany({}),
-      Report.deleteMany({}),
-      CreditLedger.deleteMany({})
+      SwapRequest.deleteMany({}),
+      CreditLedger.deleteMany({}),
+      Report.deleteMany({})
     ]);
 
     const hashedPassword = await bcrypt.hash("password123", 10);
     const adminHashedPassword = await bcrypt.hash("admin123", 10);
 
-    console.log("👥 Creating Super Admin and Members...");
+    console.log("👥 Creating Super Admin and Members (including Harsh Vishwakarma)...");
 
     // 1. Super Admin
     await User.create({
@@ -54,8 +48,26 @@ const seedAll = async () => {
       onboardingCompleted: true
     });
 
-    // 2. Realistic Members
+    // 2. Realistic Members (including Harsh Vishwakarma)
     const membersData = [
+      {
+        firstName: "Harsh",
+        lastName: "Vishwakarma",
+        name: "Harsh Vishwakarma",
+        username: "harsh_developer",
+        email: "harsh@gmail.com",
+        password: hashedPassword,
+        role: "user",
+        status: "active",
+        credits: 10,
+        bio: "Full Stack Developer & SkillLoop Community Member 🚀",
+        headline: "React & Node.js Engineer 💻",
+        skillsCanTeach: ["React JS", "Node.js", "MongoDB", "JavaScript"],
+        skillsWantToLearn: ["UI/UX Design", "Python"],
+        rating: 5.0,
+        ratingCount: 15,
+        onboardingCompleted: true
+      },
       {
         firstName: "Aarav",
         lastName: "Sharma",
@@ -102,7 +114,7 @@ const seedAll = async () => {
         role: "user",
         status: "active",
         credits: 15,
-        bio: "Backend architect building scalable microservices with Node.js, Express, MongoDB, and Redis caching.",
+        bio: "Backend Architect passionate about building scalable REST APIs, microservices, and database optimization.",
         headline: "Full Stack Node.js & MongoDB Specialist 💻",
         skillsCanTeach: ["Node.js", "Express", "MongoDB", "REST APIs"],
         skillsWantToLearn: ["Docker", "Kubernetes"],
@@ -114,16 +126,16 @@ const seedAll = async () => {
         firstName: "Sneha",
         lastName: "Patel",
         name: "Sneha Patel",
-        username: "sneha_speak",
+        username: "sneha_lingo",
         email: "sneha@gmail.com",
         password: hashedPassword,
         role: "user",
         status: "active",
-        credits: 9,
-        bio: "Certified English trainer focusing on professional fluency, corporate presentation skills, and job interview mastery.",
+        credits: 10,
+        bio: "Certified ESL Coach helping professionals gain fluency, master business English, and excel in interviews.",
         headline: "Spoken English & Communication Coach 🗣️",
         skillsCanTeach: ["English", "Public Speaking", "Interview Prep", "Pronunciation"],
-        skillsWantToLearn: ["Figma", "Canva Design"],
+        skillsWantToLearn: ["Spanish", "French"],
         rating: 4.9,
         ratingCount: 15,
         onboardingCompleted: true
@@ -138,12 +150,12 @@ const seedAll = async () => {
         role: "user",
         status: "active",
         credits: 14,
-        bio: "Data scientist working with PyTorch, Pandas, and LLM fine-tuning for predictive analysis.",
-        headline: "Python & AI Data Scientist 🤖",
+        bio: "Data Scientist exploring LLMs, computer vision, and neural network fine-tuning with Python.",
+        headline: "AI & Machine Learning Researcher 🤖",
         skillsCanTeach: ["Python", "Machine Learning", "Data Science", "Pandas"],
-        skillsWantToLearn: ["JavaScript", "React"],
-        rating: 5.0,
-        ratingCount: 22,
+        skillsWantToLearn: ["React JS", "Web Development"],
+        rating: 4.8,
+        ratingCount: 12,
         onboardingCompleted: true
       },
       {
@@ -155,143 +167,151 @@ const seedAll = async () => {
         password: hashedPassword,
         role: "user",
         status: "active",
-        credits: 7,
-        bio: "Digital strategist helping creators and startups rank #1 on Google with high-converting copy.",
-        headline: "SEO & Growth Marketing Strategist 📈",
+        credits: 6,
+        bio: "Growth marketer helping SaaS startups scale user acquisition via SEO, funnel optimization, and Google Ads.",
+        headline: "Growth Marketing & Technical SEO Specialist 📈",
         skillsCanTeach: ["SEO", "Growth Marketing", "Copywriting", "Google Ads"],
-        skillsWantToLearn: ["Python Automation"],
-        rating: 4.8,
-        ratingCount: 14,
+        skillsWantToLearn: ["Python", "Data Analysis"],
+        rating: 4.7,
+        ratingCount: 9,
         onboardingCompleted: true
       }
     ];
 
     const users = await User.insertMany(membersData);
-    console.log(`✅ Seeded ${users.length} member profiles!`);
+    console.log(`✅ Seeded ${users.length} member profiles into MongoDB (including Harsh Vishwakarma)!`);
 
-    // 3. Categories
+    const harshUser = users[0];
+    const aaravUser = users[1];
+    const priyaUser = users[2];
+    const rohanUser = users[3];
+
+    // 3. Skill Categories
     console.log("⚡ Seeding Skill Categories...");
-    const categoriesData = [
-      { name: "Code & Data", icon: "💻", description: "Frontend, Backend, Databases, Algorithms", memberCount: 140, status: "Active" },
-      { name: "Design & UI", icon: "🎨", description: "UI/UX, Figma, Illustrations, 3D Assets", memberCount: 95, status: "Active" },
-      { name: "Languages", icon: "🗣️", description: "English, Spanish, French, Public Speaking", memberCount: 80, status: "Active" },
-      { name: "AI & Data Science", icon: "🤖", description: "Machine Learning, LLMs, Deep Learning, Pandas", memberCount: 110, status: "Active" },
-      { name: "Marketing & Growth", icon: "📈", description: "SEO, Copywriting, Social Ads, Funnels", memberCount: 65, status: "Active" },
-      { name: "Music & Audio", icon: "🎵", description: "Guitar, Piano, Mixing, Vocal Training", memberCount: 45, status: "Active" }
-    ];
-    await Category.insertMany(categoriesData);
+    await Category.insertMany([
+      { name: "Code & Data", icon: "💻", count: 140, status: "Active" },
+      { name: "Design & UI", icon: "🎨", count: 95, status: "Active" },
+      { name: "Languages", icon: "🗣️", count: 80, status: "Active" },
+      { name: "AI & Data Science", icon: "🤖", count: 110, status: "Active" },
+      { name: "Marketing & Growth", icon: "📈", count: 65, status: "Active" },
+      { name: "Music & Audio", icon: "🎵", count: 45, status: "Active" }
+    ]);
 
     // 4. Swap Requests
     console.log("📩 Seeding Swap Requests...");
-    const req1 = await SwapRequest.create({
-      sender: users[0]._id, // Aarav
-      receiver: users[1]._id, // Priya
-      skillWant: "Figma",
-      message: "Hey Priya, loved your Figma designs! Would love to swap React lessons for Figma tips.",
-      status: "accepted"
-    });
+    const swapRequests = await SwapRequest.insertMany([
+      {
+        sender: priyaUser._id,
+        receiver: harshUser._id,
+        skillOffer: "Figma UI Design",
+        skillWant: "React JS",
+        skillOffered: "Figma UI Design",
+        skillRequested: "React JS",
+        message: "Hey Harsh! Loved your profile. Would love to learn React in exchange for Figma UI design!",
+        status: "pending"
+      },
+      {
+        sender: aaravUser._id,
+        receiver: rohanUser._id,
+        skillOffer: "React",
+        skillWant: "Node.js",
+        skillOffered: "React",
+        skillRequested: "Node.js",
+        message: "Hi Rohan, interested in learning Node.js REST APIs from you!",
+        status: "accepted"
+      },
+      {
+        sender: rohanUser._id,
+        receiver: priyaUser._id,
+        skillOffer: "MongoDB Indexing",
+        skillWant: "UI Design",
+        skillOffered: "MongoDB Indexing",
+        skillRequested: "UI Design",
+        message: "Hi Priya, let's swap backend indexing for UI design!",
+        status: "accepted"
+      }
+    ]);
 
-    const req2 = await SwapRequest.create({
-      sender: users[1]._id, // Priya
-      receiver: users[0]._id, // Aarav
-      skillWant: "React",
-      message: "Hi Aarav, excited to learn React state management!",
-      status: "accepted"
-    });
-
-    const req3 = await SwapRequest.create({
-      sender: users[2]._id, // Rohan
-      receiver: users[4]._id, // Ananya
-      skillWant: "Python",
-      message: "Hi Ananya, let's swap Node.js for Python data science basics.",
-      status: "accepted"
-    });
-
-    const req4 = await SwapRequest.create({
-      sender: users[2]._id, // Rohan
-      receiver: users[3]._id, // Sneha
-      skillWant: "Public Speaking",
-      message: "Hi Sneha, looking to improve my tech conference talk delivery.",
-      status: "pending"
-    });
-
-    // 5. Sessions
+    // 5. Sessions & Meet Logs
     console.log("🎥 Seeding Sessions & Meet Logs...");
-    const session1 = await Session.create({
-      swapRequest: req1._id,
-      teacher: users[0]._id,
-      learner: users[1]._id,
-      skill: "React Components & State",
-      mode: "online",
-      meetLink: "https://meet.google.com/abc-defg-hij",
-      duration: 60,
-      status: "completed",
-      scheduledAt: new Date(Date.now() - 86400000 * 2),
-      completedAt: new Date(Date.now() - 86400000 * 2 + 3600000)
-    });
-
-    await Session.create({
-      swapRequest: req2._id,
-      teacher: users[1]._id,
-      learner: users[0]._id,
-      skill: "Figma Auto-Layout & Design Systems",
-      mode: "online",
-      meetLink: "https://meet.google.com/xyz-uvwx-rst",
-      duration: 45,
-      status: "scheduled",
-      scheduledAt: new Date(Date.now() + 86400000 * 1)
-    });
-
-    const session3 = await Session.create({
-      swapRequest: req3._id,
-      teacher: users[2]._id,
-      learner: users[4]._id,
-      skill: "MongoDB Indexing",
-      mode: "online",
-      meetLink: "https://meet.google.com/dispute-test",
-      duration: 45,
-      status: "disputed",
-      scheduledAt: new Date(Date.now() - 86400000 * 3),
-      disputeDetails: { reason: "Teacher arrived 30 mins late without notice" }
-    });
+    await Session.insertMany([
+      {
+        swapRequest: swapRequests[0]._id,
+        teacher: harshUser._id,
+        learner: priyaUser._id,
+        skill: "React JS",
+        topic: "React Components & State",
+        status: "completed",
+        scheduledAt: new Date(Date.now() - 86400000 * 2),
+        duration: 60,
+        meetLink: "https://meet.google.com/abc-defg-hij"
+      },
+      {
+        swapRequest: swapRequests[1]._id,
+        teacher: aaravUser._id,
+        learner: harshUser._id,
+        skill: "Tailwind CSS",
+        topic: "Tailwind CSS Layouts",
+        status: "scheduled",
+        scheduledAt: new Date(Date.now() + 86400000),
+        duration: 45,
+        meetLink: "https://meet.google.com/xyz-uvwx-rst"
+      },
+      {
+        swapRequest: swapRequests[2]._id,
+        teacher: rohanUser._id,
+        learner: priyaUser._id,
+        skill: "MongoDB Indexing",
+        topic: "MongoDB Indexing Optimization",
+        status: "disputed",
+        scheduledAt: new Date(Date.now() - 86400000 * 5),
+        duration: 45,
+        meetLink: "https://meet.google.com/dispute-test"
+      }
+    ]);
 
     // 6. Credit Ledger
     console.log("🪙 Seeding Credit Ledger...");
-    await CreditLedger.create([
+    await CreditLedger.insertMany([
       {
-        sender: users[1]._id,
-        receiver: users[0]._id,
-        session: session1._id,
+        sender: priyaUser._id,
+        receiver: harshUser._id,
         amount: 1,
-        transactionType: "session_reward",
-        description: "Completed React Components session with Aarav Sharma"
+        type: "earned",
+        description: "Taught React Components & State to Priya Verma"
       },
       {
-        sender: users[4]._id,
-        receiver: users[2]._id,
-        session: session3._id,
+        sender: harshUser._id,
+        receiver: priyaUser._id,
         amount: 1,
-        transactionType: "session_reward",
-        description: "Completed Node.js REST API session with Rohan Gupta"
+        type: "spent",
+        description: "Learned React Components from Harsh Vishwakarma"
       }
     ]);
 
     // 7. Moderation Reports
     console.log("🚨 Seeding Moderation Queue...");
-    await Report.create({
-      reporter: users[3]._id,
-      reportedUser: users[5]._id,
-      reason: "Sent unsolicited marketing spam links during introduction",
-      status: "pending"
-    });
+    await Report.insertMany([
+      {
+        reporter: priyaUser._id,
+        reportedUser: users[6]._id,
+        reason: "Sent unsolicited marketing spam links during introduction",
+        status: "pending"
+      }
+    ]);
 
-    console.log("🎉 FULL DATABASE SEEDING COMPLETE! All live MongoDB data is ready!");
-    process.exit(0);
-
+    console.log("🎉 FULL DATABASE SEEDING COMPLETE! Harsh Vishwakarma & all live MongoDB data is ready!");
+    if (process.argv[1]?.includes("seedAllDatabase.js")) {
+      process.exit(0);
+    }
   } catch (error) {
     console.error("❌ Seeding Error:", error);
-    process.exit(1);
+    if (process.argv[1]?.includes("seedAllDatabase.js")) {
+      process.exit(1);
+    }
   }
 };
 
-seedAll();
+if (process.argv[1]?.includes("seedAllDatabase.js")) {
+  seedAll();
+}

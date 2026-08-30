@@ -169,7 +169,7 @@ export const getUsers = async (req, res, next) => {
     const pageNumber = Math.max(parseInt(page, 10) || 1, 1);
     const limitNumber = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 50);
 
-    const filter = { status: { $ne: "banned" } };
+    const filter = { status: { $ne: "banned" }, role: { $nin: ["superadmin", "admin"] } };
     if (req.user?._id) {
       filter._id = { $ne: req.user._id };
     }
@@ -238,7 +238,7 @@ export const getUsers = async (req, res, next) => {
  */
 export const getLeaderboard = async (req, res, next) => {
   try {
-    const users = await User.find({ status: { $ne: "banned" } })
+    const users = await User.find({ status: { $ne: "banned" }, role: { $nin: ["superadmin", "admin"] } })
       .select("name firstName lastName username rating credits skillsCanTeach profilePhotoUrl")
       .sort({ rating: -1, credits: -1 })
       .limit(10)

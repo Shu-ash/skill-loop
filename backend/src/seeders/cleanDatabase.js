@@ -8,25 +8,26 @@ import SwapRequest from "../models/swapRequest.js";
 import Category from "../models/category.js";
 import Report from "../models/report.js";
 import CreditLedger from "../models/creditLedger.js";
+import Notification from "../models/notification.js";
+import { connectDB } from "../config/db.js";
 
 dotenv.config();
 
-const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/skill-loop";
-
 const cleanForProduction = async () => {
   try {
-    console.log("🟢 Connecting to MongoDB at:", MONGO_URI);
-    await mongoose.connect(MONGO_URI);
+    console.log("🟢 Connecting to MongoDB...");
+    await connectDB();
     console.log("🟢 MongoDB connected successfully!");
 
-    console.log("🧹 Clearing all demo users, sessions, swap requests, credit transactions & reports...");
+    console.log("🧹 Clearing all demo users, sessions, swap requests, credit transactions, notifications & reports...");
     await Promise.all([
       User.deleteMany({}),
       Session.deleteMany({}),
       SwapRequest.deleteMany({}),
       Category.deleteMany({}),
       Report.deleteMany({}),
-      CreditLedger.deleteMany({})
+      CreditLedger.deleteMany({}),
+      Notification.deleteMany({})
     ]);
 
     const adminHashedPassword = await bcrypt.hash("admin123", 10);
@@ -53,12 +54,12 @@ const cleanForProduction = async () => {
 
     console.log("⚡ Seeding Clean Default Skill Categories...");
     const defaultCategories = [
-      { name: "Code & Data", icon: "💻", description: "Frontend, Backend, Databases, Algorithms", memberCount: 0, status: "Active" },
-      { name: "Design & UI", icon: "🎨", description: "UI/UX, Figma, Illustrations, 3D Assets", memberCount: 0, status: "Active" },
-      { name: "Languages", icon: "🗣️", description: "English, Spanish, French, Public Speaking", memberCount: 0, status: "Active" },
-      { name: "AI & Data Science", icon: "🤖", description: "Machine Learning, LLMs, Deep Learning, Pandas", memberCount: 0, status: "Active" },
-      { name: "Marketing & Growth", icon: "📈", description: "SEO, Copywriting, Social Ads, Funnels", memberCount: 0, status: "Active" },
-      { name: "Music & Audio", icon: "🎵", description: "Guitar, Piano, Mixing, Vocal Training", memberCount: 0, status: "Active" }
+      { name: "Code & Data", icon: "💻", description: "Frontend, Backend, Databases, Algorithms", count: 0, status: "Active" },
+      { name: "Design & UI", icon: "🎨", description: "UI/UX, Figma, Illustrations, 3D Assets", count: 0, status: "Active" },
+      { name: "Languages", icon: "🗣️", description: "English, Spanish, French, Public Speaking", count: 0, status: "Active" },
+      { name: "AI & Data Science", icon: "🤖", description: "Machine Learning, LLMs, Deep Learning, Pandas", count: 0, status: "Active" },
+      { name: "Marketing & Growth", icon: "📈", description: "SEO, Copywriting, Social Ads, Funnels", count: 0, status: "Active" },
+      { name: "Music & Audio", icon: "🎵", description: "Guitar, Piano, Mixing, Vocal Training", count: 0, status: "Active" }
     ];
     await Category.insertMany(defaultCategories);
 

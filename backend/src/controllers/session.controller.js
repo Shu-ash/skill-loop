@@ -1,4 +1,7 @@
 import Session from "../models/session.js";
+import User from "../models/user.js";
+import CreditLedger from "../models/creditLedger.js";
+import Notification from "../models/notification.js";
 
 /**
  * GET /api/sessions
@@ -394,41 +397,8 @@ export const startSession = async (
             });
         }
 
-        // =========================
-        // START TIME CHECK
-        // =========================
-
-        const now = new Date();
-
-        const scheduledTime =
-            new Date(
-                session.scheduledAt
-            );
-
-        /*
-         * Allow starting up to 15 minutes
-         * before the scheduled time.
-         */
-        const earliestStart =
-            new Date(
-                scheduledTime.getTime() -
-                15 * 60 * 1000
-            );
-
-        if (now < earliestStart) {
-            return res.status(400).json({
-                success: false,
-                message:
-                    `Session can be started 15 minutes before the scheduled time`
-            });
-        }
-
-        // =========================
-        // START
-        // =========================
-
-        session.status =
-            "in_progress";
+        session.status = "in_progress";
+        await session.save();
 
         await session.save();
 
@@ -520,43 +490,78 @@ export const completeSession =
             }
 
             if (
-                session.status !==
-                "in_progress"
+                session.status !== "in_progress" &&
+                session.status !== "scheduled"
             ) {
                 return res.status(400).json({
                     success: false,
-                    message:
-                        "Session must be in progress before it can be completed"
+                    message: "Session must be active before it can be completed"
                 });
             }
 
-            session.status =
-                "completed";
-
-            session.completedAt =
-                new Date();
-
+            session.status = "completed";
+            session.completedAt = new Date();
             await session.save();
 
             await session.populate([
                 {
                     path: "teacher",
-                    select:
-                        "firstName lastName name username profilePhotoUrl headline rating"
+                    select: "firstName lastName name username profilePhotoUrl headline rating credits"
                 },
                 {
                     path: "learner",
-                    select:
-                        "firstName lastName name username profilePhotoUrl headline rating"
+                    select: "firstName lastName name username profilePhotoUrl headline rating credits"
+                }
+            ]);
+
+            const teacherName = session.teacher?.name || `${session.teacher?.firstName || ''} ${session.teacher?.lastName || ''}`.trim() || 'Teacher';
+            const learnerName = session.learner?.name || `${session.learner?.firstName || ''} ${session.learner?.lastName || ''}`.trim() || 'Learner';
+
+            // 1. Credit Economy: Teacher earns +1, Learner spends -1
+            await Promise.all([
+                User.findByIdAndUpdate(session.teacher._id, { $inc: { credits: 1, ratingCount: 1 } }),
+                User.findByIdAndUpdate(session.learner._id, { $inc: { credits: -1 } })
+            ]);
+
+            // 2. Audit Trail: Create CreditLedger records
+            await CreditLedger.insertMany([
+                {
+                    sender: session.learner._id,
+                    receiver: session.teacher._id,
+                    amount: 1,
+                    type: "earned",
+                    description: `Taught ${session.skill} to ${learnerName}`
+                },
+                {
+                    sender: session.learner._id,
+                    receiver: session.teacher._id,
+                    amount: 1,
+                    type: "spent",
+                    description: `Learned ${session.skill} from ${teacherName}`
+                }
+            ]);
+
+            // 3. In-App Notifications: Live notifications for both parties
+            await Notification.insertMany([
+                {
+                    user: session.teacher._id,
+                    title: "🎉 +1 Skill Credit Earned!",
+                    text: `Session completed! You earned +1 credit for teaching ${session.skill} to ${learnerName}.`,
+                    type: "credit_earned",
+                    link: "/credits"
+                },
+                {
+                    user: session.learner._id,
+                    title: "🎓 Class Completed (-1 Credit)",
+                    text: `Completed ${session.skill} class with ${teacherName}. 1 credit deducted.`,
+                    type: "credit_spent",
+                    link: "/credits"
                 }
             ]);
 
             return res.status(200).json({
                 success: true,
-
-                message:
-                    "Session completed successfully",
-
+                message: "Session completed successfully! Credits and ledger updated.",
                 data: {
                     session
                 }

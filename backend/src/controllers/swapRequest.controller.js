@@ -1,5 +1,7 @@
 import SwapRequest from "../models/swapRequest.js";
 import User from "../models/user.js";
+import Notification from "../models/notification.js";
+import Session from "../models/session.js";
 
 /**
  * POST /api/requests
@@ -68,6 +70,16 @@ export const createSwapRequest = async (req, res, next) => {
             receiver: receiverId,
             skillWant: skillWant.trim(),
             message: message?.trim() || ""
+        });
+
+        // Trigger Notification for receiver
+        const senderName = req.user.name || `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim() || 'A member';
+        await Notification.create({
+            user: receiverId,
+            title: "📩 New Skill Swap Request!",
+            text: `${senderName} wants to swap skills: "${skillWant.trim()}".`,
+            type: "swap_request",
+            link: "/requests"
         });
 
         return res.status(201).json({
@@ -179,14 +191,38 @@ export const acceptSwapRequest = async (
         }
 
         request.status = "accepted";
-
         await request.save();
+
+        // Automatically create associated Session in MongoDB
+        let session = await Session.findOne({ swapRequest: request._id });
+        if (!session) {
+            session = await Session.create({
+                swapRequest: request._id,
+                teacher: request.receiver,
+                learner: request.sender,
+                skill: request.skillWant || "Skill Swap",
+                status: "scheduled",
+                scheduledAt: new Date(Date.now() + 86400000),
+                duration: 45,
+                meetLink: `https://meet.google.com/skillloop-${request._id.toString().slice(-6)}`
+            });
+        }
+
+        const receiverName = req.user.name || `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim() || 'A member';
+        await Notification.create({
+            user: request.sender,
+            title: "🎉 Swap Request Accepted!",
+            text: `${receiverName} accepted your skill swap request! A new session has been scheduled.`,
+            type: "swap_accepted",
+            link: "/sessions"
+        });
 
         return res.status(200).json({
             success: true,
-            message: "Swap request accepted",
+            message: "Swap request accepted and session scheduled",
             data: {
-                request
+                request,
+                session
             }
         });
 
