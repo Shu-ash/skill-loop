@@ -37,10 +37,11 @@ export default function AdminDashboardPage() {
         const usersData = await usersRes.json();
 
         if (metricsData.success && metricsData.data) {
+          const d = metricsData.data;
           setMetrics([
-            { label: 'Total Users', value: String(metricsData.data.totalUsers || 7), change: '+100% live database', icon: '👥' },
-            { label: 'Total Sessions', value: String(metricsData.data.totalSessions || 3), change: 'Live session audit', icon: '🎥' },
-            { label: 'Total Skills', value: String(metricsData.data.totalSkills || 25), change: 'Active trading', icon: '⚡' }
+            { label: 'Total Users', value: String(d.totalUsers ?? 0), change: `${d.totalUsers ?? 0} registered members`, icon: '👥' },
+            { label: 'Total Sessions', value: String(d.totalSessions ?? 0), change: `${d.activeSessions ?? 0} active / ${d.completedSessions ?? 0} completed`, icon: '🎥' },
+            { label: 'Total Skills', value: String(d.totalSkills ?? 0), change: `${d.totalCategories ?? 0} active categories`, icon: '⚡' }
           ]);
         }
 

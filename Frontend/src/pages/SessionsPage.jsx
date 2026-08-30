@@ -123,6 +123,12 @@ export default function SessionsPage() {
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 401 || data.message?.toLowerCase().includes('token')) {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('skillloop_user');
+          navigate('/login');
+          return;
+        }
         throw new Error(data.message || 'Failed to load sessions');
       }
 
@@ -196,6 +202,12 @@ export default function SessionsPage() {
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('skillloop_user');
+          navigate('/login');
+          return;
+        }
         throw new Error(data.message || 'Failed to start session');
       }
 
@@ -258,6 +270,12 @@ export default function SessionsPage() {
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('skillloop_user');
+          navigate('/login');
+          return;
+        }
         throw new Error(data.message || 'Failed to schedule session');
       }
 
@@ -297,6 +315,12 @@ export default function SessionsPage() {
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('skillloop_user');
+          navigate('/login');
+          return;
+        }
         throw new Error(data.message || 'Failed to complete session');
       }
 
@@ -339,6 +363,12 @@ export default function SessionsPage() {
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('skillloop_user');
+          navigate('/login');
+          return;
+        }
         throw new Error(data.message || 'Failed to cancel session');
       }
 

@@ -1,12 +1,13 @@
 // src/components/ProfileHeaderCard.jsx
 import React, { useRef } from 'react';
 
-// ProfileHeaderCard: Shows cover banner, user avatar, display name, handle, rating, with local file pickers
+// ProfileHeaderCard: Shows cover banner, user avatar, display name, handle, rating, with local file pickers & Change Password
 export default function ProfileHeaderCard({ 
   user, 
   onCoverFileSelected, 
   onAvatarFileSelected, 
-  onEditProfile 
+  onEditProfile,
+  onChangePassword
 }) {
   const coverInputRef = useRef(null);
   const avatarInputRef = useRef(null);
@@ -77,6 +78,16 @@ export default function ProfileHeaderCard({
           >
             📷 Change photo
           </button>
+          {onChangePassword && (
+            <button 
+              type="button" 
+              className="btn btn-secondary btn-pill-sm" 
+              onClick={onChangePassword}
+              title="Change your account login password"
+            >
+              🔒 Password
+            </button>
+          )}
           <button 
             type="button" 
             className="btn btn-primary btn-pill-sm edit-profile-btn" 
@@ -93,30 +104,24 @@ export default function ProfileHeaderCard({
         <div className="profile-avatar-wrapper">
           <div 
             className="profile-avatar-large"
+            style={hasCustomAvatar ? {
+              backgroundImage: `url(${user.profilePhotoUrl || user.avatarUrl})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
+            } : {}}
             onClick={() => avatarInputRef.current?.click()}
             title="Click to change profile picture"
           >
-            {hasCustomAvatar ? (
-              <img 
-                src={user.profilePhotoUrl || user.avatarUrl} 
-                alt={user.name} 
-                className="profile-avatar-img"
-              />
-            ) : (
-              initials
-            )}
-            
+            {!hasCustomAvatar && initials}
             <div className="avatar-hover-overlay">
-              <span>📷 Change</span>
+              <span>📷</span>
             </div>
           </div>
-
-          <button
+          <button 
             type="button"
-            className="avatar-camera-badge"
+            className="avatar-edit-badge-btn"
             onClick={() => avatarInputRef.current?.click()}
-            title="Upload new profile photo"
-            aria-label="Upload new profile photo"
+            title="Upload photo"
           >
             📷
           </button>
@@ -125,7 +130,7 @@ export default function ProfileHeaderCard({
         <div className="profile-text-meta">
           <div className="name-rating-line">
             <h2>{user.name}</h2>
-            <span className="profile-rating-badge">⭐ {user.rating || '4.9'} (24 reviews)</span>
+            <span className="profile-rating-badge">⭐ {Number(user.rating || 0).toFixed(1)} ({user.ratingCount || 0} reviews)</span>
           </div>
           <p className="profile-username">{user.username || '@user'}</p>
           <p className="profile-headline">{user.headline || 'SkillLoop Community Member 🚀'}</p>

@@ -1,13 +1,8 @@
 // src/admin/components/AdminCreditsLedgerTable.jsx
 import React from 'react';
 
-export default function AdminCreditsLedgerTable({ transactions, title = "System Credit Transactions Audit", onViewDetails, loading = false }) {
-  const defaultTransactions = [
-    { id: 'tx_901', displayId: '#TX-000901', sender: 'Priya Verma', receiver: 'Aarav Sharma', amount: '+1 Credit', date: 'Today', description: 'React Components session reward' },
-    { id: 'tx_902', displayId: '#TX-000902', sender: 'Ananya Iyer', receiver: 'Rohan Gupta', amount: '+1 Credit', date: 'Yesterday', description: 'Node.js REST API session reward' }
-  ];
-
-  const list = (transactions && transactions.length > 0) ? transactions : (!loading && transactions !== undefined && transactions.length === 0 ? [] : defaultTransactions);
+export default function AdminCreditsLedgerTable({ transactions = [], title = "System Credit Transactions Audit", onViewDetails, loading = false }) {
+  const list = Array.isArray(transactions) ? transactions : [];
 
   return (
     <div className="admin-table-card">
@@ -23,8 +18,10 @@ export default function AdminCreditsLedgerTable({ transactions, title = "System 
           Loading credit audit ledger from MongoDB...
         </div>
       ) : list.length === 0 ? (
-        <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--slate-500, #64748b)' }}>
-          No matching transactions found.
+        <div style={{ padding: '3rem 1.5rem', textAlign: 'center', color: 'var(--slate-500, #64748b)' }}>
+          <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '0.5rem' }}>🪙</span>
+          <h4 style={{ margin: '0 0 0.4rem 0', fontWeight: 700, color: 'var(--slate-800)' }}>No Credit Transactions Yet</h4>
+          <p style={{ margin: 0, fontSize: '0.9rem' }}>Real member credit transactions will be logged here when sessions are completed.</p>
         </div>
       ) : (
         <table className="admin-data-table">
@@ -41,16 +38,16 @@ export default function AdminCreditsLedgerTable({ transactions, title = "System 
           </thead>
           <tbody>
             {list.map((tx) => {
-              const formattedId = tx.displayId || `#TX-${(tx.id || '').toString().slice(-6).toUpperCase()}`;
+              const formattedId = tx.displayId || `#TX-${(tx.id || tx._id || '').toString().slice(-6).toUpperCase()}`;
               return (
-                <tr key={tx.id}>
+                <tr key={tx.id || tx._id}>
                   <td style={{ whiteSpace: 'nowrap' }}>
-                    <span className="user-id-badge" title={`Full Transaction ID: ${tx.id}`}>
+                    <span className="user-id-badge" title={`Full Transaction ID: ${tx.id || tx._id}`}>
                       {formattedId}
                     </span>
                   </td>
-                  <td style={{ whiteSpace: 'nowrap' }}><strong>{tx.sender}</strong></td>
-                  <td style={{ whiteSpace: 'nowrap' }}><strong>{tx.receiver}</strong></td>
+                  <td style={{ whiteSpace: 'nowrap' }}><strong>{tx.sender || 'Member'}</strong></td>
+                  <td style={{ whiteSpace: 'nowrap' }}><strong>{tx.receiver || 'Member'}</strong></td>
                   <td style={{ whiteSpace: 'nowrap' }}>
                     <span className={`pill ${tx.amount?.startsWith('+') ? 'pill-earned' : 'pill-spent'}`}>
                       {tx.amount || '+1 Credit'}

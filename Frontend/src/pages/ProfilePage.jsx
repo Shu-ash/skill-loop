@@ -9,25 +9,52 @@ import ProfileDetailsEditor from '../components/ProfileDetailsEditor';
 import ProfileSkillsTagsCard from '../components/ProfileSkillsTagsCard';
 import EditProfileModal from '../components/EditProfileModal';
 import ImageCropperModal from '../components/ImageCropperModal';
+import ChangePasswordModal from '../components/ChangePasswordModal';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
-// ProfilePage: Clean Read-Only profile showcase with live MongoDB sync & comprehensive skill management
+// ProfilePage: Clean Read-Only profile showcase with live MongoDB sync & 2-column layout
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const [user, setUser] = useState({
-    name: 'Member User',
-    username: '@user',
-    headline: 'SkillLoop Community Member 🚀',
-    bio: '',
-    profilePhotoUrl: '',
-    coverPhotoUrl: '',
-    rating: '5.0',
-    credits: 3,
-    teachSkills: ['React JS', 'JavaScript'],
-    learnSkills: ['UI/UX Design', 'Python'],
-    skillLevel: 'intermediate',
-    onboardingCompleted: false
+  const [user, setUser] = useState(() => {
+    const userSession = localStorage.getItem('skillloop_user');
+    if (userSession) {
+      try {
+        const parsed = JSON.parse(userSession);
+        return {
+          name: parsed.name || 'Member',
+          username: parsed.username ? `@${parsed.username.replace(/^@/, '')}` : '@user',
+          headline: parsed.headline || 'SkillLoop Community Member 🚀',
+          bio: parsed.bio || '',
+          profilePhotoUrl: parsed.profilePhotoUrl || '',
+          coverPhotoUrl: parsed.coverPhotoUrl || '',
+          rating: (parsed.rating || 0).toString(),
+          ratingCount: parsed.ratingCount || 0,
+          credits: parsed.credits ?? 10,
+          teachSkills: Array.isArray(parsed.skillsCanTeach) ? parsed.skillsCanTeach : (Array.isArray(parsed.teachSkills) ? parsed.teachSkills : []),
+          learnSkills: Array.isArray(parsed.skillsWantToLearn) ? parsed.skillsWantToLearn : (Array.isArray(parsed.learnSkills) ? parsed.learnSkills : []),
+          skillLevel: parsed.skillLevel || 'beginner',
+          onboardingCompleted: parsed.onboardingCompleted ?? false
+        };
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return {
+      name: 'Member',
+      username: '@user',
+      headline: 'SkillLoop Community Member 🚀',
+      bio: '',
+      profilePhotoUrl: '',
+      coverPhotoUrl: '',
+      rating: '0.0',
+      ratingCount: 0,
+      credits: 10,
+      teachSkills: [],
+      learnSkills: [],
+      skillLevel: 'beginner',
+      onboardingCompleted: false
+    };
   });
 
   const [availability, setAvailability] = useState({
@@ -37,6 +64,7 @@ export default function ProfilePage() {
   });
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState('');
 
   // Image Cropper State
@@ -46,16 +74,16 @@ export default function ProfilePage() {
     cropType: 'avatar' // 'avatar' | 'cover'
   });
 
-  // Calculate dynamic profile strength percentage
+  // Calculate dynamic profile strength percentage (0% to 100% based on real filled data)
   const profileStrength = useMemo(() => {
-    let score = 20; // Base score
-    if (user.name && user.name !== 'Member User') score += 15;
-    if (user.username && user.username !== '@user') score += 10;
+    let score = 0;
+    if (user.name && user.name !== 'Member') score += 20;
+    if (user.username && user.username !== '@user') score += 15;
     if (user.bio && user.bio.trim().length > 5) score += 20;
     if (user.profilePhotoUrl) score += 15;
-    if (user.coverPhotoUrl) score += 5;
+    if (user.coverPhotoUrl) score += 10;
     if (user.teachSkills && user.teachSkills.length > 0) score += 10;
-    if (user.learnSkills && user.learnSkills.length > 0) score += 5;
+    if (user.learnSkills && user.learnSkills.length > 0) score += 10;
     return Math.min(score, 100);
   }, [user]);
 
@@ -68,21 +96,29 @@ export default function ProfilePage() {
         headers: { Authorization: `Bearer ${token}` },
         credentials: 'include'
       });
+      if (res.status === 401) {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('skillloop_user');
+        navigate('/login');
+        return;
+      }
+
       const data = await res.json();
       if (data.success && data.data?.user) {
         const u = data.data.user;
         const liveUser = {
-          name: u.name || 'Member User',
+          name: u.name || `${u.firstName || ''} ${u.lastName || ''}`.trim() || 'Member',
           username: u.username ? `@${u.username.replace(/^@/, '')}` : '@user',
           headline: u.headline || 'SkillLoop Community Member 🚀',
           bio: u.bio || '',
           profilePhotoUrl: u.profilePhotoUrl || '',
           coverPhotoUrl: u.coverPhotoUrl || '',
-          rating: u.rating ? u.rating.toString() : '5.0',
-          credits: u.credits ?? 3,
-          teachSkills: Array.isArray(u.skillsCanTeach) && u.skillsCanTeach.length ? u.skillsCanTeach : (user.teachSkills || ['React JS', 'JavaScript']),
-          learnSkills: Array.isArray(u.skillsWantToLearn) && u.skillsWantToLearn.length ? u.skillsWantToLearn : (user.learnSkills || ['UI/UX Design', 'Python']),
-          skillLevel: u.skillLevel || 'intermediate',
+          rating: (u.rating || 0).toString(),
+          ratingCount: u.ratingCount || 0,
+          credits: u.credits ?? 10,
+          teachSkills: Array.isArray(u.skillsCanTeach) ? u.skillsCanTeach : [],
+          learnSkills: Array.isArray(u.skillsWantToLearn) ? u.skillsWantToLearn : [],
+          skillLevel: u.skillLevel || 'beginner',
           onboardingCompleted: u.onboardingCompleted ?? false
         };
         setUser(liveUser);
@@ -105,167 +141,112 @@ export default function ProfilePage() {
       return;
     }
 
-    if (userSession) {
-      try {
-        const parsed = JSON.parse(userSession);
-        setUser(prev => ({
-          ...prev,
-          name: parsed.name || prev.name,
-          username: parsed.username || prev.username,
-          headline: parsed.headline || prev.headline,
-          bio: parsed.bio || prev.bio,
-          profilePhotoUrl: parsed.profilePhotoUrl || parsed.avatarUrl || prev.profilePhotoUrl,
-          coverPhotoUrl: parsed.coverPhotoUrl || prev.coverPhotoUrl,
-          rating: parsed.rating || prev.rating,
-          credits: parsed.credits ?? prev.credits,
-          teachSkills: Array.isArray(parsed.teachSkills) && parsed.teachSkills.length ? parsed.teachSkills : (Array.isArray(parsed.skillsCanTeach) ? parsed.skillsCanTeach : prev.teachSkills),
-          learnSkills: Array.isArray(parsed.learnSkills) && parsed.learnSkills.length ? parsed.learnSkills : (Array.isArray(parsed.skillsWantToLearn) ? parsed.skillsWantToLearn : prev.learnSkills),
-          skillLevel: parsed.skillLevel || prev.skillLevel,
-          onboardingCompleted: parsed.onboardingCompleted ?? prev.onboardingCompleted
-        }));
-
-        if (parsed.availability) {
-          setAvailability(parsed.availability);
-        }
-      } catch (e) {
-        console.error('Error parsing profile:', e);
-      }
-    }
-
-    // Always fetch live profile from MongoDB
     fetchUserProfile();
   }, [navigate]);
 
-  // Local File Selected from PC Handlers
-  const handleAvatarFileSelected = (file) => {
+  // Open file cropper
+  const handleFileForCrop = (file, cropType) => {
+    if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
       setCropperConfig({
         isOpen: true,
         imageSrc: reader.result,
-        cropType: 'avatar'
+        cropType
       });
     };
     reader.readAsDataURL(file);
   };
 
-  const handleCoverFileSelected = (file) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      setCropperConfig({
-        isOpen: true,
-        imageSrc: reader.result,
-        cropType: 'cover'
-      });
-    };
-    reader.readAsDataURL(file);
+  // Save cropped result (avatar or cover)
+  const handleCropComplete = async (croppedBase64) => {
+    setCropperConfig(prev => ({ ...prev, isOpen: false }));
+
+    if (cropperConfig.cropType === 'avatar') {
+      setUser(prev => ({ ...prev, profilePhotoUrl: croppedBase64 }));
+      await saveProfileFieldToDB({ profilePhotoUrl: croppedBase64 });
+    } else {
+      setUser(prev => ({ ...prev, coverPhotoUrl: croppedBase64 }));
+      await saveProfileFieldToDB({ coverPhotoUrl: croppedBase64 });
+    }
   };
 
-  // Crop Complete Handler
-  const handleCropComplete = async (croppedDataUrl) => {
-    const isAvatar = cropperConfig.cropType === 'avatar';
-    const fieldKey = isAvatar ? 'profilePhotoUrl' : 'coverPhotoUrl';
-
-    const updatedUser = {
-      ...user,
-      [fieldKey]: croppedDataUrl,
-      ...(isAvatar ? { avatarUrl: croppedDataUrl } : {})
-    };
-
-    setUser(updatedUser);
-    localStorage.setItem('skillloop_user', JSON.stringify(updatedUser));
-
-    setSavedSuccess(isAvatar ? '✓ Profile photo updated and saved to database!' : '✓ Cover banner updated and saved to database!');
-    setTimeout(() => setSavedSuccess(''), 3500);
-
+  // Helper to persist single fields to Backend MongoDB
+  const saveProfileFieldToDB = async (updatePayload) => {
     const token = localStorage.getItem('accessToken');
-    if (token) {
-      try {
-        await fetch(`${API_BASE_URL}/users/me`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            [fieldKey]: croppedDataUrl
-          })
-        });
-      } catch (err) {
-        console.error('Backend photo sync error:', err);
-      }
-    }
-  };
-
-  // Save Modal Data (Basic details + Skills + Availability)
-  const handleSaveModalData = async (updatedFields) => {
-    const accessToken = localStorage.getItem('accessToken');
-
-    if (updatedFields.availability) {
-      setAvailability(updatedFields.availability);
-    }
-
-    const updatedUserLocal = {
-      ...user,
-      name: updatedFields.name,
-      username: updatedFields.username,
-      headline: updatedFields.headline,
-      bio: updatedFields.bio,
-      teachSkills: updatedFields.teachSkills || updatedFields.skillsCanTeach || user.teachSkills,
-      learnSkills: updatedFields.learnSkills || updatedFields.skillsWantToLearn || user.learnSkills,
-      skillLevel: updatedFields.skillLevel || user.skillLevel,
-      availability: updatedFields.availability || availability,
-      onboardingCompleted: true
-    };
-
-    setUser(updatedUserLocal);
-    localStorage.setItem('skillloop_user', JSON.stringify(updatedUserLocal));
-    setIsEditModalOpen(false);
-    setSavedSuccess('✓ Profile, skills & availability saved to MongoDB successfully!');
-    setTimeout(() => setSavedSuccess(''), 3500);
-
-    if (!accessToken) return;
+    if (!token) return;
 
     try {
-      const res = await fetch(`${API_BASE_URL}/users/me`, {
+      const res = await fetch(`${API_BASE_URL}/users/profile`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`
+          Authorization: `Bearer ${token}`
         },
         credentials: 'include',
-        body: JSON.stringify({
-          name: updatedFields.name,
-          username: (updatedFields.username || '').replace(/^@/, ''),
-          bio: updatedFields.bio,
-          headline: updatedFields.headline,
-          skillsCanTeach: updatedFields.teachSkills || updatedFields.skillsCanTeach || [],
-          skillsWantToLearn: updatedFields.learnSkills || updatedFields.skillsWantToLearn || [],
-          skillLevel: updatedFields.skillLevel || 'intermediate',
-          availability: updatedFields.availability || availability,
-          onboardingCompleted: true
-        })
+        body: JSON.stringify(updatePayload)
       });
-
-      const resData = await res.json();
-      if (resData.success && resData.data?.user) {
-        const u = resData.data.user;
-        const liveUser = {
-          ...updatedUserLocal,
-          name: u.name || updatedUserLocal.name,
-          username: u.username ? `@${u.username.replace(/^@/, '')}` : updatedUserLocal.username,
-          teachSkills: Array.isArray(u.skillsCanTeach) ? u.skillsCanTeach : updatedUserLocal.teachSkills,
-          learnSkills: Array.isArray(u.skillsWantToLearn) ? u.skillsWantToLearn : updatedUserLocal.learnSkills,
-          skillLevel: u.skillLevel || updatedUserLocal.skillLevel,
-          availability: u.availability || updatedUserLocal.availability
+      const data = await res.json();
+      if (data.success && data.data?.user) {
+        const u = data.data.user;
+        const updatedLiveUser = {
+          name: u.name || `${u.firstName || ''} ${u.lastName || ''}`.trim() || 'Member',
+          username: u.username ? `@${u.username.replace(/^@/, '')}` : '@user',
+          headline: u.headline || '',
+          bio: u.bio || '',
+          profilePhotoUrl: u.profilePhotoUrl || '',
+          coverPhotoUrl: u.coverPhotoUrl || '',
+          rating: (u.rating || 0).toString(),
+          ratingCount: u.ratingCount || 0,
+          credits: u.credits ?? 10,
+          teachSkills: Array.isArray(u.skillsCanTeach) ? u.skillsCanTeach : [],
+          learnSkills: Array.isArray(u.skillsWantToLearn) ? u.skillsWantToLearn : [],
+          skillLevel: u.skillLevel || 'beginner',
+          onboardingCompleted: u.onboardingCompleted ?? false
         };
-        setUser(liveUser);
-        localStorage.setItem('skillloop_user', JSON.stringify(liveUser));
+        setUser(updatedLiveUser);
+        localStorage.setItem('skillloop_user', JSON.stringify({ ...updatedLiveUser, availability: u.availability || availability }));
+        setSavedSuccess('Profile updated successfully!');
+        setTimeout(() => setSavedSuccess(''), 2500);
       }
-    } catch (error) {
-      console.error('Profile update MongoDB error:', error);
+    } catch (err) {
+      console.error('Failed to save profile changes to DB:', err);
     }
+  };
+
+  // Save changes from EditProfileModal (including skills addition & removal)
+  const handleSaveModalProfile = async (updatedData) => {
+    const teachSkills = Array.isArray(updatedData.skillsCanTeach) ? updatedData.skillsCanTeach : [];
+    const learnSkills = Array.isArray(updatedData.skillsWantToLearn) ? updatedData.skillsWantToLearn : [];
+
+    setUser(prev => ({
+      ...prev,
+      name: updatedData.name,
+      username: updatedData.username ? `@${updatedData.username.replace(/^@/, '')}` : prev.username,
+      headline: updatedData.headline,
+      bio: updatedData.bio,
+      teachSkills,
+      learnSkills,
+      skillLevel: updatedData.skillLevel
+    }));
+
+    if (updatedData.availability) {
+      setAvailability(updatedData.availability);
+    }
+
+    const payload = {
+      name: updatedData.name,
+      username: updatedData.username,
+      headline: updatedData.headline,
+      bio: updatedData.bio,
+      skillsCanTeach: teachSkills,
+      skillsWantToLearn: learnSkills,
+      skillLevel: updatedData.skillLevel,
+      availability: updatedData.availability
+    };
+
+    await saveProfileFieldToDB(payload);
+    setIsEditModalOpen(false);
   };
 
   return (
@@ -282,43 +263,44 @@ export default function ProfilePage() {
         <div className="app-layout">
           <Sidebar />
 
-          <main className="main-content">
+          <main className="main-content profile-page-content">
             <div className="page-title-row">
               <div>
-                <h2>My Profile &amp; Skills</h2>
-                <p>Preview your public member showcase, customize your bio, and manage your skill categories.</p>
+                <h2>Your Profile</h2>
+                <p>Manage your public appearance, teaching skills, password, and weekly swap availability.</p>
               </div>
             </div>
 
             {savedSuccess && (
-              <div className="onboarding-error-banner profile-save-banner" style={{ background: 'rgba(52, 211, 153, 0.15)', color: '#10b981', border: '1px solid rgba(52, 211, 153, 0.4)', marginBottom: '1.2rem' }}>
-                {savedSuccess}
+              <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '12px', padding: '0.75rem 1rem', fontSize: '0.88rem', fontWeight: 600, marginBottom: '1.25rem' }}>
+                ✓ {savedSuccess}
               </div>
             )}
 
-            {/* Component 1: Header Profile Card with Photo Upload Triggers */}
-            <ProfileHeaderCard 
-              user={user} 
-              onCoverFileSelected={handleCoverFileSelected}
-              onAvatarFileSelected={handleAvatarFileSelected}
-              onEditProfile={() => setIsEditModalOpen(true)}
+            {/* Profile Header Hero Card */}
+            <ProfileHeaderCard
+              user={user}
+              profileStrength={profileStrength}
+              onOpenEditModal={() => setIsEditModalOpen(true)}
+              onOpenPasswordModal={() => setIsPasswordModalOpen(true)}
+              onUploadAvatar={(file) => handleFileForCrop(file, 'avatar')}
+              onUploadCover={(file) => handleFileForCrop(file, 'cover')}
             />
 
-            {/* Grid layout for Clean Read-Only Profile Showcases */}
-            <div className="profile-editors-grid">
-              <div className="profile-col-left">
-                {/* Clean Read-Only About & Availability Card */}
-                <ProfileDetailsEditor 
-                  bio={user.bio} 
+            {/* Side-by-Side 2-Column Editors Layout */}
+            <div className="profile-editors-grid" style={{ marginTop: '1.5rem' }}>
+              {/* Left Column: Read-Only Info & Availability */}
+              <div className="profile-editors-left">
+                <ProfileDetailsEditor
+                  bio={user.bio}
                   availability={availability}
-                  profileStrength={profileStrength}
-                  onOpenEdit={() => setIsEditModalOpen(true)}
+                  onOpenEditModal={() => setIsEditModalOpen(true)}
                 />
               </div>
 
-              <div className="profile-col-right">
-                {/* Clean Read-Only Skills & Focus Showcase */}
-                <ProfileSkillsTagsCard 
+              {/* Right Column: Skills I Can Teach & Want to Learn */}
+              <div className="profile-editors-right">
+                <ProfileSkillsTagsCard
                   teachSkills={user.teachSkills}
                   learnSkills={user.learnSkills}
                   skillLevel={user.skillLevel}
@@ -332,16 +314,26 @@ export default function ProfilePage() {
         <MobileNav />
       </div>
 
-      {/* Comprehensive Edit Profile & Skills Modal */}
-      <EditProfileModal 
+      {/* Profile Edit Full Modal */}
+      <EditProfileModal
         isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        user={user}
+        user={{
+          ...user,
+          teachSkills: user.teachSkills,
+          learnSkills: user.learnSkills
+        }}
         availability={availability}
-        onSave={handleSaveModalData}
+        onClose={() => setIsEditModalOpen(false)}
+        onSave={handleSaveModalProfile}
       />
 
-      {/* Image Cropper Modal for Profile & Cover Photos */}
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+      />
+
+      {/* Image Cropper Modal */}
       <ImageCropperModal
         isOpen={cropperConfig.isOpen}
         imageSrc={cropperConfig.imageSrc}

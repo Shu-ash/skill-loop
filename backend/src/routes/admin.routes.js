@@ -11,6 +11,7 @@ import {
   getAdminCreditsLedger,
   getAdminCategories,
   createCategory,
+  updateCategory,
   deleteCategory,
   getAdminReports,
   resolveReport
@@ -40,6 +41,7 @@ router.get("/credits", getAdminCreditsLedger);
 // Skill Categories
 router.get("/categories", getAdminCategories);
 router.post("/categories", createCategory);
+router.patch("/categories/:id", updateCategory);
 router.delete("/categories/:id", deleteCategory);
 
 // Moderation Reports Queue

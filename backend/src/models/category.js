@@ -17,6 +17,10 @@ const categorySchema = new mongoose.Schema(
       type: String,
       default: "⚡"
     },
+    skills: {
+      type: [String],
+      default: []
+    },
     memberCount: {
       type: Number,
       default: 0

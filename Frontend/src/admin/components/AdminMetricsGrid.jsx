@@ -3,12 +3,12 @@ import React from 'react';
 
 export default function AdminMetricsGrid({ metrics }) {
   const defaultMetrics = [
-    { label: 'Total Users', value: '100', change: '+12% this week', icon: '👥' },
-    { label: 'Total Sessions', value: '250', change: '+18% this month', icon: '🎥' },
-    { label: 'Total Skills', value: '50', change: 'Active trading', icon: '⚡' }
+    { label: 'Total Users', value: '0', change: 'Live members', icon: '👥' },
+    { label: 'Total Sessions', value: '0', change: 'Live session audit', icon: '🎥' },
+    { label: 'Total Skills', value: '0', change: 'Active categories in DB', icon: '⚡' }
   ];
 
-  const items = metrics || defaultMetrics;
+  const items = metrics && metrics.length > 0 ? metrics : defaultMetrics;
 
   return (
     <div className="admin-metrics-grid">

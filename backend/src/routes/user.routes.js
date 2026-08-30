@@ -4,6 +4,7 @@ import {
   getMyProfile,
   completeOnboarding,
   updateMyProfile,
+  changePassword,
   getLeaderboard,
   getDashboardStats
 } from "../controllers/user.controller.js";
@@ -26,7 +27,11 @@ router.get("/dashboard-stats", protect, getDashboardStats);
 // Complete onboarding
 router.put("/onboarding", protect, completeOnboarding);
 
-// Update profile
+// Update profile (both /me and /profile)
 router.patch("/me", protect, updateMyProfile);
+router.patch("/profile", protect, updateMyProfile);
+
+// Change logged-in user password
+router.patch("/change-password", protect, changePassword);
 
 export default router;

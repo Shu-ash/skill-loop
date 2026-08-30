@@ -2,7 +2,7 @@
 import React from 'react';
 
 // CreditBalanceCards: Displays Current Balance, Total Earned (+12), and Total Spent (-9)
-export default function CreditBalanceCards({ balance = 3, earned = 12, spent = 9 }) {
+export default function CreditBalanceCards({ balance = 10, earned = 0, spent = 0 }) {
   return (
     <div className="credits-summary-grid">
       {/* CURRENT BALANCE */}

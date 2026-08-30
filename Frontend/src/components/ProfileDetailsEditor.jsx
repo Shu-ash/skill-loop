@@ -3,22 +3,28 @@ import React from 'react';
 
 // ProfileDetailsEditor: Clean, elegant showcase card for user bio, availability, and profile strength
 export default function ProfileDetailsEditor({
+  user,
   bio,
   availability = { weekdayEvenings: true, weekendMornings: false, mode: 'Online Only' },
-  profileStrength = 85,
-  onOpenEdit
+  profileStrength = 0,
+  onOpenEdit,
+  onEditProfile
 }) {
+  const displayBio = bio || user?.bio || '';
+  const displayAvailability = availability || user?.availability || { weekdayEvenings: true, weekendMornings: false, mode: 'Online Only' };
+  const handleEdit = onOpenEdit || onEditProfile;
+
   return (
     <div className="glass-panel profile-details-card" style={{ padding: '1.6rem 1.8rem', borderRadius: '24px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
         <h3 style={{ margin: 0, fontSize: '1.2rem', fontFamily: 'var(--font-display)' }}>
           About &amp; Availability
         </h3>
-        {onOpenEdit && (
+        {handleEdit && (
           <button 
             type="button" 
             className="action-btn" 
-            onClick={onOpenEdit}
+            onClick={handleEdit}
             style={{ fontSize: '0.8rem', padding: '0.35rem 0.8rem' }}
           >
             ✏️ Edit
@@ -36,8 +42,8 @@ export default function ProfileDetailsEditor({
         <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--violet-primary, #6c5ce7)', display: 'block', marginBottom: '0.4rem' }}>
           About Me
         </span>
-        <p style={{ margin: 0, fontSize: '0.92rem', lineHeight: '1.6', fontStyle: bio ? 'normal' : 'italic' }}>
-          {bio || 'Tell the community about yourself, your learning goals, and what you love trading! Click "Edit" to customize.'}
+        <p style={{ margin: 0, fontSize: '0.92rem', lineHeight: '1.6', fontStyle: displayBio ? 'normal' : 'italic' }}>
+          {displayBio || 'Tell the community about yourself, your learning goals, and what you love trading! Click "Edit" to customize.'}
         </p>
       </div>
 
@@ -52,8 +58,8 @@ export default function ProfileDetailsEditor({
             <span style={{ fontSize: '0.88rem', fontWeight: 600 }}>
               🌙 Weekday evenings
             </span>
-            <span className={`pill ${availability.weekdayEvenings ? 'pill-earned' : 'pill-spent'}`} style={{ fontSize: '0.78rem', padding: '0.25rem 0.65rem' }}>
-              {availability.weekdayEvenings ? '✓ Available' : 'Busy'}
+            <span className={`pill ${displayAvailability.weekdayEvenings ? 'pill-earned' : 'pill-spent'}`} style={{ fontSize: '0.78rem', padding: '0.25rem 0.65rem' }}>
+              {displayAvailability.weekdayEvenings ? '✓ Available' : 'Busy'}
             </span>
           </div>
 
@@ -61,8 +67,8 @@ export default function ProfileDetailsEditor({
             <span style={{ fontSize: '0.88rem', fontWeight: 600 }}>
               ☀️ Weekend mornings
             </span>
-            <span className={`pill ${availability.weekendMornings ? 'pill-earned' : 'pill-spent'}`} style={{ fontSize: '0.78rem', padding: '0.25rem 0.65rem' }}>
-              {availability.weekendMornings ? '✓ Available' : 'Busy'}
+            <span className={`pill ${displayAvailability.weekendMornings ? 'pill-earned' : 'pill-spent'}`} style={{ fontSize: '0.78rem', padding: '0.25rem 0.65rem' }}>
+              {displayAvailability.weekendMornings ? '✓ Available' : 'Busy'}
             </span>
           </div>
 
@@ -71,7 +77,7 @@ export default function ProfileDetailsEditor({
               🎥 Preferred Session Mode
             </span>
             <span className="pill pill-user" style={{ fontSize: '0.78rem', padding: '0.25rem 0.65rem' }}>
-              {availability.mode || 'Online Video Only'}
+              {displayAvailability.mode || 'Online Video Only'}
             </span>
           </div>
         </div>

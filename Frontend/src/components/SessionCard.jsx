@@ -1,5 +1,5 @@
 // src/components/SessionCard.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
 export default function SessionCard({
   session,
@@ -24,36 +24,11 @@ export default function SessionCard({
     id,
     isTeacher,
     scheduledAt,
-    duration
+    duration,
+    message
   } = session;
 
-  const [scheduledAtInput, setScheduledAtInput] = useState('');
-  const [sessionMode, setSessionMode] = useState(mode === 'In Person' ? 'in_person' : 'online');
-  const [meetLinkInput, setMeetLinkInput] = useState(meetLink || '');
-  const [selectedDuration, setSelectedDuration] = useState(Number(duration) || 45);
-
-  useEffect(() => {
-    setSessionMode(mode === 'In Person' ? 'in_person' : 'online');
-    setMeetLinkInput(meetLink || '');
-    setSelectedDuration(Number(duration) || 45);
-
-    if (scheduledAt && status === 'scheduled') {
-      setScheduledAtInput('');
-    }
-  }, [mode, meetLink, duration, scheduledAt, status]);
-
-  const [currentTime, setCurrentTime] = useState(new Date());
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const sessionStartTime = scheduledAt ? new Date(scheduledAt) : null;
-  const validSessionStartTime = sessionStartTime && !Number.isNaN(sessionStartTime.getTime());
-  const canJoin = Boolean(meetLink) && Boolean(validSessionStartTime) && currentTime >= sessionStartTime;
+  const [copied, setCopied] = useState(false);
 
   const getStatusLabel = () => {
     switch (status) {
@@ -70,201 +45,144 @@ export default function SessionCard({
     }
   };
 
-  const getMinDateTime = () => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  const handleCopyLink = () => {
+    if (!meetLink) return;
+    navigator.clipboard.writeText(meetLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSchedule = () => {
-    if (!onScheduleSession) return;
-
-    if (!scheduledAtInput) {
-      alert('Please select a date and time.');
-      return;
-    }
-
-    const selectedDate = new Date(scheduledAtInput);
-    if (Number.isNaN(selectedDate.getTime())) {
-      alert('Please select a valid date and time.');
-      return;
-    }
-
-    if (selectedDate <= new Date()) {
-      alert('Please select a future date and time.');
-      return;
-    }
-
-    const finalDuration = Number(selectedDuration);
-    const allowedDurations = [30, 45, 60, 90, 120];
-    if (!allowedDurations.includes(finalDuration)) {
-      alert('Please select a valid duration.');
-      return;
-    }
-
-    if (sessionMode !== 'online' && sessionMode !== 'in_person') {
-      alert('Please select a valid session mode.');
-      return;
-    }
-
-    if (sessionMode === 'online' && !meetLinkInput.trim()) {
-      alert('Please enter the Google Meet link.');
-      return;
-    }
-
-    onScheduleSession(
-      id,
-      selectedDate.toISOString(),
-      sessionMode,
-      sessionMode === 'online' ? meetLinkInput.trim() : '',
-      finalDuration
-    );
+  const handleOpenLink = () => {
+    if (!meetLink) return;
+    const url = meetLink.startsWith('http://') || meetLink.startsWith('https://') 
+      ? meetLink 
+      : `https://${meetLink}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   return (
-    <div className="glass-panel session-card">
-      <div className="session-card-header">
+    <div className="glass-panel session-card" style={{ padding: '1.8rem', borderRadius: '24px', marginBottom: '1.25rem' }}>
+      <div className="session-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.2rem' }}>
         <div>
-          <span className="pill-badge pill-violet">
-            {getStatusLabel()}
-          </span>
-          <h3>{title}</h3>
-          <p className="session-partner-sub">
-            Session with {partnerName} • {date} at {time}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem' }}>
+            <span className={`pill-badge ${status === 'completed' ? 'pill-mint' : status === 'cancelled' ? 'pill-coral' : 'pill-violet'}`}>
+              ● {getStatusLabel()}
+            </span>
+            <span className="pill-badge pill-white" style={{ fontSize: '0.78rem' }}>
+              {isTeacher ? '🎓 You are the Teacher' : '🎒 You are the Student'}
+            </span>
+          </div>
+
+          <h3 style={{ margin: '0 0 0.35rem 0', fontSize: '1.3rem', fontFamily: 'var(--font-display)' }}>
+            {title}
+          </h3>
+          <p className="session-partner-sub" style={{ margin: 0, color: 'var(--slate-500)', fontSize: '0.9rem' }}>
+            {isTeacher ? `Student: ${partnerName}` : `Teacher: ${partnerName}`} • <strong>{date}</strong> at <strong>{time}</strong>
           </p>
         </div>
-        <div className="partner-avatar-circle">{partnerAvatar}</div>
+
+        <div className="partner-avatar-circle" style={{ width: '48px', height: '48px', borderRadius: '50%', background: isTeacher ? 'var(--coral-primary)' : 'var(--violet-primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '1.1rem' }}>
+          {partnerAvatar}
+        </div>
       </div>
 
-      {/* Schedule Form for Teacher if unscheduled */}
-      {isTeacher && status === 'scheduled' && !scheduledAt && !meetLink && (
-        <div className="glass-panel request-inline-form">
-          <h4>📅 Schedule Session</h4>
-          <p>Choose when you want to conduct this session.</p>
-
-          <div className="form-group">
-            <label htmlFor="scheduledAt">Date &amp; Time</label>
-            <input
-              id="scheduledAt"
-              type="datetime-local"
-              value={scheduledAtInput}
-              min={getMinDateTime()}
-              onChange={(e) => setScheduledAtInput(e.target.value)}
-              disabled={actionLoading}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="sessionDuration">Duration</label>
-            <select
-              id="sessionDuration"
-              value={selectedDuration}
-              onChange={(e) => setSelectedDuration(Number(e.target.value))}
-              disabled={actionLoading}
-            >
-              <option value={30}>30 minutes</option>
-              <option value={45}>45 minutes</option>
-              <option value={60}>60 minutes</option>
-              <option value={90}>90 minutes</option>
-              <option value={120}>120 minutes</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="sessionMode">Session Mode</label>
-            <select
-              id="sessionMode"
-              value={sessionMode}
-              onChange={(e) => setSessionMode(e.target.value)}
-              disabled={actionLoading}
-            >
-              <option value="online">Online</option>
-              <option value="in_person">In Person</option>
-            </select>
-          </div>
-
-          {sessionMode === 'online' && (
-            <div className="form-group">
-              <label htmlFor="meetLink">Google Meet Link</label>
-              <input
-                id="meetLink"
-                type="url"
-                value={meetLinkInput}
-                onChange={(e) => setMeetLinkInput(e.target.value)}
-                placeholder="https://meet.google.com/abc-defg-hij"
-                disabled={actionLoading}
-              />
-            </div>
-          )}
-
-          <button
-            type="button"
-            className="btn btn-primary btn-full"
-            onClick={handleSchedule}
-            disabled={
-              actionLoading ||
-              !scheduledAtInput ||
-              (sessionMode === 'online' && !meetLinkInput.trim())
-            }
-          >
-            {actionLoading ? 'Scheduling...' : '📅 Schedule Session'}
-          </button>
-        </div>
-      )}
-
-      {/* Scheduled Details Banner */}
-      {status === 'scheduled' && scheduledAt && (
-        <div className="glass-panel scheduled-banner">
-          <strong>📅 Session scheduled</strong>
-          <p>{date} • {time}</p>
+      {message && (
+        <div style={{ background: 'rgba(241, 245, 249, 0.6)', padding: '0.75rem 1rem', borderRadius: '12px', fontSize: '0.86rem', color: 'var(--slate-600)', marginBottom: '1.1rem', fontStyle: 'italic' }}>
+          💬 Note: "{message}"
         </div>
       )}
 
       {/* Meeting Room Link Banner */}
-      {meetLink && (
-        <div className="session-meet-banner session-link-banner">
-          <div className="meet-info">
-            <span className="meet-icon">🎥</span>
+      {meetLink && status !== 'cancelled' && (
+        <div className="session-meet-banner session-link-banner" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem', borderRadius: '16px', marginBottom: '1.2rem', gap: '1rem', flexWrap: 'wrap' }}>
+          <div className="meet-info" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: '240px' }}>
+            <span className="meet-icon" style={{ fontSize: '1.6rem' }}>🎥</span>
             <div>
-              <strong>Google Meet Link</strong>
-              <p>{meetLink}</p>
+              <strong style={{ fontSize: '0.9rem', display: 'block' }}>Video Meeting Link</strong>
+              <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--violet-primary, #6c5ce7)', wordBreak: 'break-all', fontWeight: 600 }}>
+                {meetLink}
+              </p>
             </div>
           </div>
 
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => {
-              if (canJoin) {
-                onJoinCall(meetLink);
-              }
-            }}
-            disabled={actionLoading || !canJoin}
-          >
-            {canJoin ? '🎥 Join Google Meet →' : `🔒 Available at ${time}`}
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <button
+              type="button"
+              className="action-btn"
+              onClick={handleCopyLink}
+              title="Copy meeting URL to clipboard"
+              style={{ fontSize: '0.82rem', padding: '0.5rem 0.85rem', borderRadius: '10px' }}
+            >
+              {copied ? '✓ Copied!' : '📋 Copy Link'}
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleOpenLink}
+              disabled={actionLoading}
+              style={{ padding: '0.55rem 1.15rem', borderRadius: '12px', fontWeight: 700, fontSize: '0.88rem' }}
+            >
+              🎥 Join Meeting →
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Bottom Session Meta Details */}
-      <div className="session-meta-grid">
-        <div className="meta-item">
-          <span>Mode</span>
-          <strong>{mode}</strong>
+      {/* Bottom Session Meta Details & Teacher Completion Button */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', paddingTop: '0.5rem', borderTop: '1px solid rgba(226, 232, 240, 0.7)' }}>
+        <div className="session-meta-grid" style={{ display: 'flex', gap: '1.5rem', margin: 0 }}>
+          <div className="meta-item">
+            <span style={{ fontSize: '0.75rem', color: 'var(--slate-500)', display: 'block' }}>Mode</span>
+            <strong style={{ fontSize: '0.88rem' }}>{mode}</strong>
+          </div>
+
+          <div className="meta-item">
+            <span style={{ fontSize: '0.75rem', color: 'var(--slate-500)', display: 'block' }}>Duration</span>
+            <strong style={{ fontSize: '0.88rem' }}>{duration} mins</strong>
+          </div>
+
+          <div className="meta-item">
+            <span style={{ fontSize: '0.75rem', color: 'var(--slate-500)', display: 'block' }}>Credit Reward</span>
+            <strong className="session-credit-earn" style={{ fontSize: '0.88rem', color: 'var(--mint-primary)' }}>
+              {isTeacher ? '+1 Credit to You' : '-1 Credit from Balance'}
+            </strong>
+          </div>
         </div>
 
-        <div className="meta-item">
-          <span>Duration</span>
-          <strong>{Number(duration) || 45} mins</strong>
-        </div>
+        {/* Action Buttons: Teacher Mark Complete & Cancel */}
+        <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+          {status === 'scheduled' && (
+            <>
+              <button
+                type="button"
+                className="action-btn btn-danger-sm"
+                onClick={() => onCancelSession && onCancelSession(id)}
+                disabled={actionLoading}
+                style={{ fontSize: '0.82rem', padding: '0.5rem 0.85rem' }}
+              >
+                Cancel Session
+              </button>
 
-        <div className="meta-item">
-          <span>Credit Reward</span>
-          <strong className="session-credit-earn">+1 Credit to {partnerName}</strong>
+              {isTeacher && (
+                <button
+                  type="button"
+                  className="btn btn-primary btn-pill-sm"
+                  onClick={() => onMarkComplete && onMarkComplete(id)}
+                  disabled={actionLoading}
+                  style={{ background: 'var(--mint-primary, #10b981)', borderColor: 'var(--mint-primary, #10b981)', padding: '0.55rem 1.15rem', fontWeight: 700 }}
+                >
+                  ✅ Mark Class Completed (+1 Credit)
+                </button>
+              )}
+            </>
+          )}
+
+          {status === 'completed' && (
+            <span className="pill-badge pill-mint" style={{ padding: '0.4rem 0.85rem', fontSize: '0.85rem', fontWeight: 700 }}>
+              ✓ Class Completed &amp; Credits Settled
+            </span>
+          )}
         </div>
       </div>
     </div>

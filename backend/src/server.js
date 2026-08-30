@@ -19,6 +19,7 @@ import sessionRoutes from "./routes/session.routes.js";
 import creditRoutes from "./routes/credit.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
+import categoryRoutes from "./routes/category.routes.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -76,6 +77,7 @@ app.use("/api/credits", creditRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/categories", categoryRoutes);
 
 // 404 & ERROR HANDLERS
 app.use(notFound);

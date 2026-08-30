@@ -1,18 +1,12 @@
 // src/admin/components/AdminSessionsTable.jsx
 import React from 'react';
 
-export default function AdminSessionsTable({ sessions, title = "Session Logs", onResolveDispute, onViewDetails, loading = false }) {
-  const defaultSessions = [
-    { id: 'sess_101', displayId: '#SES-000101', teacher: 'Aarav Sharma', learner: 'Priya Verma', topic: 'React Components & State', status: 'Completed' },
-    { id: 'sess_102', displayId: '#SES-000102', teacher: 'Priya Verma', learner: 'Aarav Sharma', topic: 'Figma Auto-Layout', status: 'Scheduled' },
-    { id: 'sess_103', displayId: '#SES-000103', teacher: 'Rohan Gupta', learner: 'Ananya Iyer', topic: 'MongoDB Indexing', status: 'Disputed' }
-  ];
-
-  const list = (sessions && sessions.length > 0) ? sessions : (!loading && sessions !== undefined && sessions.length === 0 ? [] : defaultSessions);
+export default function AdminSessionsTable({ sessions = [], title = "Session Logs", onResolveDispute, onViewDetails, loading = false }) {
+  const list = Array.isArray(sessions) ? sessions : [];
 
   const getStatusClass = (status) => {
-    if (status === 'Completed' || status === 'Confirmed') return 'pill-earned';
-    if (status === 'Disputed' || status === 'Cancelled') return 'pill-spent';
+    if (status === 'Completed' || status === 'Confirmed' || status === 'completed') return 'pill-earned';
+    if (status === 'Disputed' || status === 'Cancelled' || status === 'cancelled') return 'pill-spent';
     return 'pill-admin';
   };
 
@@ -30,8 +24,10 @@ export default function AdminSessionsTable({ sessions, title = "Session Logs", o
           Loading live sessions from MongoDB...
         </div>
       ) : list.length === 0 ? (
-        <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--slate-500, #64748b)' }}>
-          No matching sessions found.
+        <div style={{ padding: '3rem 1.5rem', textAlign: 'center', color: 'var(--slate-500, #64748b)' }}>
+          <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '0.5rem' }}>📅</span>
+          <h4 style={{ margin: '0 0 0.4rem 0', fontWeight: 700, color: 'var(--slate-800)' }}>No Scheduled Sessions Yet</h4>
+          <p style={{ margin: 0, fontSize: '0.9rem' }}>Real learning sessions between community members will appear here in real-time.</p>
         </div>
       ) : (
         <table className="admin-data-table">
@@ -47,11 +43,11 @@ export default function AdminSessionsTable({ sessions, title = "Session Logs", o
           </thead>
           <tbody>
             {list.map((s) => {
-              const formattedId = s.displayId || `#SES-${(s.id || '').toString().slice(-6).toUpperCase()}`;
+              const formattedId = s.displayId || `#SES-${(s.id || s._id || '').toString().slice(-6).toUpperCase()}`;
               return (
-                <tr key={s.id}>
+                <tr key={s.id || s._id}>
                   <td style={{ whiteSpace: 'nowrap' }}>
-                    <span className="user-id-badge" title={`Full Session ID: ${s.id}`}>
+                    <span className="user-id-badge" title={`Full Session ID: ${s.id || s._id}`}>
                       {formattedId}
                     </span>
                   </td>
@@ -75,7 +71,7 @@ export default function AdminSessionsTable({ sessions, title = "Session Logs", o
                           Details
                         </button>
                       )}
-                      {s.status === 'Disputed' && onResolveDispute && (
+                      {(s.status === 'Disputed' || s.status === 'disputed') && onResolveDispute && (
                         <button 
                           type="button" 
                           className="action-btn btn-danger-sm"

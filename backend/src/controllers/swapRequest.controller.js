@@ -176,24 +176,30 @@ export const acceptSwapRequest = async (
     next
 ) => {
     try {
-        const request =
-            await SwapRequest.findOne({
-                _id: req.params.requestId,
-                receiver: req.user._id,
-                status: "pending"
-            });
+        const { scheduledAt, duration, mode, meetLink, message } = req.body;
+
+        const request = await SwapRequest.findOne({
+            _id: req.params.requestId,
+            receiver: req.user._id,
+            status: "pending"
+        });
 
         if (!request) {
             return res.status(404).json({
                 success: false,
-                message: "Pending request not found"
+                message: "Pending request not found or already accepted"
             });
         }
 
         request.status = "accepted";
         await request.save();
 
-        // Automatically create associated Session in MongoDB
+        const selectedDate = scheduledAt ? new Date(scheduledAt) : new Date(Date.now() + 86400000);
+        const selectedMode = mode || "online";
+        const selectedDuration = Number(duration) || 45;
+        const selectedMeetLink = meetLink ? meetLink.trim() : `https://meet.google.com/skillloop-${request._id.toString().slice(-6)}`;
+
+        // Create or update associated Session in MongoDB with Teacher's schedule & meet link
         let session = await Session.findOne({ swapRequest: request._id });
         if (!session) {
             session = await Session.create({
@@ -202,24 +208,36 @@ export const acceptSwapRequest = async (
                 learner: request.sender,
                 skill: request.skillWant || "Skill Swap",
                 status: "scheduled",
-                scheduledAt: new Date(Date.now() + 86400000),
-                duration: 45,
-                meetLink: `https://meet.google.com/skillloop-${request._id.toString().slice(-6)}`
+                scheduledAt: selectedDate,
+                duration: selectedDuration,
+                mode: selectedMode,
+                meetLink: selectedMeetLink,
+                message: message?.trim() || ""
             });
+        } else {
+            session.scheduledAt = selectedDate;
+            session.duration = selectedDuration;
+            session.mode = selectedMode;
+            session.meetLink = selectedMeetLink;
+            session.status = "scheduled";
+            if (message) session.message = message.trim();
+            await session.save();
         }
 
-        const receiverName = req.user.name || `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim() || 'A member';
+        const receiverName = req.user.name || `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim() || 'Your mentor';
+        const formattedTime = selectedDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+
         await Notification.create({
             user: request.sender,
-            title: "🎉 Swap Request Accepted!",
-            text: `${receiverName} accepted your skill swap request! A new session has been scheduled.`,
+            title: "🎉 Swap Request Accepted & Scheduled!",
+            text: `${receiverName} accepted your skill swap for "${request.skillWant}"! Session is scheduled for ${formattedTime}. Click to join!`,
             type: "swap_accepted",
             link: "/sessions"
         });
 
         return res.status(200).json({
             success: true,
-            message: "Swap request accepted and session scheduled",
+            message: "Swap request accepted and session scheduled successfully!",
             data: {
                 request,
                 session

@@ -5,7 +5,6 @@ import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import MobileNav from '../components/MobileNav';
 import WelcomeBanner from '../components/WelcomeBanner';
-import SkillLoopSummaryCard from '../components/SkillLoopSummaryCard';
 import KpiStatsGrid from '../components/KpiStatsGrid';
 import RecommendedMatchesSection from '../components/RecommendedMatchesSection';
 
@@ -20,24 +19,27 @@ export default function DashboardPage() {
       try {
         const u = JSON.parse(stored);
         return {
+          id: u._id || u.id,
           name: u.name || `${u.firstName || ''} ${u.lastName || ''}`.trim() || 'Member',
           username: u.username ? `@${u.username.replace(/^@/, '')}` : '@user',
-          teachSkills: u.skillsCanTeach || [],
-          learnSkills: u.skillsWantToLearn || [],
-          credits: u.credits ?? 3
+          teachSkills: Array.isArray(u.skillsCanTeach) ? u.skillsCanTeach : [],
+          learnSkills: Array.isArray(u.skillsWantToLearn) ? u.skillsWantToLearn : [],
+          credits: u.credits ?? 10
         };
       } catch (e) {
         console.error(e);
       }
     }
-    return { name: 'Member', username: '@user', teachSkills: [], learnSkills: [], credits: 3 };
+    return { id: null, name: 'Member', username: '@user', teachSkills: [], learnSkills: [], credits: 10 };
   });
 
   const [stats, setStats] = useState({
-    credits: 3,
-    activeSwaps: 2,
-    rating: '5.0',
-    sessionsTaught: 6
+    credits: 10,
+    activeSwaps: 0,
+    rating: '0.0',
+    sessionsTaught: 0,
+    pendingRequests: 0,
+    upcomingSessions: 0
   });
 
   const [recommendations, setRecommendations] = useState([]);
@@ -69,19 +71,32 @@ export default function DashboardPage() {
           fetch(`${API_BASE_URL}/matches/recommendations`, { headers, credentials: 'include' })
         ]);
 
+        if (userRes.status === 401 || statsRes.status === 401) {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('skillloop_user');
+          navigate('/login');
+          return;
+        }
+
         const userData = await userRes.json();
         const statsData = await statsRes.json();
         const recsData = await recsRes.json();
 
+        let loggedInUserId = null;
+        let loggedInEmail = null;
+
         if (userRes.ok && userData.data?.user) {
           const backendUser = userData.data.user;
+          loggedInUserId = backendUser._id || backendUser.id;
+          loggedInEmail = backendUser.email?.toLowerCase();
           const fullName = backendUser.name || `${backendUser.firstName || ''} ${backendUser.lastName || ''}`.trim() || 'Member';
           setUser({
+            id: loggedInUserId,
             name: fullName,
             username: backendUser.username ? `@${backendUser.username.replace(/^@/, '')}` : '@user',
-            teachSkills: backendUser.skillsCanTeach || [],
-            learnSkills: backendUser.skillsWantToLearn || [],
-            credits: backendUser.credits ?? 3
+            teachSkills: Array.isArray(backendUser.skillsCanTeach) ? backendUser.skillsCanTeach : [],
+            learnSkills: Array.isArray(backendUser.skillsWantToLearn) ? backendUser.skillsWantToLearn : [],
+            credits: backendUser.credits ?? 10
           });
           localStorage.setItem('skillloop_user', JSON.stringify({ ...backendUser, name: fullName }));
         }
@@ -91,38 +106,60 @@ export default function DashboardPage() {
         }
 
         if (recsRes.ok && recsData.data?.recommendations?.length) {
-          const formatted = recsData.data.recommendations.map((match) => {
-            const matchUser = match.user || match;
-            const name = matchUser.name || `${matchUser.firstName || ''} ${matchUser.lastName || ''}`.trim() || 'Member';
-            return {
-              id: matchUser._id || matchUser.id,
-              name,
-              avatar: name.split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase(),
-              avatarBg: 'var(--violet-primary)',
-              title: matchUser.headline || 'SkillLoop Member',
-              teachSkills: matchUser.skillsCanTeach || [],
-              learnSkills: matchUser.skillsWantToLearn || [],
-              rating: `${matchUser.rating ?? 5} ★`
-            };
-          });
+          const formatted = recsData.data.recommendations
+            .filter((match) => {
+              const matchUser = match.user || match;
+              const matchId = matchUser._id || matchUser.id;
+              const matchEmail = (matchUser.email || '').toLowerCase();
+              if (loggedInUserId && String(matchId) === String(loggedInUserId)) return false;
+              if (loggedInEmail && matchEmail === loggedInEmail) return false;
+              return true;
+            })
+            .map((match) => {
+              const matchUser = match.user || match;
+              const name = matchUser.name || `${matchUser.firstName || ''} ${matchUser.lastName || ''}`.trim() || 'Member';
+              return {
+                id: matchUser._id || matchUser.id,
+                name,
+                avatar: name.split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase() || 'SL',
+                avatarBg: 'var(--violet-primary)',
+                title: matchUser.headline || 'SkillLoop Member',
+                teachSkills: matchUser.skillsCanTeach || [],
+                learnSkills: matchUser.skillsWantToLearn || [],
+                rating: `${(matchUser.rating || 0).toFixed(1)} ★`
+              };
+            });
           setRecommendations(formatted);
         } else {
+          // Fallback other members from users API (always strictly exclude self)
           const usersRes = await fetch(`${API_BASE_URL}/users`, { headers, credentials: 'include' });
           const usersData = await usersRes.json();
           if (usersRes.ok && usersData.data?.users?.length) {
-            const formatted = usersData.data.users.slice(0, 3).map((u) => ({
-              id: u.id || u._id,
-              name: u.name,
-              avatar: (u.name || 'SL').split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase(),
-              avatarBg: 'var(--violet-primary)',
-              title: u.headline || 'SkillLoop Member',
-              teachSkills: u.skillsCanTeach || [],
-              learnSkills: u.skillsWantToLearn || [],
-              rating: `${u.rating ?? 5.0} ★`
-            }));
+            const formatted = usersData.data.users
+              .filter((u) => {
+                const uId = u.id || u._id;
+                const uEmail = (u.email || '').toLowerCase();
+                if (loggedInUserId && String(uId) === String(loggedInUserId)) return false;
+                if (loggedInEmail && uEmail === loggedInEmail) return false;
+                return true;
+              })
+              .slice(0, 3)
+              .map((u) => ({
+                id: u.id || u._id,
+                name: u.name,
+                avatar: (u.name || 'SL').split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase() || 'SL',
+                avatarBg: 'var(--violet-primary)',
+                title: u.headline || 'SkillLoop Member',
+                teachSkills: u.skillsCanTeach || [],
+                learnSkills: u.skillsWantToLearn || [],
+                rating: `${(u.rating || 0).toFixed(1)} ★`
+              }));
             setRecommendations(formatted);
+          } else {
+            setRecommendations([]);
           }
         }
+
       } catch (err) {
         console.error('Failed to load dashboard data:', err);
       }
@@ -130,10 +167,6 @@ export default function DashboardPage() {
 
     fetchDashboardData();
   }, [navigate]);
-
-  const handleRequestSwap = (matchUser) => {
-    navigate('/browse');
-  };
 
   return (
     <>
@@ -150,32 +183,21 @@ export default function DashboardPage() {
           <Sidebar />
 
           <main className="main-content">
-            {/* Component 1: Welcome Greeting Banner */}
             <WelcomeBanner
               greeting={greeting}
               name={user.name}
+              subtitle="Ready to exchange knowledge and earn skill credits today."
               onNewSwapClick={() => navigate('/browse')}
             />
 
-            {/* Component 2: Your Skill Loop Summary */}
-            <SkillLoopSummaryCard
-              teachSkills={user.teachSkills}
-              learnSkills={user.learnSkills}
-            />
-
-            {/* Component 3: Live KPI Metrics Grid */}
             <KpiStatsGrid
-              credits={user.credits}
+              credits={stats.credits}
               activeSwaps={stats.activeSwaps}
               rating={stats.rating}
               sessionsTaught={stats.sessionsTaught}
             />
 
-            {/* Component 4: Recommended Matches Section & Match Cards */}
-            <RecommendedMatchesSection
-              matches={recommendations}
-              onRequestSwap={handleRequestSwap}
-            />
+            <RecommendedMatchesSection recommendations={recommendations} />
           </main>
         </div>
 

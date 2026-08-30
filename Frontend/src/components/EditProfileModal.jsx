@@ -2,17 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
-const CATEGORY_SKILL_SUGGESTIONS = {
-  'Code & Data': ['React JS', 'Node.js', 'Python', 'JavaScript', 'TypeScript', 'MongoDB', 'SQL', 'Docker', 'Next.js'],
-  'Design & UI': ['Figma', 'UI/UX Design', 'Logo Design', 'Design Systems', 'Adobe Illustrator', 'Photoshop', 'Canva'],
-  'Languages': ['English Conversation', 'Spanish', 'French', 'German', 'Japanese', 'Hindi', 'Mandarin'],
-  'AI & Data Science': ['Machine Learning', 'Prompt Engineering', 'ChatGPT & LLMs', 'Data Analysis', 'Deep Learning', 'PyTorch'],
-  'Marketing & Growth': ['SEO Optimization', 'Content Strategy', 'Social Media Growth', 'Copywriting', 'Email Marketing'],
-  'Music & Audio': ['Acoustic Guitar', 'Piano Basics', 'Vocal Training', 'Music Production', 'FL Studio', 'Ableton']
-};
+const API_BASE_URL = 'http://localhost:5000/api';
 
 export default function EditProfileModal({ isOpen, user, availability = {}, onClose, onSave }) {
   const [activeTab, setActiveTab] = useState('basic'); // 'basic' | 'skills' | 'availability'
+
+  const [categoriesList, setCategoriesList] = useState([]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -27,11 +22,29 @@ export default function EditProfileModal({ isOpen, user, availability = {}, onCl
     sessionMode: 'Online Only'
   });
 
-  const [selectedTeachCategory, setSelectedTeachCategory] = useState('Code & Data');
+  const [selectedTeachCategory, setSelectedTeachCategory] = useState('');
   const [customTeachSkill, setCustomTeachSkill] = useState('');
 
-  const [selectedLearnCategory, setSelectedLearnCategory] = useState('Design & UI');
+  const [selectedLearnCategory, setSelectedLearnCategory] = useState('');
   const [customLearnSkill, setCustomLearnSkill] = useState('');
+
+  // Fetch live categories and nested skills from MongoDB database
+  useEffect(() => {
+    const fetchLiveCategories = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/categories`);
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data?.categories) && data.data.categories.length > 0) {
+          setCategoriesList(data.data.categories);
+          setSelectedTeachCategory(data.data.categories[0].name);
+          setSelectedLearnCategory(data.data.categories[1]?.name || data.data.categories[0].name);
+        }
+      } catch (err) {
+        console.error('Failed to load categories in EditProfileModal:', err);
+      }
+    };
+    fetchLiveCategories();
+  }, []);
 
   useEffect(() => {
     if (isOpen && user) {
@@ -59,7 +72,7 @@ export default function EditProfileModal({ isOpen, user, availability = {}, onCl
     document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', handleKeyDown);
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = 'unset';
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen, onClose]);
@@ -67,66 +80,61 @@ export default function EditProfileModal({ isOpen, user, availability = {}, onCl
   if (!isOpen) return null;
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
   };
 
-  // Teach Skills Handlers
   const handleAddTeachSkill = (skillToAdd) => {
-    const raw = typeof skillToAdd === 'string' ? skillToAdd : customTeachSkill;
-    const val = (raw || '').trim();
-    if (!val) return;
-
-    if (!formData.skillsCanTeach.some(s => s.toLowerCase() === val.toLowerCase())) {
+    const target = (skillToAdd || customTeachSkill).trim();
+    if (!target) return;
+    if (!formData.skillsCanTeach.some(s => s.toLowerCase() === target.toLowerCase())) {
       setFormData(prev => ({
         ...prev,
-        skillsCanTeach: [...prev.skillsCanTeach, val]
+        skillsCanTeach: [...prev.skillsCanTeach, target]
       }));
     }
-    setCustomTeachSkill('');
+    if (!skillToAdd) setCustomTeachSkill('');
   };
 
   const handleRemoveTeachSkill = (skillToRemove) => {
     setFormData(prev => ({
       ...prev,
-      skillsCanTeach: prev.skillsCanTeach.filter(s => s.toLowerCase() !== skillToRemove.toLowerCase())
+      skillsCanTeach: prev.skillsCanTeach.filter(s => s !== skillToRemove)
     }));
   };
 
-  // Learn Skills Handlers
   const handleAddLearnSkill = (skillToAdd) => {
-    const raw = typeof skillToAdd === 'string' ? skillToAdd : customLearnSkill;
-    const val = (raw || '').trim();
-    if (!val) return;
-
-    if (!formData.skillsWantToLearn.some(s => s.toLowerCase() === val.toLowerCase())) {
+    const target = (skillToAdd || customLearnSkill).trim();
+    if (!target) return;
+    if (!formData.skillsWantToLearn.some(s => s.toLowerCase() === target.toLowerCase())) {
       setFormData(prev => ({
         ...prev,
-        skillsWantToLearn: [...prev.skillsWantToLearn, val]
+        skillsWantToLearn: [...prev.skillsWantToLearn, target]
       }));
     }
-    setCustomLearnSkill('');
+    if (!skillToAdd) setCustomLearnSkill('');
   };
 
   const handleRemoveLearnSkill = (skillToRemove) => {
     setFormData(prev => ({
       ...prev,
-      skillsWantToLearn: prev.skillsWantToLearn.filter(s => s.toLowerCase() !== skillToRemove.toLowerCase())
+      skillsWantToLearn: prev.skillsWantToLearn.filter(s => s !== skillToRemove)
     }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const formattedUsername = formData.username.startsWith('@') 
-      ? formData.username 
-      : `@${formData.username.trim()}`;
-
     onSave({
-      ...formData,
-      username: formattedUsername,
-      teachSkills: formData.skillsCanTeach,
-      learnSkills: formData.skillsWantToLearn,
+      name: formData.name.trim(),
+      username: formData.username.trim().replace(/^@/, ''),
+      headline: formData.headline.trim(),
+      bio: formData.bio.trim(),
       skillsCanTeach: formData.skillsCanTeach,
       skillsWantToLearn: formData.skillsWantToLearn,
+      skillLevel: formData.skillLevel,
       availability: {
         weekdayEvenings: formData.weekdayEvenings,
         weekendMornings: formData.weekendMornings,
@@ -135,18 +143,45 @@ export default function EditProfileModal({ isOpen, user, availability = {}, onCl
     });
   };
 
-  const modalContent = (
-    <div className="full-viewport-blur-overlay modal-overlay" onClick={onClose}>
-      <div 
-        className="glass-panel edit-profile-modal-box clay-card-3d admin-action-center-modal" 
+  const currentTeachCategoryObj = categoriesList.find(c => c.name === selectedTeachCategory) || categoriesList[0];
+  const currentLearnCategoryObj = categoriesList.find(c => c.name === selectedLearnCategory) || categoriesList[1] || categoriesList[0];
+
+  const teachSuggestions = currentTeachCategoryObj?.skills || [];
+  const learnSuggestions = currentLearnCategoryObj?.skills || [];
+
+  const modalJSX = (
+    <div
+      className="modal-overlay"
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.65)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        zIndex: 999999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1.25rem'
+      }}
+    >
+      <div
+        className="glass-panel edit-profile-modal-box clay-card-3d"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '640px', width: '94%', maxHeight: '90vh', overflowY: 'auto' }}
+        style={{
+          maxWidth: '560px',
+          width: '100%',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+          borderRadius: '24px',
+          padding: '2rem 2.2rem'
+        }}
       >
-        <div className="modal-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <span style={{ fontSize: '1.25rem' }}>✏️</span>
-            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>Edit Profile &amp; Skills</h3>
-          </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+          <h3 style={{ margin: 0, fontSize: '1.35rem', fontFamily: 'var(--font-display)' }}>
+            ✏️ Edit Profile &amp; Skills
+          </h3>
           <button type="button" className="close-modal-btn" onClick={onClose} title="Close">✕</button>
         </div>
 
@@ -181,7 +216,7 @@ export default function EditProfileModal({ isOpen, user, availability = {}, onCl
         <form onSubmit={handleSubmit} className="edit-profile-form modal-body-padded">
           {/* TAB 1: BASIC DETAILS */}
           {activeTab === 'basic' && (
-            <div>
+            <div style={{ paddingTop: '1rem' }}>
               <div className="form-group" style={{ marginBottom: '1rem' }}>
                 <label style={{ display: 'block', fontWeight: 600, fontSize: '0.86rem', color: 'var(--slate-700, #334155)', marginBottom: '0.35rem' }}>
                   Display Name *
@@ -246,9 +281,9 @@ export default function EditProfileModal({ isOpen, user, availability = {}, onCl
             </div>
           )}
 
-          {/* TAB 2: SKILLS & CATEGORIES */}
+          {/* TAB 2: SKILLS & CATEGORIES (FETCHED LIVE FROM MONGODB) */}
           {activeTab === 'skills' && (
-            <div>
+            <div style={{ paddingTop: '1rem' }}>
               {/* SECTION: SKILLS I CAN TEACH */}
               <div style={{ background: 'rgba(248, 250, 252, 0.75)', padding: '1rem 1.1rem', borderRadius: '16px', border: '1px solid rgba(226, 232, 240, 0.8)', marginBottom: '1.25rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem' }}>
@@ -302,15 +337,17 @@ export default function EditProfileModal({ isOpen, user, availability = {}, onCl
                   )}
                 </div>
 
-                {/* Category Picker & Custom Input */}
+                {/* Live Category Picker & Custom Input */}
                 <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.65rem', flexWrap: 'wrap' }}>
                   <select 
                     value={selectedTeachCategory}
                     onChange={(e) => setSelectedTeachCategory(e.target.value)}
                     style={{ padding: '0.45rem 0.65rem', borderRadius: '10px', border: '1px solid var(--slate-300)', fontSize: '0.82rem', fontWeight: 600 }}
                   >
-                    {Object.keys(CATEGORY_SKILL_SUGGESTIONS).map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
+                    {categoriesList.map(cat => (
+                      <option key={cat.id || cat.name} value={cat.name}>
+                        {cat.icon ? `${cat.icon} ` : ''}{cat.name}
+                      </option>
                     ))}
                   </select>
 
@@ -339,10 +376,10 @@ export default function EditProfileModal({ isOpen, user, availability = {}, onCl
                   </button>
                 </div>
 
-                {/* Predefined Category Suggestions */}
+                {/* Live Category Suggestions from MongoDB */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.74rem', color: 'var(--slate-500)', fontWeight: 600 }}>Quick suggestions:</span>
-                  {(CATEGORY_SKILL_SUGGESTIONS[selectedTeachCategory] || []).map(item => {
+                  <span style={{ fontSize: '0.74rem', color: 'var(--slate-500)', fontWeight: 600 }}>Live suggestions:</span>
+                  {teachSuggestions.map(item => {
                     const isAlreadyAdded = formData.skillsCanTeach.some(s => s.toLowerCase() === item.toLowerCase());
                     return (
                       <button
@@ -364,6 +401,11 @@ export default function EditProfileModal({ isOpen, user, availability = {}, onCl
                       </button>
                     );
                   })}
+                  {teachSuggestions.length === 0 && (
+                    <span style={{ fontSize: '0.75rem', color: 'var(--slate-400)', fontStyle: 'italic' }}>
+                      Type a custom skill above.
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -406,15 +448,17 @@ export default function EditProfileModal({ isOpen, user, availability = {}, onCl
                   )}
                 </div>
 
-                {/* Category Picker & Custom Input */}
+                {/* Live Category Picker & Custom Input */}
                 <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.65rem', flexWrap: 'wrap' }}>
                   <select 
                     value={selectedLearnCategory}
                     onChange={(e) => setSelectedLearnCategory(e.target.value)}
                     style={{ padding: '0.45rem 0.65rem', borderRadius: '10px', border: '1px solid var(--slate-300)', fontSize: '0.82rem', fontWeight: 600 }}
                   >
-                    {Object.keys(CATEGORY_SKILL_SUGGESTIONS).map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
+                    {categoriesList.map(cat => (
+                      <option key={cat.id || cat.name} value={cat.name}>
+                        {cat.icon ? `${cat.icon} ` : ''}{cat.name}
+                      </option>
                     ))}
                   </select>
 
@@ -443,10 +487,10 @@ export default function EditProfileModal({ isOpen, user, availability = {}, onCl
                   </button>
                 </div>
 
-                {/* Predefined Category Suggestions */}
+                {/* Live Category Suggestions from MongoDB */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.74rem', color: 'var(--slate-500)', fontWeight: 600 }}>Quick suggestions:</span>
-                  {(CATEGORY_SKILL_SUGGESTIONS[selectedLearnCategory] || []).map(item => {
+                  <span style={{ fontSize: '0.74rem', color: 'var(--slate-500)', fontWeight: 600 }}>Live suggestions:</span>
+                  {learnSuggestions.map(item => {
                     const isAlreadyAdded = formData.skillsWantToLearn.some(s => s.toLowerCase() === item.toLowerCase());
                     return (
                       <button
@@ -455,7 +499,7 @@ export default function EditProfileModal({ isOpen, user, availability = {}, onCl
                         onClick={() => handleAddLearnSkill(item)}
                         style={{
                           background: isAlreadyAdded ? 'rgba(255, 118, 117, 0.15)' : 'white',
-                          border: `1px ${isAlreadyAdded ? 'solid #d63031' : 'dashed var(--slate-300)'}`,
+                          border: `1px ${isAlreadyAdded ? 'solid #ff7675' : 'dashed var(--slate-300)'}`,
                           borderRadius: '12px',
                           padding: '0.2rem 0.55rem',
                           fontSize: '0.74rem',
@@ -468,79 +512,74 @@ export default function EditProfileModal({ isOpen, user, availability = {}, onCl
                       </button>
                     );
                   })}
+                  {learnSuggestions.length === 0 && (
+                    <span style={{ fontSize: '0.75rem', color: 'var(--slate-400)', fontStyle: 'italic' }}>
+                      Type a custom skill above.
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
           )}
 
-          {/* TAB 3: AVAILABILITY & PREFERENCES */}
+          {/* TAB 3: AVAILABILITY & SESSION MODE */}
           {activeTab === 'availability' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.9rem 1.1rem', background: 'rgba(248, 250, 252, 0.75)', borderRadius: '14px', border: '1px solid rgba(226, 232, 240, 0.8)' }}>
-                <div>
-                  <strong style={{ display: 'block', fontSize: '0.9rem', color: 'var(--slate-800)' }}>🌙 Weekday Evenings</strong>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--slate-500)' }}>Available for swap sessions after 6:00 PM</span>
+            <div style={{ paddingTop: '1rem' }}>
+              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', fontWeight: 600, fontSize: '0.86rem', color: 'var(--slate-700, #334155)', marginBottom: '0.65rem' }}>
+                  Preferred Meeting Days
+                </label>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer', fontSize: '0.88rem' }}>
+                    <input
+                      type="checkbox"
+                      name="weekdayEvenings"
+                      checked={formData.weekdayEvenings}
+                      onChange={handleChange}
+                      style={{ width: '18px', height: '18px', accentColor: 'var(--violet-primary)' }}
+                    />
+                    🌙 Available on Weekday Evenings (after 6 PM)
+                  </label>
+
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer', fontSize: '0.88rem' }}>
+                    <input
+                      type="checkbox"
+                      name="weekendMornings"
+                      checked={formData.weekendMornings}
+                      onChange={handleChange}
+                      style={{ width: '18px', height: '18px', accentColor: 'var(--violet-primary)' }}
+                    />
+                    ☀️ Available on Weekend Mornings (10 AM - 2 PM)
+                  </label>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setFormData(p => ({ ...p, weekdayEvenings: !p.weekdayEvenings }))}
-                  className={`pill ${formData.weekdayEvenings ? 'pill-earned' : 'pill-spent'}`}
-                  style={{ cursor: 'pointer', border: 'none' }}
-                >
-                  {formData.weekdayEvenings ? '✓ Active' : 'Off'}
-                </button>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.9rem 1.1rem', background: 'rgba(248, 250, 252, 0.75)', borderRadius: '14px', border: '1px solid rgba(226, 232, 240, 0.8)' }}>
-                <div>
-                  <strong style={{ display: 'block', fontSize: '0.9rem', color: 'var(--slate-800)' }}>☀️ Weekend Mornings</strong>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--slate-500)' }}>Available Saturday &amp; Sunday mornings</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setFormData(p => ({ ...p, weekendMornings: !p.weekendMornings }))}
-                  className={`pill ${formData.weekendMornings ? 'pill-earned' : 'pill-spent'}`}
-                  style={{ cursor: 'pointer', border: 'none' }}
-                >
-                  {formData.weekendMornings ? '✓ Active' : 'Off'}
-                </button>
-              </div>
-
-              <div className="form-group">
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
                 <label style={{ display: 'block', fontWeight: 600, fontSize: '0.86rem', color: 'var(--slate-700, #334155)', marginBottom: '0.35rem' }}>
-                  🎥 Preferred Session Mode
+                  Session Mode
                 </label>
                 <select
                   name="sessionMode"
                   value={formData.sessionMode}
                   onChange={handleChange}
-                  className="form-input"
-                  style={{ width: '100%', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '0.6rem 0.85rem', borderRadius: '10px', border: '1px solid var(--slate-300)', fontSize: '0.86rem' }}
                 >
-                  <option value="Online Only">Online Video Call (Google Meet / Zoom)</option>
-                  <option value="In-Person & Online">Both In-Person &amp; Online Video</option>
-                  <option value="In-Person Only">In-Person Meetup Only</option>
+                  <option value="Online Video Only">🎥 Online Video Call Only</option>
+                  <option value="In Person & Online">🤝 In Person &amp; Online</option>
+                  <option value="In Person Only">📍 In Person Only</option>
                 </select>
               </div>
             </div>
           )}
 
-          {/* Modal Action Footer Buttons */}
-          <div className="modal-action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.4rem' }}>
-            <button 
-              type="button" 
-              className="action-btn" 
-              onClick={onClose}
-              style={{ padding: '0.65rem 1.25rem' }}
-            >
+          {/* Action Buttons */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid rgba(226, 232, 240, 0.8)' }}>
+            <button type="button" className="action-btn" onClick={onClose} style={{ padding: '0.65rem 1.2rem', borderRadius: '12px' }}>
               Cancel
             </button>
-            <button 
-              type="submit" 
-              className="btn btn-primary"
-              style={{ padding: '0.65rem 1.4rem' }}
-            >
-              Save Profile &amp; Skills
+            <button type="submit" className="btn btn-primary" style={{ padding: '0.65rem 1.4rem', borderRadius: '12px', fontWeight: 700 }}>
+              Save Changes 💾
             </button>
           </div>
         </form>
@@ -548,5 +587,5 @@ export default function EditProfileModal({ isOpen, user, availability = {}, onCl
     </div>
   );
 
-  return createPortal(modalContent, document.body);
+  return typeof document !== 'undefined' ? createPortal(modalJSX, document.body) : null;
 }

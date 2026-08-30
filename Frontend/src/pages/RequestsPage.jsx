@@ -1,3 +1,4 @@
+// src/pages/RequestsPage.jsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -6,6 +7,7 @@ import Sidebar from '../components/Sidebar';
 import MobileNav from '../components/MobileNav';
 import RequestsTabNav from '../components/RequestsTabNav';
 import RequestCard from '../components/RequestCard';
+import ScheduleSessionModal from '../components/ScheduleSessionModal';
 
 const API_URL = 'http://localhost:5000/api';
 
@@ -24,6 +26,14 @@ export default function RequestsPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+
+  // Schedule Modal State for Teacher
+  const [scheduleModal, setScheduleModal] = useState({
+    open: false,
+    request: null,
+    loading: false
+  });
 
   const getToken = () => {
     return localStorage.getItem('accessToken');
@@ -145,6 +155,13 @@ export default function RequestsPage() {
         fetch(`${API_URL}/requests/sent`, { headers, credentials: 'include' })
       ]);
 
+      if (receivedResponse.status === 401 || sentResponse.status === 401) {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('skillloop_user');
+        navigate('/login');
+        return;
+      }
+
       const receivedData = await receivedResponse.json();
       const sentData = await sentResponse.json();
 
@@ -156,10 +173,14 @@ export default function RequestsPage() {
         ...localSent.filter(ls => !backendSent.some(bs => bs._id === ls.id))
       ];
 
+      // Extract accepted requests for accepted tab
+      const acceptedReceived = backendReceived.filter(r => r.status === 'accepted').map(r => formatRequest(r, 'received'));
+      const acceptedSent = backendSent.filter(r => r.status === 'accepted').map(r => formatRequest(r, 'sent'));
+
       setRequests({
-        received: backendReceived.map((r) => formatRequest(r, 'received')),
+        received: backendReceived.filter(r => r.status === 'pending').map((r) => formatRequest(r, 'received')),
         sent: formattedSent,
-        accepted: [],
+        accepted: [...acceptedReceived, ...acceptedSent],
         history: []
       });
 
@@ -180,7 +201,17 @@ export default function RequestsPage() {
     loadRequests();
   }, []);
 
-  const handleAccept = async (requestId) => {
+  // Open Schedule Modal when Teacher accepts
+  const handleOpenAcceptModal = (request) => {
+    setScheduleModal({
+      open: true,
+      request,
+      loading: false
+    });
+  };
+
+  // Submit Schedule & Accept by Teacher
+  const handleConfirmSchedule = async (schedulePayload) => {
     const token = getToken();
 
     if (!token) {
@@ -188,47 +219,43 @@ export default function RequestsPage() {
       return;
     }
 
-    try {
-      setActionLoading(true);
-      setError('');
+    setScheduleModal(prev => ({ ...prev, loading: true }));
+    setError('');
 
-      const response = await fetch(`${API_URL}/requests/${requestId}/accept`, {
+    try {
+      const response = await fetch(`${API_URL}/requests/${schedulePayload.requestId}/accept`, {
         method: 'PATCH',
-        headers: { Authorization: `Bearer ${token}` },
-        credentials: 'include'
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          scheduledAt: schedulePayload.scheduledAt,
+          duration: schedulePayload.duration,
+          mode: schedulePayload.mode,
+          meetLink: schedulePayload.meetLink,
+          message: schedulePayload.message
+        })
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to accept request');
+        throw new Error(data.message || 'Failed to accept request & schedule session');
       }
 
-      const acceptedRequest = data?.data?.request;
-      const createdSession = data?.data?.session;
+      setScheduleModal({ open: false, request: null, loading: false });
+      setSuccessMsg('Session scheduled successfully! Redirecting to your active sessions...');
 
-      setRequests((current) => ({
-        ...current,
-        received: current.received.filter((r) => r.id !== requestId),
-        accepted: acceptedRequest
-          ? [
-              {
-                ...formatRequest(acceptedRequest, 'received'),
-                status: 'accepted',
-                sessionId: createdSession?._id || ''
-              },
-              ...current.accepted
-            ]
-          : current.accepted
-      }));
-
-      setActiveTab('accepted');
+      setTimeout(() => {
+        navigate('/sessions');
+      }, 1200);
 
     } catch (err) {
-      console.error('Accept request failed:', err);
-      setError(err.message || 'Failed to accept request');
-    } finally {
-      setActionLoading(false);
+      console.error('Accept & schedule error:', err);
+      setError(err.message || 'Failed to schedule session');
+      setScheduleModal(prev => ({ ...prev, loading: false }));
     }
   };
 
@@ -273,12 +300,6 @@ export default function RequestsPage() {
   };
 
   const handleSchedule = (request) => {
-    if (!request) return;
-
-    if (request.sessionId) {
-      localStorage.setItem('activeSessionId', request.sessionId);
-    }
-
     navigate('/sessions');
   };
 
@@ -302,13 +323,19 @@ export default function RequestsPage() {
             <div className="page-title-row">
               <div>
                 <h2>Swap requests inbox</h2>
-                <p>Manage everything you've sent and received from peers.</p>
+                <p>Manage skill swap requests and schedule interactive learning sessions.</p>
               </div>
             </div>
 
             {error && (
-              <div className="glass-panel onboarding-error-banner">
-                {error}
+              <div className="glass-panel onboarding-error-banner margin-bottom-xs">
+                ⚠️ {error}
+              </div>
+            )}
+
+            {successMsg && (
+              <div className="profile-save-banner margin-bottom-xs" style={{ background: '#ecfdf5', color: '#10b981', padding: '0.85rem', borderRadius: '14px', textAlign: 'center', fontWeight: 700 }}>
+                ✓ {successMsg}
               </div>
             )}
 
@@ -325,7 +352,7 @@ export default function RequestsPage() {
             <div className="requests-list-wrapper">
               {loading ? (
                 <div className="glass-panel empty-requests-card">
-                  Loading requests...
+                  Loading requests from MongoDB...
                 </div>
               ) : currentList.length > 0 ? (
                 currentList.map((request) => (
@@ -333,15 +360,27 @@ export default function RequestsPage() {
                     key={request.id}
                     request={request}
                     direction={activeTab}
-                    onAccept={handleAccept}
+                    onAccept={() => handleOpenAcceptModal(request)}
                     onDecline={handleDecline}
                     onSchedule={handleSchedule}
                     actionLoading={actionLoading}
                   />
                 ))
               ) : (
-                <div className="glass-panel empty-requests-card">
-                  <p>No requests found in this tab.</p>
+                <div className="glass-panel empty-requests-card" style={{ padding: '3.5rem 1.5rem', textAlign: 'center', borderRadius: '24px' }}>
+                  <span style={{ fontSize: '3rem', display: 'block', marginBottom: '0.75rem' }}>
+                    {activeTab === 'received' ? '📬' : activeTab === 'sent' ? '📤' : '🤝'}
+                  </span>
+                  <h3 style={{ margin: '0 0 0.5rem 0', fontWeight: 700, color: 'var(--slate-800)' }}>
+                    No {activeTab} requests
+                  </h3>
+                  <p style={{ color: 'var(--slate-500)', fontSize: '0.92rem', maxWidth: '420px', margin: '0 auto', lineHeight: '1.6' }}>
+                    {activeTab === 'received' 
+                      ? 'When peers want to learn skills from you, their swap invitations will appear here.'
+                      : activeTab === 'sent'
+                      ? 'You have not sent any skill swap requests yet. Visit Browse Skills to request a class!'
+                      : 'Accepted and scheduled skill sessions will appear here.'}
+                  </p>
                 </div>
               )}
             </div>
@@ -350,6 +389,15 @@ export default function RequestsPage() {
 
         <MobileNav />
       </div>
+
+      {/* Schedule Session Modal for Teacher */}
+      <ScheduleSessionModal
+        isOpen={scheduleModal.open}
+        request={scheduleModal.request}
+        onClose={() => setScheduleModal({ open: false, request: null, loading: false })}
+        onConfirmSchedule={handleConfirmSchedule}
+        loading={scheduleModal.loading}
+      />
     </>
   );
 }

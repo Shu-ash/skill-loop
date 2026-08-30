@@ -1,12 +1,8 @@
 // src/admin/components/AdminReportsTable.jsx
 import React from 'react';
 
-export default function AdminReportsTable({ reports, title = "Moderation Queue Reports", onResolveReport, onViewDetails, loading = false }) {
-  const defaultReports = [
-    { id: 'rep_1', displayId: '#REP-000001', reporterName: 'Sneha Patel', reportedName: 'Vikram Malhotra', reason: 'Sent unsolicited marketing spam links during introduction', status: 'Pending' }
-  ];
-
-  const list = (reports && reports.length > 0) ? reports : (!loading && reports !== undefined && reports.length === 0 ? [] : defaultReports);
+export default function AdminReportsTable({ reports = [], title = "Moderation Queue Reports", onResolveReport, onViewDetails, loading = false }) {
+  const list = Array.isArray(reports) ? reports : [];
 
   return (
     <div className="admin-table-card">
@@ -22,9 +18,11 @@ export default function AdminReportsTable({ reports, title = "Moderation Queue R
           Loading moderation queue from MongoDB...
         </div>
       ) : list.length === 0 ? (
-        <p className="empty-reports-msg" style={{ padding: '1rem', color: 'var(--slate-500)' }}>
-          No active reports found in moderation queue. System is healthy!
-        </p>
+        <div style={{ padding: '3rem 1.5rem', textAlign: 'center', color: 'var(--slate-500, #64748b)' }}>
+          <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '0.5rem' }}>🛡️</span>
+          <h4 style={{ margin: '0 0 0.4rem 0', fontWeight: 700, color: 'var(--slate-800)' }}>No Moderation Reports</h4>
+          <p style={{ margin: 0, fontSize: '0.9rem' }}>The community is healthy. Any reported violations will appear here.</p>
+        </div>
       ) : (
         <table className="admin-data-table">
           <thead>
@@ -39,11 +37,11 @@ export default function AdminReportsTable({ reports, title = "Moderation Queue R
           </thead>
           <tbody>
             {list.map((r) => {
-              const formattedId = r.displayId || `#REP-${(r.id || '').toString().slice(-6).toUpperCase()}`;
+              const formattedId = r.displayId || `#REP-${(r.id || r._id || '').toString().slice(-6).toUpperCase()}`;
               return (
-                <tr key={r.id}>
+                <tr key={r.id || r._id}>
                   <td style={{ whiteSpace: 'nowrap' }}>
-                    <span className="user-id-badge" title={`Full Report ID: ${r.id}`}>
+                    <span className="user-id-badge" title={`Full Report ID: ${r.id || r._id}`}>
                       {formattedId}
                     </span>
                   </td>
@@ -51,7 +49,7 @@ export default function AdminReportsTable({ reports, title = "Moderation Queue R
                   <td style={{ whiteSpace: 'nowrap' }}><strong>{r.reportedName || 'Member'}</strong></td>
                   <td>{r.reason}</td>
                   <td>
-                    <span className={`pill ${r.status === 'Resolved' ? 'pill-earned' : 'pill-spent'}`}>
+                    <span className={`pill ${r.status === 'Resolved' || r.status === 'resolved' ? 'pill-earned' : 'pill-spent'}`}>
                       {r.status || 'Pending'}
                     </span>
                   </td>
@@ -67,7 +65,7 @@ export default function AdminReportsTable({ reports, title = "Moderation Queue R
                           Details
                         </button>
                       )}
-                      {onResolveReport && r.status !== 'Resolved' ? (
+                      {onResolveReport && r.status !== 'Resolved' && r.status !== 'resolved' ? (
                         <>
                           <button 
                             type="button" 

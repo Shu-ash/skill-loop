@@ -9,7 +9,6 @@ export default function AdminUsersTable({
   showActions = true, 
   onRoleToggle, 
   onStatusToggle,
-  onResetPassword,
   onViewDetails,
   loading = false
 }) {
@@ -40,7 +39,7 @@ export default function AdminUsersTable({
             <tr>
               <th style={{ whiteSpace: 'nowrap' }}>User ID</th>
               <th>Name &amp; Handle</th>
-              <th>Email &amp; Password</th>
+              {showEmail && <th>Email</th>}
               {showRole && <th>Role</th>}
               <th>Credits</th>
               <th>Status</th>
@@ -63,12 +62,11 @@ export default function AdminUsersTable({
                     <strong>{u.name}</strong>
                     <div style={{ fontSize: '0.78rem', color: 'var(--slate-500)' }}>{u.handle || `@${(u.email || '').split('@')[0]}`}</div>
                   </td>
-                  <td>
-                    <div>{u.email}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--slate-500)', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.2rem' }}>
-                      <span>🔒</span> <span>Encrypted Password</span>
-                    </div>
-                  </td>
+                  {showEmail && (
+                    <td>
+                      <div>{u.email}</div>
+                    </td>
+                  )}
                   {showRole && (
                     <td style={{ whiteSpace: 'nowrap' }}>
                       <span className={`pill ${isSuperAdmin ? 'pill-admin' : u.role === 'Admin' || u.role === 'admin' ? 'pill-admin' : 'pill-user'}`}>
@@ -98,17 +96,6 @@ export default function AdminUsersTable({
                           </button>
                         )}
 
-                        {onResetPassword && (
-                          <button
-                            type="button"
-                            className="action-btn"
-                            onClick={() => onResetPassword(u)}
-                            title="Set / Reset User Password"
-                          >
-                            🔑 Password
-                          </button>
-                        )}
-
                         {isSuperAdmin ? (
                           <span className="text-subtle" style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--violet-primary, #6c5ce7)', whiteSpace: 'nowrap', padding: '0 0.5rem' }}>
                             Protected Root
@@ -118,7 +105,7 @@ export default function AdminUsersTable({
                             {onRoleToggle && (
                               <button 
                                 type="button" 
-                                className="action-btn"
+                                className="action-btn" 
                                 onClick={() => onRoleToggle(u)}
                                 title="Toggle Admin/User Role"
                               >
@@ -128,7 +115,7 @@ export default function AdminUsersTable({
                             {onStatusToggle && (
                               <button 
                                 type="button" 
-                                className="action-btn btn-danger-sm"
+                                className="action-btn btn-danger-sm" 
                                 onClick={() => onStatusToggle(u)}
                                 title="Toggle Active/Banned Status"
                               >

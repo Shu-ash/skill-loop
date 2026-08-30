@@ -9,27 +9,36 @@ import { hashPassword } from "../utils/password.js";
 // GET /api/admin/metrics - Real-time KPI Statistics
 export const getAdminMetrics = async (req, res) => {
   try {
-    const totalUsers = (await User.countDocuments()) || 0;
-    const totalSessions = (await Session.countDocuments()) || 0;
-    const disputedSessions = (await Session.countDocuments({ status: "disputed" })) || 0;
-    const totalCategories = (await Category.countDocuments({ status: "Active" })) || 3;
-    const pendingReports = (await Report.countDocuments({ status: "pending" })) || 0;
+    const totalUsers = await User.countDocuments();
+    const totalSessions = await Session.countDocuments();
+    const activeSessions = await Session.countDocuments({ status: { $in: ["scheduled", "in_progress"] } });
+    const completedSessions = await Session.countDocuments({ status: "completed" });
+    const disputedSessions = await Session.countDocuments({ status: "disputed" });
+    const totalCategories = await Category.countDocuments({ status: "Active" });
+    const pendingReports = await Report.countDocuments({ status: "pending" });
+
+    // Calculate total unique skills from all categories in MongoDB
+    const allCategories = await Category.find({ status: "Active" }, "skills");
+    const allSkillsSet = new Set();
+    allCategories.forEach(c => {
+      if (Array.isArray(c.skills)) {
+        c.skills.forEach(s => allSkillsSet.add(s.trim()));
+      }
+    });
 
     const creditAggregate = await User.aggregate([
       { $group: { _id: null, totalCredits: { $sum: "$credits" } } }
     ]);
-    const creditsCirculating = creditAggregate[0]?.totalCredits || totalUsers * 10;
-
-    const usersWithSkills = await User.find({}, "skillsCanTeach");
-    const uniqueSkills = new Set();
-    usersWithSkills.forEach(u => u.skillsCanTeach?.forEach(s => uniqueSkills.add(s.toLowerCase())));
+    const creditsCirculating = creditAggregate[0]?.totalCredits || 0;
 
     res.status(200).json({
       success: true,
       data: {
-        totalUsers: totalUsers > 0 ? totalUsers : 100,
-        totalSessions: totalSessions > 0 ? totalSessions : 250,
-        totalSkills: uniqueSkills.size > 0 ? uniqueSkills.size : 50,
+        totalUsers,
+        totalSessions,
+        activeSessions,
+        completedSessions,
+        totalSkills: allSkillsSet.size,
         disputedSessions,
         totalCategories,
         pendingReports,
@@ -37,17 +46,9 @@ export const getAdminMetrics = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(200).json({
-      success: true,
-      data: {
-        totalUsers: 100,
-        totalSessions: 250,
-        totalSkills: 50,
-        disputedSessions: 2,
-        totalCategories: 3,
-        pendingReports: 0,
-        creditsCirculating: 1000
-      }
+    res.status(500).json({
+      success: false,
+      message: error.message
     });
   }
 };
@@ -317,6 +318,7 @@ export const getAdminCategories = async (req, res) => {
       name: c.name,
       description: c.description || 'Skill category',
       icon: c.icon || '⚡',
+      skills: Array.isArray(c.skills) ? c.skills : [],
       count: c.memberCount || 0,
       status: c.status || 'Active'
     }));
@@ -333,20 +335,62 @@ export const getAdminCategories = async (req, res) => {
 // POST /api/admin/categories - Create Skill Category
 export const createCategory = async (req, res) => {
   try {
-    const { name, description, icon } = req.body;
+    const { name, description, icon, skills } = req.body;
     if (!name) {
       return res.status(400).json({ success: false, message: "Category name is required" });
     }
 
+    const cleanSkills = Array.isArray(skills)
+      ? [...new Set(skills.map(s => String(s).trim()).filter(Boolean))]
+      : typeof skills === 'string'
+      ? skills.split(',').map(s => s.trim()).filter(Boolean)
+      : [];
+
     const category = await Category.create({
       name: name.trim(),
-      description: description || 'Skill Category',
-      icon: icon || '⚡'
+      description: description?.trim() || 'Skill Category',
+      icon: icon || '⚡',
+      skills: cleanSkills
     });
 
     res.status(201).json({
       success: true,
       message: "Skill category created successfully",
+      data: { category }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// PATCH /api/admin/categories/:id - Update Skill Category & Skills
+export const updateCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description, icon, skills, status } = req.body;
+
+    const updates = {};
+    if (name) updates.name = name.trim();
+    if (description !== undefined) updates.description = description.trim();
+    if (icon) updates.icon = icon;
+    if (status) updates.status = status;
+    if (skills !== undefined) {
+      updates.skills = Array.isArray(skills)
+        ? [...new Set(skills.map(s => String(s).trim()).filter(Boolean))]
+        : typeof skills === 'string'
+        ? skills.split(',').map(s => s.trim()).filter(Boolean)
+        : [];
+    }
+
+    const category = await Category.findByIdAndUpdate(id, updates, { new: true, runValidators: true });
+
+    if (!category) {
+      return res.status(404).json({ success: false, message: "Category not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Category updated successfully",
       data: { category }
     });
   } catch (error) {
