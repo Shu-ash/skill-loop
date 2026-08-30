@@ -40,7 +40,7 @@ const sessionSchema = new mongoose.Schema(
 
         duration: {
             type: Number,
-            enum: [30, 45, 60, 90, 120],
+            enum: [15, 30, 45, 60, 90, 120],
             default: 45,
             required: true
         },
@@ -55,6 +55,26 @@ const sessionSchema = new mongoose.Schema(
             type: String,
             trim: true,
             default: ""
+        },
+
+        learnerJoined: {
+            type: Boolean,
+            default: false
+        },
+
+        learnerJoinedAt: {
+            type: Date,
+            default: null
+        },
+
+        teacherJoined: {
+            type: Boolean,
+            default: false
+        },
+
+        teacherJoinedAt: {
+            type: Date,
+            default: null
         },
 
         /*

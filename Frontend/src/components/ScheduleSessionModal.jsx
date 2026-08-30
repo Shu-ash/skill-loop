@@ -26,6 +26,7 @@ export default function ScheduleSessionModal({
   };
 
   const [scheduledAt, setScheduledAt] = useState(getTomorrowDateTime());
+  const [duration, setDuration] = useState(45);
   const [mode, setMode] = useState('online');
   const [meetLink, setMeetLink] = useState(`https://meet.google.com/skillloop-${request.id?.toString().slice(-6) || 'session'}`);
   const [message, setMessage] = useState('');
@@ -63,7 +64,7 @@ export default function ScheduleSessionModal({
     onSubmit({
       requestId: request.id,
       scheduledAt,
-      duration: 45,
+      duration: Number(duration) || 45,
       mode,
       meetLink: mode === 'online' ? meetLink.trim() : '',
       message: message.trim()
@@ -136,6 +137,27 @@ export default function ScheduleSessionModal({
               disabled={loading}
               style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '12px' }}
             />
+          </div>
+
+          {/* Duration */}
+          <div className="form-group" style={{ marginBottom: '1.1rem' }}>
+            <label className="form-label" style={{ fontWeight: 600, fontSize: '0.88rem' }}>
+              ⏱️ Session Duration *
+            </label>
+            <select
+              className="form-input"
+              value={duration}
+              onChange={(e) => setDuration(Number(e.target.value))}
+              disabled={loading}
+              style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '12px' }}
+            >
+              <option value={15}>15 Minutes</option>
+              <option value={30}>30 Minutes</option>
+              <option value={45}>45 Minutes (Recommended)</option>
+              <option value={60}>60 Minutes (1 Hour)</option>
+              <option value={90}>90 Minutes (1.5 Hours)</option>
+              <option value={120}>120 Minutes (2 Hours)</option>
+            </select>
           </div>
 
           {/* Mode */}

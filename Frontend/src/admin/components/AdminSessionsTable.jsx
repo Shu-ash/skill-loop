@@ -37,6 +37,7 @@ export default function AdminSessionsTable({ sessions = [], title = "Session Log
               <th>Teacher</th>
               <th>Learner</th>
               <th>Topic / Skill</th>
+              <th>Duration</th>
               <th>Status</th>
               <th style={{ whiteSpace: 'nowrap' }}>Actions</th>
             </tr>
@@ -54,6 +55,9 @@ export default function AdminSessionsTable({ sessions = [], title = "Session Log
                   <td style={{ whiteSpace: 'nowrap' }}><strong>{s.teacher}</strong></td>
                   <td style={{ whiteSpace: 'nowrap' }}>{s.learner}</td>
                   <td>{s.topic}</td>
+                  <td style={{ whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{s.duration || 45} mins</span>
+                  </td>
                   <td>
                     <span className={`pill ${getStatusClass(s.status)}`}>
                       {s.status}

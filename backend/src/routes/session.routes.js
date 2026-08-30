@@ -6,7 +6,8 @@ import {
     startSession,
     completeSession,
     cancelSession,
-    scheduleSession
+    scheduleSession,
+    joinSession
 } from "../controllers/session.controller.js";
 
 import { protect } from "../middleware/auth.middleware.js";
@@ -50,6 +51,17 @@ router.patch(
     "/:sessionId/schedule",
     protect,
     scheduleSession
+);
+
+
+// =========================
+// JOIN
+// =========================
+
+router.patch(
+    "/:sessionId/join",
+    protect,
+    joinSession
 );
 
 

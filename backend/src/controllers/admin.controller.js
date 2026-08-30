@@ -217,6 +217,8 @@ export const getAdminSessions = async (req, res) => {
       teacher: s.teacher?.name || s.teacher?.firstName || 'Teacher',
       learner: s.learner?.name || s.learner?.firstName || 'Learner',
       topic: s.skill || 'Skill Swap',
+      duration: s.duration || 45,
+      mode: s.mode === 'in_person' ? 'In Person' : 'Online Video Call',
       status: s.status === 'completed' ? 'Completed' : s.status === 'disputed' ? 'Disputed' : s.status === 'cancelled' ? 'Cancelled' : 'Scheduled',
       meetLink: s.meetLink || '',
       scheduledAt: s.scheduledAt

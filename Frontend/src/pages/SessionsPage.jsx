@@ -85,6 +85,8 @@ export default function SessionsPage() {
       id: backendSession._id || backendSession.id,
       isTeacher,
       isLearner,
+      learnerJoined: Boolean(backendSession.learnerJoined),
+      teacherJoined: Boolean(backendSession.teacherJoined),
       scheduledAt: backendSession.scheduledAt || null,
       title: `${backendSession.skill || 'Skill'} Session`,
       partnerName,
@@ -109,7 +111,6 @@ export default function SessionsPage() {
     }
 
     try {
-      setLoading(true);
       setError('');
 
       const response = await fetch(`${API_URL}/sessions`, {
@@ -152,6 +153,13 @@ export default function SessionsPage() {
     const user = getCurrentUser();
     setCurrentUser(user);
     loadSessions(user);
+
+    // Auto-refresh sessions every 5s so when student joins, teacher screen updates live
+    const pollInterval = setInterval(() => {
+      loadSessions(user);
+    }, 5000);
+
+    return () => clearInterval(pollInterval);
   }, []);
 
   const updateSessionInState = (backendSession) => {
@@ -166,10 +174,27 @@ export default function SessionsPage() {
     );
   };
 
-  const handleJoinCall = (meetLink) => {
+  const handleJoinCall = async (session) => {
+    const meetLink = typeof session === 'string' ? session : session?.meetLink;
+    const sessionId = typeof session === 'object' ? session?.id : null;
+
     if (!meetLink) {
       setError('Meeting link is not available.');
       return;
+    }
+
+    // Call backend to record join timestamp & learnerJoined status
+    if (sessionId) {
+      const accessToken = localStorage.getItem('accessToken');
+      if (accessToken) {
+        try {
+          fetch(`${API_URL}/sessions/${sessionId}/join`, {
+            method: 'PATCH',
+            headers: { Authorization: `Bearer ${accessToken}` },
+            credentials: 'include'
+          }).then(() => loadSessions(currentUser)).catch(() => {});
+        } catch (e) {}
+      }
     }
 
     const normalizedLink =
