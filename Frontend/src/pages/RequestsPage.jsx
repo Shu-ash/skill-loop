@@ -153,11 +153,16 @@ export default function RequestsPage() {
       const acceptedReceived = backendReceived.filter(r => r.status === 'accepted').map(r => formatRequest(r, 'received'));
       const acceptedSent = backendSent.filter(r => r.status === 'accepted').map(r => formatRequest(r, 'sent'));
 
+      // Extract history (declined, cancelled, completed) for history tab
+      const historyStatuses = ['declined', 'cancelled', 'completed'];
+      const historyReceived = backendReceived.filter(r => historyStatuses.includes(r.status)).map(r => formatRequest(r, 'received'));
+      const historySent = backendSent.filter(r => historyStatuses.includes(r.status)).map(r => formatRequest(r, 'sent'));
+
       setRequests({
         received: backendReceived.filter(r => r.status === 'pending').map((r) => formatRequest(r, 'received')),
         sent: backendSent.filter(r => r.status === 'pending').map((r) => formatRequest(r, 'sent')),
         accepted: [...acceptedReceived, ...acceptedSent],
-        history: []
+        history: [...historyReceived, ...historySent]
       });
 
     } catch (err) {
@@ -253,7 +258,7 @@ export default function RequestsPage() {
       setActionLoading(true);
       setError('');
 
-      const response = await fetch(`${API_URL}/requests/${requestId}/reject`, {
+      const response = await fetch(`${API_URL}/requests/${requestId}/decline`, {
         method: 'PATCH',
         headers: {
           Authorization: `Bearer ${token}`
@@ -371,10 +376,11 @@ export default function RequestsPage() {
                     <RequestCard
                       key={req.id}
                       request={req}
-                      tab={activeTab}
+                      direction={activeTab}
                       onAccept={handleOpenAcceptModal}
-                      onReject={handleReject}
+                      onDecline={handleReject}
                       onCancel={handleCancel}
+                      onSchedule={(r) => navigate('/sessions')}
                       actionLoading={actionLoading}
                     />
                   ))}

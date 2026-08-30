@@ -6,7 +6,7 @@ export default function ScheduleSessionModal({
   isOpen,
   onClose,
   request,
-  onConfirmSchedule,
+  onSubmit,
   loading = false
 }) {
   if (!isOpen || !request) return null;
@@ -60,7 +60,7 @@ export default function ScheduleSessionModal({
       return;
     }
 
-    onConfirmSchedule({
+    onSubmit({
       requestId: request.id,
       scheduledAt,
       duration: 45,

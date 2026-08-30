@@ -6,6 +6,7 @@ export default function RequestCard({
   direction,
   onAccept,
   onDecline,
+  onCancel,
   onSchedule,
   actionLoading = false
 }) {
@@ -20,6 +21,7 @@ export default function RequestCard({
 
   const isReceived = direction === 'received';
   const isSent = direction === 'sent';
+  const isAccepted = direction === 'accepted';
 
   return (
     <div className="glass-panel request-card">
@@ -40,7 +42,11 @@ export default function RequestCard({
             {user?.name || 'Skill Loop User'}
             <span>
               {' '}
-              {isReceived ? 'wants to learn' : 'wants to learn from you:'}{' '}
+              {isReceived
+                ? 'wants to learn from you:'
+                : isSent
+                  ? '— you requested to learn:'
+                  : 'swap accepted for:'}{' '}
             </span>
             <strong>{skillWant || 'Unknown skill'}</strong>
           </h4>
@@ -61,7 +67,7 @@ export default function RequestCard({
             <button
               type="button"
               className="btn btn-secondary btn-pill-sm"
-              onClick={() => onDecline(id)}
+              onClick={() => onDecline(request)}
               disabled={actionLoading}
             >
               Decline
@@ -80,9 +86,20 @@ export default function RequestCard({
 
         {/* SENT REQUEST - PENDING (Learner is waiting for Teacher) */}
         {isSent && status === 'pending' && (
-          <span className="pill-badge pill-gold" title="Waiting for teacher to accept & set class time">
-            ● AWAITING TEACHER
-          </span>
+          <>
+            <span className="pill-badge pill-gold" title="Waiting for teacher to accept & set class time">
+              ● AWAITING TEACHER
+            </span>
+
+            <button
+              type="button"
+              className="btn btn-secondary btn-pill-sm"
+              onClick={() => onCancel && onCancel(request)}
+              disabled={actionLoading}
+            >
+              Cancel Request
+            </button>
+          </>
         )}
 
         {/* ACCEPTED (Both see link to Scheduled Session) */}
@@ -93,7 +110,7 @@ export default function RequestCard({
             <button
               type="button"
               className="btn btn-primary btn-pill-sm"
-              onClick={() => onSchedule(request)}
+              onClick={() => onSchedule && onSchedule(request)}
               disabled={actionLoading}
             >
               🎥 View Session &amp; Link →
@@ -104,6 +121,11 @@ export default function RequestCard({
         {/* DECLINED */}
         {status === 'declined' && (
           <span className="pill-badge pill-coral">● DECLINED</span>
+        )}
+
+        {/* CANCELLED */}
+        {status === 'cancelled' && (
+          <span className="pill-badge pill-coral">● CANCELLED</span>
         )}
       </div>
     </div>

@@ -290,3 +290,45 @@ export const declineSwapRequest = async (
         next(error);
     }
 };
+
+
+/**
+ * PATCH /api/requests/:requestId/cancel
+ * Sender cancels their own pending request
+ */
+export const cancelSwapRequest = async (
+    req,
+    res,
+    next
+) => {
+    try {
+        const request =
+            await SwapRequest.findOne({
+                _id: req.params.requestId,
+                sender: req.user._id,
+                status: "pending"
+            });
+
+        if (!request) {
+            return res.status(404).json({
+                success: false,
+                message: "Pending request not found or already processed"
+            });
+        }
+
+        request.status = "cancelled";
+
+        await request.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Swap request cancelled",
+            data: {
+                request
+            }
+        });
+
+    } catch (error) {
+        next(error);
+    }
+};
