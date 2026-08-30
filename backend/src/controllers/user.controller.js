@@ -108,13 +108,15 @@ export const completeOnboarding = async (req, res, next) => {
 };
 
 /**
- * PATCH /api/users/me
+ * PATCH /api/users/me & PATCH /api/users/profile
  * Update profile
  */
 export const updateMyProfile = async (req, res, next) => {
   try {
     const allowedFields = [
       "name",
+      "firstName",
+      "lastName",
       "username",
       "profilePhotoUrl",
       "coverPhotoUrl",
@@ -132,6 +134,23 @@ export const updateMyProfile = async (req, res, next) => {
       if (req.body[field] !== undefined) {
         updates[field] = req.body[field];
       }
+    }
+
+    // Aliases support
+    if (req.body.teachSkills !== undefined && updates.skillsCanTeach === undefined) {
+      updates.skillsCanTeach = req.body.teachSkills;
+    }
+    if (req.body.learnSkills !== undefined && updates.skillsWantToLearn === undefined) {
+      updates.skillsWantToLearn = req.body.learnSkills;
+    }
+
+    // Name splitting into firstName & lastName
+    if (updates.name) {
+      const parts = updates.name.trim().split(/\s+/);
+      updates.firstName = parts[0] || "Member";
+      updates.lastName = parts.slice(1).join(" ") || "";
+    } else if (updates.firstName || updates.lastName) {
+      updates.name = `${updates.firstName || ""} ${updates.lastName || ""}`.trim();
     }
 
     if (updates.username !== undefined) {

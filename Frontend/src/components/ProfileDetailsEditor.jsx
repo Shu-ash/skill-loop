@@ -8,11 +8,14 @@ export default function ProfileDetailsEditor({
   availability = { weekdayEvenings: true, weekendMornings: false, mode: 'Online Only' },
   profileStrength = 0,
   onOpenEdit,
-  onEditProfile
+  onEditProfile,
+  onOpenEditModal
 }) {
   const displayBio = bio || user?.bio || '';
   const displayAvailability = availability || user?.availability || { weekdayEvenings: true, weekendMornings: false, mode: 'Online Only' };
-  const handleEdit = onOpenEdit || onEditProfile;
+  const handleEdit = onOpenEdit || onEditProfile || onOpenEditModal;
+
+  const validStrength = Math.min(Math.max(Number(profileStrength) || 0, 0), 100);
 
   return (
     <div className="glass-panel profile-details-card" style={{ padding: '1.6rem 1.8rem', borderRadius: '24px' }}>
@@ -87,13 +90,13 @@ export default function ProfileDetailsEditor({
       <div className="profile-strength-card" style={{ borderRadius: '16px', padding: '1rem 1.2rem' }}>
         <div className="strength-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
           <span style={{ fontSize: '0.84rem', fontWeight: 700 }}>Profile Strength</span>
-          <span style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--violet-primary, #6c5ce7)' }}>{profileStrength}%</span>
+          <span style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--violet-primary, #6c5ce7)' }}>{validStrength}%</span>
         </div>
-        <div className="strength-bar-track" style={{ height: '8px', borderRadius: '9999px', overflow: 'hidden' }}>
+        <div className="strength-bar-track" style={{ height: '8px', borderRadius: '9999px', overflow: 'hidden', background: 'rgba(226, 232, 240, 0.8)' }}>
           <div 
             className="strength-bar-fill" 
             style={{ 
-              width: `${profileStrength}%`, 
+              width: `${validStrength}%`, 
               height: '100%', 
               background: 'linear-gradient(90deg, #6c5ce7 0%, #10b981 100%)',
               borderRadius: '9999px',
@@ -101,8 +104,8 @@ export default function ProfileDetailsEditor({
             }}
           />
         </div>
-        <p className="strength-tip" style={{ fontSize: '0.75rem', margin: '0.5rem 0 0 0' }}>
-          💡 Complete your bio and skills to reach 100% profile strength!
+        <p className="strength-tip" style={{ fontSize: '0.75rem', margin: '0.5rem 0 0 0', color: 'var(--slate-500)' }}>
+          {validStrength === 100 ? '🎉 Amazing! Your profile is 100% complete and ready for swaps.' : '💡 Add your bio and teaching skills to reach 100% profile strength!'}
         </p>
       </div>
     </div>

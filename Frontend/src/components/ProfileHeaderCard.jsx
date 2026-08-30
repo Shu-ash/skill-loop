@@ -3,27 +3,36 @@ import React, { useRef } from 'react';
 
 // ProfileHeaderCard: Shows cover banner, user avatar, display name, handle, rating, with local file pickers & Change Password
 export default function ProfileHeaderCard({ 
-  user, 
-  onCoverFileSelected, 
-  onAvatarFileSelected, 
+  user = {}, 
+  onCoverFileSelected,
+  onUploadCover,
+  onAvatarFileSelected,
+  onUploadAvatar, 
   onEditProfile,
-  onChangePassword
+  onOpenEditModal,
+  onChangePassword,
+  onOpenPasswordModal
 }) {
   const coverInputRef = useRef(null);
   const avatarInputRef = useRef(null);
 
+  const handleCoverCallback = onCoverFileSelected || onUploadCover;
+  const handleAvatarCallback = onAvatarFileSelected || onUploadAvatar;
+  const handleEditCallback = onEditProfile || onOpenEditModal;
+  const handlePasswordCallback = onChangePassword || onOpenPasswordModal;
+
   const handleCoverChange = (e) => {
     const file = e.target.files && e.target.files[0];
-    if (file) {
-      onCoverFileSelected(file);
+    if (file && handleCoverCallback) {
+      handleCoverCallback(file);
     }
     e.target.value = '';
   };
 
   const handleAvatarChange = (e) => {
     const file = e.target.files && e.target.files[0];
-    if (file) {
-      onAvatarFileSelected(file);
+    if (file && handleAvatarCallback) {
+      handleAvatarCallback(file);
     }
     e.target.value = '';
   };
@@ -31,7 +40,7 @@ export default function ProfileHeaderCard({
   const hasCustomCover = Boolean(user.coverPhotoUrl);
   const hasCustomAvatar = Boolean(user.profilePhotoUrl || user.avatarUrl);
 
-  const initials = user.avatar || (user.name ? user.name.slice(0, 2).toUpperCase() : 'SL');
+  const initials = user.avatar || (user.name ? user.name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase() : 'SL');
 
   return (
     <div className="glass-panel profile-header-card">
@@ -78,23 +87,25 @@ export default function ProfileHeaderCard({
           >
             📷 Change photo
           </button>
-          {onChangePassword && (
+          {handlePasswordCallback && (
             <button 
               type="button" 
               className="btn btn-secondary btn-pill-sm" 
-              onClick={onChangePassword}
+              onClick={handlePasswordCallback}
               title="Change your account login password"
             >
               🔒 Password
             </button>
           )}
-          <button 
-            type="button" 
-            className="btn btn-primary btn-pill-sm edit-profile-btn" 
-            onClick={onEditProfile}
-          >
-            ✏️ Edit profile
-          </button>
+          {handleEditCallback && (
+            <button 
+              type="button" 
+              className="btn btn-primary btn-pill-sm edit-profile-btn" 
+              onClick={handleEditCallback}
+            >
+              ✏️ Edit profile
+            </button>
+          )}
         </div>
       </div>
 
@@ -118,8 +129,8 @@ export default function ProfileHeaderCard({
             </div>
           </div>
           <button 
-            type="button"
-            className="avatar-edit-badge-btn"
+            type="button" 
+            className="avatar-edit-badge-btn" 
             onClick={() => avatarInputRef.current?.click()}
             title="Upload photo"
           >

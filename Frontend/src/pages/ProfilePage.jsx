@@ -22,7 +22,7 @@ export default function ProfilePage() {
       try {
         const parsed = JSON.parse(userSession);
         return {
-          name: parsed.name || 'Member',
+          name: parsed.name || `${parsed.firstName || ''} ${parsed.lastName || ''}`.trim() || 'Member',
           username: parsed.username ? `@${parsed.username.replace(/^@/, '')}` : '@user',
           headline: parsed.headline || 'SkillLoop Community Member 🚀',
           bio: parsed.bio || '',
@@ -77,11 +77,11 @@ export default function ProfilePage() {
   // Calculate dynamic profile strength percentage (0% to 100% based on real filled data)
   const profileStrength = useMemo(() => {
     let score = 0;
-    if (user.name && user.name !== 'Member') score += 20;
-    if (user.username && user.username !== '@user') score += 15;
+    if (user.name && user.name !== 'Member' && user.name.trim().length > 0) score += 20;
+    if (user.username && user.username !== '@user' && user.username.trim().length > 1) score += 15;
     if (user.bio && user.bio.trim().length > 5) score += 20;
-    if (user.profilePhotoUrl) score += 15;
-    if (user.coverPhotoUrl) score += 10;
+    if (user.profilePhotoUrl && user.profilePhotoUrl.length > 10) score += 15;
+    if (user.coverPhotoUrl && user.coverPhotoUrl.length > 10) score += 10;
     if (user.teachSkills && user.teachSkills.length > 0) score += 10;
     if (user.learnSkills && user.learnSkills.length > 0) score += 10;
     return Math.min(score, 100);
@@ -280,21 +280,21 @@ export default function ProfilePage() {
             {/* Profile Header Hero Card */}
             <ProfileHeaderCard
               user={user}
-              profileStrength={profileStrength}
-              onOpenEditModal={() => setIsEditModalOpen(true)}
-              onOpenPasswordModal={() => setIsPasswordModalOpen(true)}
-              onUploadAvatar={(file) => handleFileForCrop(file, 'avatar')}
-              onUploadCover={(file) => handleFileForCrop(file, 'cover')}
+              onEditProfile={() => setIsEditModalOpen(true)}
+              onChangePassword={() => setIsPasswordModalOpen(true)}
+              onAvatarFileSelected={(file) => handleFileForCrop(file, 'avatar')}
+              onCoverFileSelected={(file) => handleFileForCrop(file, 'cover')}
             />
 
             {/* Side-by-Side 2-Column Editors Layout */}
             <div className="profile-editors-grid" style={{ marginTop: '1.5rem' }}>
-              {/* Left Column: Read-Only Info & Availability */}
+              {/* Left Column: Read-Only Info & Availability & Profile Strength */}
               <div className="profile-editors-left">
                 <ProfileDetailsEditor
                   bio={user.bio}
                   availability={availability}
-                  onOpenEditModal={() => setIsEditModalOpen(true)}
+                  profileStrength={profileStrength}
+                  onOpenEdit={() => setIsEditModalOpen(true)}
                 />
               </div>
 
