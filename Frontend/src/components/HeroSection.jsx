@@ -1,12 +1,14 @@
 // src/components/HeroSection.jsx
-
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { getAuthStatus } from '../utils/auth';
 
 export default function HeroSection() {
+  const { isAuthenticated } = getAuthStatus();
+  const targetLink = isAuthenticated ? '/browse' : '/login?mode=signup';
+
   return (
     <section className="landing-hero">
-
       {/* Left side: Hero text and stats */}
       <div className="hero-left">
         <div className="hero-tag">
@@ -23,8 +25,10 @@ export default function HeroSection() {
 
         {/* Call-to-action buttons */}
         <div className="hero-btns">
-          <Link className="btn btn-primary" to="/login?mode=signup" state={{ mode: 'signup' }}>Join the loop →</Link>
-          <a className="btn btn-secondary" href="#how-it-works">See how it works</a>
+          <Link className="btn btn-primary" to={targetLink}>
+            {isAuthenticated ? 'Browse skills to learn →' : 'Join the loop →'}
+          </Link>
+          <Link className="btn btn-secondary" to="/how-it-works">See how it works</Link>
         </div>
 
         {/* Hero stats */}

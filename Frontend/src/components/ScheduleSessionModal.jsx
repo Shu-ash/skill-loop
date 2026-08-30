@@ -26,7 +26,6 @@ export default function ScheduleSessionModal({
   };
 
   const [scheduledAt, setScheduledAt] = useState(getTomorrowDateTime());
-  const [duration, setDuration] = useState(45);
   const [mode, setMode] = useState('online');
   const [meetLink, setMeetLink] = useState(`https://meet.google.com/skillloop-${request.id?.toString().slice(-6) || 'session'}`);
   const [message, setMessage] = useState('');
@@ -64,7 +63,7 @@ export default function ScheduleSessionModal({
     onConfirmSchedule({
       requestId: request.id,
       scheduledAt,
-      duration: Number(duration),
+      duration: 45,
       mode,
       meetLink: mode === 'online' ? meetLink.trim() : '',
       message: message.trim()
@@ -92,7 +91,7 @@ export default function ScheduleSessionModal({
         className="glass-panel clay-card-3d" 
         onClick={(e) => e.stopPropagation()} 
         style={{
-          maxWidth: '520px',
+          maxWidth: '500px',
           width: '100%',
           borderRadius: '24px',
           padding: '2.2rem 2rem',
@@ -108,7 +107,7 @@ export default function ScheduleSessionModal({
                 Schedule Session
               </h3>
               <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--slate-500)' }}>
-                You are teaching <strong>{skillWant}</strong> to <strong>{partnerName}</strong>
+                Teaching <strong>{skillWant}</strong> to <strong>{partnerName}</strong>
               </p>
             </div>
           </div>
@@ -123,9 +122,9 @@ export default function ScheduleSessionModal({
 
         <form onSubmit={handleSubmit}>
           {/* Date & Time */}
-          <div className="form-group" style={{ marginBottom: '1rem' }}>
+          <div className="form-group" style={{ marginBottom: '1.1rem' }}>
             <label className="form-label" style={{ fontWeight: 600, fontSize: '0.88rem' }}>
-              🗓️ Select Date &amp; Time *
+              🗓️ Select Class Date &amp; Time *
             </label>
             <input
               className="form-input"
@@ -139,47 +138,26 @@ export default function ScheduleSessionModal({
             />
           </div>
 
-          {/* Duration & Mode Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem', marginBottom: '1rem' }}>
-            <div className="form-group">
-              <label className="form-label" style={{ fontWeight: 600, fontSize: '0.88rem' }}>
-                ⏱️ Duration
-              </label>
-              <select
-                className="form-input"
-                value={duration}
-                onChange={(e) => setDuration(e.target.value)}
-                disabled={loading}
-                style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '12px' }}
-              >
-                <option value={30}>30 mins</option>
-                <option value={45}>45 mins</option>
-                <option value={60}>60 mins (1 Hour)</option>
-                <option value={90}>90 mins</option>
-                <option value={120}>120 mins (2 Hours)</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label" style={{ fontWeight: 600, fontSize: '0.88rem' }}>
-                📍 Mode
-              </label>
-              <select
-                className="form-input"
-                value={mode}
-                onChange={(e) => setMode(e.target.value)}
-                disabled={loading}
-                style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '12px' }}
-              >
-                <option value="online">🎥 Online Video Call</option>
-                <option value="in_person">🤝 In-Person Meeting</option>
-              </select>
-            </div>
+          {/* Mode */}
+          <div className="form-group" style={{ marginBottom: '1.1rem' }}>
+            <label className="form-label" style={{ fontWeight: 600, fontSize: '0.88rem' }}>
+              📍 Session Mode
+            </label>
+            <select
+              className="form-input"
+              value={mode}
+              onChange={(e) => setMode(e.target.value)}
+              disabled={loading}
+              style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '12px' }}
+            >
+              <option value="online">🎥 Online Video Call (Google Meet)</option>
+              <option value="in_person">🤝 In-Person Meeting</option>
+            </select>
           </div>
 
-          {/* Video Meet Link (Teacher Pastes Real Google Meet / Zoom Link) */}
+          {/* Video Meet Link */}
           {mode === 'online' && (
-            <div className="form-group" style={{ marginBottom: '1rem' }}>
+            <div className="form-group" style={{ marginBottom: '1.1rem' }}>
               <label className="form-label" style={{ fontWeight: 600, fontSize: '0.88rem' }}>
                 🎥 Google Meet / Zoom Link *
               </label>
@@ -188,13 +166,13 @@ export default function ScheduleSessionModal({
                 type="url"
                 value={meetLink}
                 onChange={(e) => setMeetLink(e.target.value)}
-                placeholder="https://meet.google.com/abc-defg-hij or Zoom Link"
+                placeholder="https://meet.google.com/abc-defg-hij"
                 required
                 disabled={loading}
                 style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '12px' }}
               />
               <span style={{ fontSize: '0.75rem', color: 'var(--slate-500)', display: 'block', marginTop: '0.35rem' }}>
-                💡 Paste your Google Meet or Zoom link here. The student will receive this link to join your class.
+                🔒 <em>Note: The meeting link will stay locked for both participants and will automatically unlock when class time arrives.</em>
               </span>
             </div>
           )}
@@ -202,14 +180,14 @@ export default function ScheduleSessionModal({
           {/* Notes for Student */}
           <div className="form-group" style={{ marginBottom: '1.4rem' }}>
             <label className="form-label" style={{ fontWeight: 600, fontSize: '0.88rem' }}>
-              💬 Message / Notes for {partnerName} (Optional)
+              💬 Note for {partnerName} (Optional)
             </label>
             <textarea
               className="form-input"
               rows={2}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder={`Hi ${partnerName}! Please join via the Google Meet link on time. Let me know if you need to reschedule.`}
+              placeholder={`Hi ${partnerName}! Looking forward to our session.`}
               disabled={loading}
               style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '12px', resize: 'vertical' }}
             />

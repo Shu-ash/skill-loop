@@ -47,22 +47,10 @@ export default function MemberCard({ member }) {
     setShowRequestModal(true);
   };
 
-  const saveRequestToLocalStore = (newRequest) => {
-    try {
-      const stored = localStorage.getItem('skillloop_user_requests');
-      let list = stored ? JSON.parse(stored) : [];
-      if (!Array.isArray(list)) list = [];
-      list.unshift(newRequest);
-      localStorage.setItem('skillloop_user_requests', JSON.stringify(list));
-    } catch (e) {
-      console.error('Error saving user request:', e);
-    }
-  };
-
   const handleSendRequest = async () => {
     const accessToken = localStorage.getItem('accessToken');
 
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !accessToken) {
       setShowAuthModal(true);
       return;
     }
@@ -76,56 +64,39 @@ export default function MemberCard({ member }) {
     setError('');
     setSuccess('');
 
-    const newRequest = {
-      id: `req_${Date.now()}`,
-      targetUser: { name, avatar, title },
-      skillWant: selectedSkill,
-      message: message.trim(),
-      status: 'pending',
-      createdAt: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
-    };
-
     try {
-      if (accessToken && id) {
-        const response = await fetch(`${API_BASE_URL}/requests`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            receiverId: id,
-            skillWant: selectedSkill,
-            message: message.trim()
-          })
-        });
+      const response = await fetch(`${API_BASE_URL}/requests`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          receiverId: id,
+          skillWant: selectedSkill,
+          message: message.trim()
+        })
+      });
 
-        if (response.ok) {
-          saveRequestToLocalStore(newRequest);
-          setSuccess(`Swap request sent successfully to ${name}!`);
-          setMessage('');
-          setTimeout(() => {
-            setShowRequestModal(false);
-            setSuccess('');
-          }, 1800);
-          return;
-        }
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to send swap request');
       }
+
+      setSuccess(`Swap request sent successfully to ${name}!`);
+      setMessage('');
+      setTimeout(() => {
+        setShowRequestModal(false);
+        setSuccess('');
+      }, 1500);
     } catch (err) {
-      console.log('Swap request fallback active:', err.message);
+      console.error('Swap request error:', err.message);
+      setError(err.message || 'Failed to send request');
     } finally {
       setLoading(false);
     }
-
-    // Graceful smooth fallback store
-    saveRequestToLocalStore(newRequest);
-    setSuccess(`Swap request sent successfully to ${name}!`);
-    setMessage('');
-    setTimeout(() => {
-      setShowRequestModal(false);
-      setSuccess('');
-    }, 1800);
   };
 
   return (

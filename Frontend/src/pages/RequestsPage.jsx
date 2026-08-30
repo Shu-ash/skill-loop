@@ -73,7 +73,9 @@ export default function RequestsPage() {
 
   const formatRequest = (backendRequest, direction) => {
     const isReceived = direction === 'received';
-    const partner = isReceived ? backendRequest.sender : backendRequest.receiver;
+    const partner = isReceived
+      ? backendRequest.sender
+      : backendRequest.receiver;
 
     return {
       id: backendRequest._id,
@@ -111,36 +113,15 @@ export default function RequestsPage() {
   };
 
   const loadRequests = async () => {
+    // Purge any stale localstorage remnants
+    try {
+      localStorage.removeItem('skillloop_user_requests');
+    } catch (e) {}
+
     const token = getToken();
 
-    let localSent = [];
-    try {
-      const stored = localStorage.getItem('skillloop_user_requests');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          localSent = parsed.map(r => ({
-            id: r.id || `req_${Date.now()}`,
-            user: { name: r.targetUser?.name || 'Peer Member', avatar: r.targetUser?.avatar || 'PM', avatarBg: 'var(--violet-primary)' },
-            skillWant: r.skillWant || 'Skill Swap',
-            message: r.message || '',
-            status: r.status || 'pending',
-            timeAgo: r.createdAt || 'Recent'
-          }));
-        }
-      }
-    } catch (e) {
-      console.error(e);
-    }
-
     if (!token) {
-      setRequests({
-        received: [],
-        sent: localSent,
-        accepted: [],
-        history: []
-      });
-      setLoading(false);
+      navigate('/login');
       return;
     }
 
@@ -168,30 +149,20 @@ export default function RequestsPage() {
       const backendReceived = receivedData?.data?.requests || [];
       const backendSent = sentData?.data?.requests || [];
 
-      const formattedSent = [
-        ...backendSent.map((r) => formatRequest(r, 'sent')),
-        ...localSent.filter(ls => !backendSent.some(bs => bs._id === ls.id))
-      ];
-
       // Extract accepted requests for accepted tab
       const acceptedReceived = backendReceived.filter(r => r.status === 'accepted').map(r => formatRequest(r, 'received'));
       const acceptedSent = backendSent.filter(r => r.status === 'accepted').map(r => formatRequest(r, 'sent'));
 
       setRequests({
         received: backendReceived.filter(r => r.status === 'pending').map((r) => formatRequest(r, 'received')),
-        sent: formattedSent,
+        sent: backendSent.filter(r => r.status === 'pending').map((r) => formatRequest(r, 'sent')),
         accepted: [...acceptedReceived, ...acceptedSent],
         history: []
       });
 
     } catch (err) {
-      console.log('Failed to load live requests, fallback active');
-      setRequests({
-        received: [],
-        sent: localSent,
-        accepted: [],
-        history: []
-      });
+      console.error('Failed to load requests from MongoDB:', err);
+      setRequests(EMPTY_REQUESTS);
     } finally {
       setLoading(false);
     }
@@ -210,97 +181,134 @@ export default function RequestsPage() {
     });
   };
 
-  // Submit Schedule & Accept by Teacher
-  const handleConfirmSchedule = async (schedulePayload) => {
-    const token = getToken();
+  const handleCloseAcceptModal = () => {
+    setScheduleModal({
+      open: false,
+      request: null,
+      loading: false
+    });
+  };
 
-    if (!token) {
-      navigate('/login');
+  // Submit Schedule & Accept Request
+  const handleSubmitSchedule = async ({ scheduledAt, duration, mode, meetLink, message }) => {
+    const token = getToken();
+    const requestId = scheduleModal.request?.id || scheduleModal.request?.requestId;
+
+    if (!token || !requestId) {
       return;
     }
 
-    setScheduleModal(prev => ({ ...prev, loading: true }));
-    setError('');
-
     try {
-      const response = await fetch(`${API_URL}/requests/${schedulePayload.requestId}/accept`, {
+      setScheduleModal(prev => ({ ...prev, loading: true }));
+      setError('');
+      setSuccessMsg('');
+
+      const response = await fetch(`${API_URL}/requests/${requestId}/accept`, {
         method: 'PATCH',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
         credentials: 'include',
         body: JSON.stringify({
-          scheduledAt: schedulePayload.scheduledAt,
-          duration: schedulePayload.duration,
-          mode: schedulePayload.mode,
-          meetLink: schedulePayload.meetLink,
-          message: schedulePayload.message
+          scheduledAt,
+          duration,
+          mode,
+          meetLink,
+          message
         })
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to accept request & schedule session');
+        throw new Error(data.message || 'Failed to accept and schedule session');
       }
 
-      setScheduleModal({ open: false, request: null, loading: false });
-      setSuccessMsg('Session scheduled successfully! Redirecting to your active sessions...');
+      handleCloseAcceptModal();
+      setSuccessMsg('🎉 Swap request accepted & live session scheduled! Check the Sessions tab.');
+      await loadRequests();
 
+      // Automatically navigate to Sessions page after 1.5s
       setTimeout(() => {
         navigate('/sessions');
-      }, 1200);
+      }, 1500);
 
     } catch (err) {
-      console.error('Accept & schedule error:', err);
+      console.error('Failed to schedule session on accept:', err);
       setError(err.message || 'Failed to schedule session');
       setScheduleModal(prev => ({ ...prev, loading: false }));
     }
   };
 
-  const handleDecline = async (requestId) => {
+  const handleReject = async (request) => {
     const token = getToken();
+    const requestId = request.id || request.requestId;
 
-    if (!token) {
-      navigate('/login');
+    if (!token || !requestId) {
       return;
     }
-
-    const confirmed = window.confirm('Are you sure you want to decline this request?');
-    if (!confirmed) return;
 
     try {
       setActionLoading(true);
       setError('');
 
-      const response = await fetch(`${API_URL}/requests/${requestId}/decline`, {
+      const response = await fetch(`${API_URL}/requests/${requestId}/reject`, {
         method: 'PATCH',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
         credentials: 'include'
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to decline request');
+        throw new Error(data.message || 'Failed to reject request');
       }
 
-      setRequests((current) => ({
-        ...current,
-        received: current.received.filter((r) => r.id !== requestId)
-      }));
-
+      await loadRequests();
     } catch (err) {
-      console.error('Decline request failed:', err);
-      setError(err.message || 'Failed to decline request');
+      console.error('Failed to reject request:', err);
+      setError(err.message || 'Failed to reject request');
     } finally {
       setActionLoading(false);
     }
   };
 
-  const handleSchedule = (request) => {
-    navigate('/sessions');
+  const handleCancel = async (request) => {
+    const token = getToken();
+    const requestId = request.id || request.requestId;
+
+    if (!token || !requestId) {
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      setError('');
+
+      const response = await fetch(`${API_URL}/requests/${requestId}/cancel`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        credentials: 'include'
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to cancel request');
+      }
+
+      await loadRequests();
+    } catch (err) {
+      console.error('Failed to cancel request:', err);
+      setError(err.message || 'Failed to cancel request');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const currentList = requests[activeTab] || [];
@@ -308,9 +316,9 @@ export default function RequestsPage() {
   return (
     <>
       <div className="liquid-bg">
-        <div className="liquid-blob blob-1"></div>
-        <div className="liquid-blob blob-2"></div>
-        <div className="liquid-blob blob-3"></div>
+        <div className="liquid-blob blob-1" />
+        <div className="liquid-blob blob-2" />
+        <div className="liquid-blob blob-3" />
       </div>
 
       <div id="app">
@@ -323,63 +331,65 @@ export default function RequestsPage() {
             <div className="page-title-row">
               <div>
                 <h2>Swap requests inbox</h2>
-                <p>Manage skill swap requests and schedule interactive learning sessions.</p>
+                <p>
+                  Manage skill swap requests and schedule interactive learning sessions.
+                </p>
               </div>
             </div>
 
             {error && (
-              <div className="glass-panel onboarding-error-banner margin-bottom-xs">
-                ⚠️ {error}
+              <div className="glass-panel onboarding-error-banner">
+                {error}
               </div>
             )}
 
             {successMsg && (
-              <div className="profile-save-banner margin-bottom-xs" style={{ background: '#ecfdf5', color: '#10b981', padding: '0.85rem', borderRadius: '14px', textAlign: 'center', fontWeight: 700 }}>
-                ✓ {successMsg}
+              <div className="glass-panel" style={{ background: 'rgba(46, 204, 113, 0.12)', color: '#27ae60', border: '1px solid rgba(46, 204, 113, 0.3)', padding: '0.85rem 1.2rem', borderRadius: '14px', marginBottom: '1.2rem', fontWeight: 600 }}>
+                {successMsg}
               </div>
             )}
 
             <RequestsTabNav
               activeTab={activeTab}
-              setActiveTab={setActiveTab}
+              onTabChange={setActiveTab}
               counts={{
                 received: requests.received.length,
                 sent: requests.sent.length,
-                accepted: requests.accepted.length
+                accepted: requests.accepted.length,
+                history: requests.history.length
               }}
             />
 
-            <div className="requests-list-wrapper">
+            <div className="requests-container">
               {loading ? (
                 <div className="glass-panel empty-requests-card">
                   Loading requests from MongoDB...
                 </div>
               ) : currentList.length > 0 ? (
-                currentList.map((request) => (
-                  <RequestCard
-                    key={request.id}
-                    request={request}
-                    direction={activeTab}
-                    onAccept={() => handleOpenAcceptModal(request)}
-                    onDecline={handleDecline}
-                    onSchedule={handleSchedule}
-                    actionLoading={actionLoading}
-                  />
-                ))
+                <div className="requests-list">
+                  {currentList.map((req) => (
+                    <RequestCard
+                      key={req.id}
+                      request={req}
+                      tab={activeTab}
+                      onAccept={handleOpenAcceptModal}
+                      onReject={handleReject}
+                      onCancel={handleCancel}
+                      actionLoading={actionLoading}
+                    />
+                  ))}
+                </div>
               ) : (
-                <div className="glass-panel empty-requests-card" style={{ padding: '3.5rem 1.5rem', textAlign: 'center', borderRadius: '24px' }}>
-                  <span style={{ fontSize: '3rem', display: 'block', marginBottom: '0.75rem' }}>
-                    {activeTab === 'received' ? '📬' : activeTab === 'sent' ? '📤' : '🤝'}
-                  </span>
-                  <h3 style={{ margin: '0 0 0.5rem 0', fontWeight: 700, color: 'var(--slate-800)' }}>
-                    No {activeTab} requests
-                  </h3>
-                  <p style={{ color: 'var(--slate-500)', fontSize: '0.92rem', maxWidth: '420px', margin: '0 auto', lineHeight: '1.6' }}>
-                    {activeTab === 'received' 
-                      ? 'When peers want to learn skills from you, their swap invitations will appear here.'
+                <div className="glass-panel empty-requests-card">
+                  <h3>No {activeTab} requests</h3>
+                  <p>
+                    {activeTab === 'received'
+                      ? 'You have no incoming skill swap proposals right now.'
                       : activeTab === 'sent'
-                      ? 'You have not sent any skill swap requests yet. Visit Browse Skills to request a class!'
-                      : 'Accepted and scheduled skill sessions will appear here.'}
+                        ? 'You have not sent any pending swap requests yet.'
+                        : activeTab === 'accepted'
+                          ? 'No accepted swaps yet. Accept requests to schedule live classes!'
+                          : 'No completed or cancelled request history.'}
                   </p>
                 </div>
               )}
@@ -388,16 +398,16 @@ export default function RequestsPage() {
         </div>
 
         <MobileNav />
-      </div>
 
-      {/* Schedule Session Modal for Teacher */}
-      <ScheduleSessionModal
-        isOpen={scheduleModal.open}
-        request={scheduleModal.request}
-        onClose={() => setScheduleModal({ open: false, request: null, loading: false })}
-        onConfirmSchedule={handleConfirmSchedule}
-        loading={scheduleModal.loading}
-      />
+        {/* Schedule & Meeting Link Modal for Teacher */}
+        <ScheduleSessionModal
+          isOpen={scheduleModal.open}
+          request={scheduleModal.request}
+          onClose={handleCloseAcceptModal}
+          onSubmit={handleSubmitSchedule}
+          loading={scheduleModal.loading}
+        />
+      </div>
     </>
   );
 }

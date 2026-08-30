@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { clearAuthSession } from '../utils/auth';
 
+const API_BASE_URL = 'http://localhost:5000/api';
+
 export default function Sidebar({ user: propUser }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -19,15 +21,39 @@ export default function Sidebar({ user: propUser }) {
         const initials = name.split(' ').filter(Boolean).map(p => p[0]).join('').slice(0, 2).toUpperCase() || 'SL';
         return {
           name,
-          credits: u.credits ?? 3,
+          credits: u.credits ?? 10,
           avatar: initials
         };
       } catch (e) {
         console.error(e);
       }
     }
-    return { name: "SkillLoop Member", credits: 3, avatar: "SL" };
+    return { name: "SkillLoop Member", credits: 10, avatar: "SL" };
   });
+
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
+
+  // Fetch pending received requests count dynamically from MongoDB database
+  useEffect(() => {
+    const fetchPendingCount = async () => {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+      try {
+        const res = await fetch(`${API_BASE_URL}/requests/received`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (res.ok && Array.isArray(data.data?.requests)) {
+          const pendingCount = data.data.requests.filter(r => r.status === 'pending').length;
+          setPendingRequestsCount(pendingCount);
+        }
+      } catch (e) {
+        // quiet fallback
+      }
+    };
+
+    fetchPendingCount();
+  }, [location.pathname]);
 
   useEffect(() => {
     if (propUser && propUser.name && propUser.name !== "User Account" && propUser.name !== "Member") {
@@ -44,7 +70,7 @@ export default function Sidebar({ user: propUser }) {
           const initials = name.split(' ').filter(Boolean).map(p => p[0]).join('').slice(0, 2).toUpperCase() || 'SL';
           setCurrentUser({
             name,
-            credits: u.credits ?? 3,
+            credits: u.credits ?? 10,
             avatar: initials
           });
         } catch (e) {
@@ -55,7 +81,7 @@ export default function Sidebar({ user: propUser }) {
       const token = localStorage.getItem('accessToken');
       if (token) {
         try {
-          const res = await fetch('http://localhost:5000/api/users/me', {
+          const res = await fetch(`${API_BASE_URL}/users/me`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           const data = await res.json();
@@ -65,7 +91,7 @@ export default function Sidebar({ user: propUser }) {
             const initials = name.split(' ').filter(Boolean).map(p => p[0]).join('').slice(0, 2).toUpperCase() || 'SL';
             const updated = {
               name,
-              credits: u.credits ?? 3,
+              credits: u.credits ?? 10,
               avatar: initials
             };
             setCurrentUser(updated);
@@ -89,7 +115,7 @@ export default function Sidebar({ user: propUser }) {
   const menuItems = [
     { label: 'Dashboard', icon: '🏠', path: '/dashboard' },
     { label: 'Browse skills', icon: '🔍', path: '/browse' },
-    { label: 'My requests', icon: '📥', path: '/requests', badge: 2 },
+    { label: 'My requests', icon: '📥', path: '/requests', badge: pendingRequestsCount > 0 ? pendingRequestsCount : null },
     { label: 'Sessions', icon: '📅', path: '/sessions' },
     { label: 'Credits', icon: '🪙', path: '/credits' },
     { label: 'Leaderboard', icon: '🏆', path: '/leaderboard' },
@@ -102,12 +128,7 @@ export default function Sidebar({ user: propUser }) {
     localStorage.setItem('user_sidebar_collapsed', String(nextState));
   };
 
-  const handleMenuClick = (path) => {
-    navigate(path);
-  };
-
-  const confirmLogout = () => {
-    setShowLogoutModal(false);
+  const handleLogout = () => {
     clearAuthSession();
     navigate('/login');
   };
@@ -116,13 +137,16 @@ export default function Sidebar({ user: propUser }) {
     <>
       <aside className={`user-sidebar ${isCollapsed ? 'collapsed' : ''}`}>
         <div>
-          <div className="sidebar-header-row">
-            <span className="sidebar-title">NAVIGATION</span>
+          <div className="sidebar-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+            <span className="sidebar-title" style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--slate-400)', letterSpacing: '0.08em' }}>
+              NAVIGATION
+            </span>
             <button 
               type="button" 
-              className="toggle-btn" 
+              className="toggle-btn"
               onClick={handleToggleSidebar}
-              title="Toggle Sidebar Width"
+              title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--slate-500)', padding: '4px' }}
             >
               {isCollapsed ? '▶' : '◀'}
             </button>
@@ -133,87 +157,82 @@ export default function Sidebar({ user: propUser }) {
               const isActive = location.pathname === item.path;
               return (
                 <li key={item.path}>
-                  <button
-                    type="button"
+                  <Link
+                    to={item.path}
                     className={`user-menu-item-btn ${isActive ? 'active' : ''}`}
-                    onClick={() => handleMenuClick(item.path)}
-                    title={item.label}
+                    title={isCollapsed ? item.label : undefined}
                   >
-                    <span className="sidebar-icon-wrapper">
+                    <div className="sidebar-icon-wrapper">
                       <span className="icon">{item.icon}</span>
-                      {isCollapsed && item.badge && (
+                      {isCollapsed && item.badge ? (
                         <span className="collapsed-badge-dot">{item.badge}</span>
-                      )}
-                    </span>
+                      ) : null}
+                    </div>
                     <span className="menu-text">{item.label}</span>
-                    {!isCollapsed && item.badge && (
-                      <span className="subnav-badge-count">{item.badge}</span>
-                    )}
-                  </button>
+                    {!isCollapsed && item.badge ? (
+                      <span className="subnav-badge-count" style={{ marginLeft: 'auto' }}>
+                        {item.badge}
+                      </span>
+                    ) : null}
+                  </Link>
                 </li>
               );
             })}
           </ul>
         </div>
 
+        {/* User Sidebar Bottom Profile Section */}
         <div className="user-sidebar-bottom">
-          <Link className="user-chip-link" to="/profile" title="View Profile">
-            <div className="subnav-avatar">{currentUser.avatar}</div>
-            <div className="subnav-user-text">
-              <span className="subnav-user-name">{currentUser.name}</span>
-              <span className="subnav-user-credits">🪙 {currentUser.credits} credits</span>
+          <Link to="/profile" className="user-chip-link" style={{ marginBottom: '0.65rem' }}>
+            <div className="subnav-avatar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700, fontSize: '0.82rem', background: 'var(--violet-primary, #6c5ce7)', flexShrink: 0 }}>
+              {currentUser.avatar}
+            </div>
+            <div className="subnav-user-text" style={{ minWidth: 0, overflow: 'hidden' }}>
+              <div style={{ fontWeight: 700, fontSize: '0.84rem', color: 'var(--slate-800)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {currentUser.name}
+              </div>
+              <div style={{ fontSize: '0.74rem', color: 'var(--slate-500)' }}>
+                🪙 {currentUser.credits} credits
+              </div>
             </div>
           </Link>
+
           <button 
             type="button" 
-            className="user-menu-item-btn logout-btn logout-btn-sidebar" 
+            className="user-menu-item-btn" 
             onClick={() => setShowLogoutModal(true)}
-            title="Logout"
+            style={{ color: 'var(--coral-primary, #ff7675)' }}
+            title="Log out of SkillLoop"
           >
-            <span className="sidebar-icon-wrapper">
-              <span className="icon">↪️</span>
-            </span>
+            <div className="sidebar-icon-wrapper">
+              <span className="icon">↪</span>
+            </div>
             <span className="menu-text">Logout</span>
           </button>
         </div>
       </aside>
 
+      {/* Logout Confirmation Modal */}
       {showLogoutModal && (
-        <div className="modal-overlay" onClick={() => setShowLogoutModal(false)}>
-          <div 
-            className="glass-panel logout-confirm-box clay-card-3d" 
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="modal-header">
-              <h3>↪️ Confirm Logout</h3>
+        <div className="custom-modal-overlay">
+          <div className="glass-panel custom-modal-card">
+            <h3>Confirm Logout</h3>
+            <p>Are you sure you want to sign out of your SkillLoop account?</p>
+            <div className="modal-actions-row">
               <button 
                 type="button" 
-                className="close-modal-btn" 
+                className="btn btn-secondary" 
                 onClick={() => setShowLogoutModal(false)}
               >
-                ✕
+                Cancel
               </button>
-            </div>
-            <div className="modal-body modal-body-padded">
-              <p className="logout-modal-text">
-                Are you sure you want to log out of SkillLoop?
-              </p>
-              <div className="modal-action-buttons">
-                <button 
-                  type="button" 
-                  className="action-btn" 
-                  onClick={() => setShowLogoutModal(false)}
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="button" 
-                  className="btn-danger-pill" 
-                  onClick={confirmLogout}
-                >
-                  Yes, Logout
-                </button>
-              </div>
+              <button 
+                type="button" 
+                className="btn btn-primary btn-danger" 
+                onClick={handleLogout}
+              >
+                Logout
+              </button>
             </div>
           </div>
         </div>

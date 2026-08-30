@@ -1,5 +1,5 @@
 // src/components/SessionCard.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function SessionCard({
   session,
@@ -29,11 +29,28 @@ export default function SessionCard({
   } = session;
 
   const [copied, setCopied] = useState(false);
+  const [currentTime, setCurrentTime] = useState(Date.now());
+
+  // Tick current time every 10 seconds to auto-unlock when class time arrives
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 10000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const scheduledTimestamp = scheduledAt ? new Date(scheduledAt).getTime() : 0;
+  // Unlocks 5 minutes before scheduled start time, or if already past / in-progress
+  const isUnlocked = Boolean(
+    status === 'in_progress' ||
+    status === 'completed' ||
+    (scheduledTimestamp > 0 && currentTime >= (scheduledTimestamp - 5 * 60 * 1000))
+  );
 
   const getStatusLabel = () => {
     switch (status) {
       case 'scheduled':
-        return 'SCHEDULED';
+        return isUnlocked ? 'READY TO JOIN' : 'SCHEDULED';
       case 'in_progress':
         return 'IN PROGRESS';
       case 'completed':
@@ -46,14 +63,14 @@ export default function SessionCard({
   };
 
   const handleCopyLink = () => {
-    if (!meetLink) return;
+    if (!meetLink || !isUnlocked) return;
     navigator.clipboard.writeText(meetLink);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   const handleOpenLink = () => {
-    if (!meetLink) return;
+    if (!meetLink || !isUnlocked) return;
     const url = meetLink.startsWith('http://') || meetLink.startsWith('https://') 
       ? meetLink 
       : `https://${meetLink}`;
@@ -65,7 +82,7 @@ export default function SessionCard({
       <div className="session-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.2rem' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem' }}>
-            <span className={`pill-badge ${status === 'completed' ? 'pill-mint' : status === 'cancelled' ? 'pill-coral' : 'pill-violet'}`}>
+            <span className={`pill-badge ${status === 'completed' ? 'pill-mint' : status === 'cancelled' ? 'pill-coral' : isUnlocked ? 'pill-mint' : 'pill-violet'}`}>
               ● {getStatusLabel()}
             </span>
             <span className="pill-badge pill-white" style={{ fontSize: '0.78rem' }}>
@@ -92,39 +109,83 @@ export default function SessionCard({
         </div>
       )}
 
-      {/* Meeting Room Link Banner */}
+      {/* Video Meeting Room Link Banner (LOCKED vs UNLOCKED) */}
       {meetLink && status !== 'cancelled' && (
-        <div className="session-meet-banner session-link-banner" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem', borderRadius: '16px', marginBottom: '1.2rem', gap: '1rem', flexWrap: 'wrap' }}>
-          <div className="meet-info" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: '240px' }}>
-            <span className="meet-icon" style={{ fontSize: '1.6rem' }}>🎥</span>
+        <div 
+          className="session-meet-banner session-link-banner" 
+          style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            padding: '1.1rem 1.35rem', 
+            borderRadius: '18px', 
+            marginBottom: '1.2rem', 
+            gap: '1rem', 
+            flexWrap: 'wrap',
+            background: isUnlocked ? 'rgba(240, 237, 255, 0.85)' : 'rgba(248, 250, 252, 0.95)',
+            border: isUnlocked ? '1.5px solid rgba(108, 92, 231, 0.35)' : '1.5px dashed rgba(148, 163, 184, 0.5)'
+          }}
+        >
+          <div className="meet-info" style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', minWidth: '240px' }}>
+            <span className="meet-icon" style={{ fontSize: '1.8rem' }}>
+              {isUnlocked ? '🎥' : '🔒'}
+            </span>
             <div>
-              <strong style={{ fontSize: '0.9rem', display: 'block' }}>Video Meeting Link</strong>
-              <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--violet-primary, #6c5ce7)', wordBreak: 'break-all', fontWeight: 600 }}>
-                {meetLink}
-              </p>
+              <strong style={{ fontSize: '0.92rem', display: 'block', color: isUnlocked ? 'var(--slate-900)' : 'var(--slate-700)' }}>
+                {isUnlocked ? 'Video Meeting Room (Unlocked & Live)' : 'Video Meeting Room (Locked)'}
+              </strong>
+              {isUnlocked ? (
+                <p style={{ margin: 0, fontSize: '0.86rem', color: 'var(--violet-primary, #6c5ce7)', wordBreak: 'break-all', fontWeight: 600 }}>
+                  {meetLink}
+                </p>
+              ) : (
+                <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--slate-500)' }}>
+                  🔒 Link will automatically unlock on <strong>{date}</strong> at <strong>{time}</strong>
+                </p>
+              )}
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <button
-              type="button"
-              className="action-btn"
-              onClick={handleCopyLink}
-              title="Copy meeting URL to clipboard"
-              style={{ fontSize: '0.82rem', padding: '0.5rem 0.85rem', borderRadius: '10px' }}
-            >
-              {copied ? '✓ Copied!' : '📋 Copy Link'}
-            </button>
+          <div style={{ display: 'flex', gap: '0.55rem', alignItems: 'center' }}>
+            {isUnlocked ? (
+              <>
+                <button
+                  type="button"
+                  className="action-btn"
+                  onClick={handleCopyLink}
+                  title="Copy meeting URL to clipboard"
+                  style={{ fontSize: '0.82rem', padding: '0.55rem 0.95rem', borderRadius: '10px' }}
+                >
+                  {copied ? '✓ Copied!' : '📋 Copy Link'}
+                </button>
 
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={handleOpenLink}
-              disabled={actionLoading}
-              style={{ padding: '0.55rem 1.15rem', borderRadius: '12px', fontWeight: 700, fontSize: '0.88rem' }}
-            >
-              🎥 Join Meeting →
-            </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleOpenLink}
+                  disabled={actionLoading}
+                  style={{ padding: '0.6rem 1.25rem', borderRadius: '12px', fontWeight: 700, fontSize: '0.9rem' }}
+                >
+                  🎥 Join Meeting →
+                </button>
+              </>
+            ) : (
+              <span 
+                style={{ 
+                  background: 'rgba(226, 232, 240, 0.8)', 
+                  color: 'var(--slate-600)', 
+                  padding: '0.45rem 0.95rem', 
+                  borderRadius: '12px', 
+                  fontSize: '0.8rem', 
+                  fontWeight: 600,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem'
+                }}
+              >
+                <span>🔒 Locked until session time</span>
+              </span>
+            )}
           </div>
         </div>
       )}
@@ -138,14 +199,9 @@ export default function SessionCard({
           </div>
 
           <div className="meta-item">
-            <span style={{ fontSize: '0.75rem', color: 'var(--slate-500)', display: 'block' }}>Duration</span>
-            <strong style={{ fontSize: '0.88rem' }}>{duration} mins</strong>
-          </div>
-
-          <div className="meta-item">
-            <span style={{ fontSize: '0.75rem', color: 'var(--slate-500)', display: 'block' }}>Credit Reward</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--slate-500)', display: 'block' }}>Credit Settlement</span>
             <strong className="session-credit-earn" style={{ fontSize: '0.88rem', color: 'var(--mint-primary)' }}>
-              {isTeacher ? '+1 Credit to You' : '-1 Credit from Balance'}
+              {isTeacher ? '+1 Credit to You on completion' : '-1 Credit from Balance'}
             </strong>
           </div>
         </div>

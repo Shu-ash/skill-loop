@@ -1,8 +1,12 @@
 // src/components/CtaSection.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { getAuthStatus } from '../utils/auth';
 
 export default function CtaSection() {
+  const { isAuthenticated } = getAuthStatus();
+  const targetLink = isAuthenticated ? '/browse' : '/login?mode=signup';
+
   return (
     <section className="cta-section">
       <div className="glass-panel cta-box clay-card-3d">
@@ -19,10 +23,10 @@ export default function CtaSection() {
         <h2>Ready to Start Your Journey?</h2>
         <p>Join SkillLoop today and be part of our amazing peer-to-peer community.</p>
 
-        <Link className="btn btn-primary btn-clay-primary" to="/login?mode=signup" state={{ mode: 'signup' }}>
-          Get started for free &rarr;
+        <Link className="btn btn-primary btn-clay-primary" to={targetLink}>
+          {isAuthenticated ? 'Browse available skills →' : 'Get started for free →'}
         </Link>
       </div>
     </section>
   );
-}
+}
