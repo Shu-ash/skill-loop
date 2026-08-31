@@ -128,14 +128,6 @@ export default function ProfileHeaderCard({
               <span>📷</span>
             </div>
           </div>
-          <button 
-            type="button" 
-            className="avatar-edit-badge-btn" 
-            onClick={() => avatarInputRef.current?.click()}
-            title="Upload photo"
-          >
-            📷
-          </button>
         </div>
 
         <div className="profile-text-meta">
