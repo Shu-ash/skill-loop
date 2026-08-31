@@ -8,6 +8,7 @@ import MobileNav from '../components/MobileNav';
 import RequestsTabNav from '../components/RequestsTabNav';
 import RequestCard from '../components/RequestCard';
 import ScheduleSessionModal from '../components/ScheduleSessionModal';
+import { fetchWithAuth, getAuthStatus } from '../utils/auth';
 
 const API_URL = 'http://localhost:5000/api';
 
@@ -118,9 +119,8 @@ export default function RequestsPage() {
       localStorage.removeItem('skillloop_user_requests');
     } catch (e) {}
 
-    const token = getToken();
-
-    if (!token) {
+    const { isAuthenticated } = getAuthStatus();
+    if (!isAuthenticated) {
       navigate('/login');
       return;
     }
@@ -129,19 +129,10 @@ export default function RequestsPage() {
       setLoading(true);
       setError('');
 
-      const headers = { Authorization: `Bearer ${token}` };
-
       const [receivedResponse, sentResponse] = await Promise.all([
-        fetch(`${API_URL}/requests/received`, { headers, credentials: 'include' }),
-        fetch(`${API_URL}/requests/sent`, { headers, credentials: 'include' })
+        fetchWithAuth(`${API_URL}/requests/received`),
+        fetchWithAuth(`${API_URL}/requests/sent`)
       ]);
-
-      if (receivedResponse.status === 401 || sentResponse.status === 401) {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('skillloop_user');
-        navigate('/login');
-        return;
-      }
 
       const receivedData = await receivedResponse.json();
       const sentData = await sentResponse.json();
@@ -196,10 +187,9 @@ export default function RequestsPage() {
 
   // Submit Schedule & Accept Request
   const handleSubmitSchedule = async ({ scheduledAt, duration, mode, meetLink, message }) => {
-    const token = getToken();
     const requestId = scheduleModal.request?.id || scheduleModal.request?.requestId;
 
-    if (!token || !requestId) {
+    if (!requestId) {
       return;
     }
 
@@ -208,13 +198,11 @@ export default function RequestsPage() {
       setError('');
       setSuccessMsg('');
 
-      const response = await fetch(`${API_URL}/requests/${requestId}/accept`, {
+      const response = await fetchWithAuth(`${API_URL}/requests/${requestId}/accept`, {
         method: 'PATCH',
         headers: {
-          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        credentials: 'include',
         body: JSON.stringify({
           scheduledAt,
           duration,
@@ -247,10 +235,9 @@ export default function RequestsPage() {
   };
 
   const handleReject = async (request) => {
-    const token = getToken();
     const requestId = request.id || request.requestId;
 
-    if (!token || !requestId) {
+    if (!requestId) {
       return;
     }
 
@@ -258,12 +245,8 @@ export default function RequestsPage() {
       setActionLoading(true);
       setError('');
 
-      const response = await fetch(`${API_URL}/requests/${requestId}/decline`, {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
-        credentials: 'include'
+      const response = await fetchWithAuth(`${API_URL}/requests/${requestId}/decline`, {
+        method: 'PATCH'
       });
 
       const data = await response.json();
@@ -282,10 +265,9 @@ export default function RequestsPage() {
   };
 
   const handleCancel = async (request) => {
-    const token = getToken();
     const requestId = request.id || request.requestId;
 
-    if (!token || !requestId) {
+    if (!requestId) {
       return;
     }
 
@@ -293,12 +275,8 @@ export default function RequestsPage() {
       setActionLoading(true);
       setError('');
 
-      const response = await fetch(`${API_URL}/requests/${requestId}/cancel`, {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
-        credentials: 'include'
+      const response = await fetchWithAuth(`${API_URL}/requests/${requestId}/cancel`, {
+        method: 'PATCH'
       });
 
       const data = await response.json();

@@ -7,7 +7,8 @@ import {
 } from "../utils/password.js";
 import {
     createAccessToken,
-    createRefreshToken
+    createRefreshToken,
+    verifyRefreshToken
 } from "../utils/jwt.js";
 
 const hashRefreshToken = (token) => {
@@ -169,5 +170,63 @@ export const me = async (req, res, next) => {
         });
     } catch (error) {
         next(error);
+    }
+};
+
+export const refresh = async (req, res, next) => {
+    try {
+        const token = req.cookies?.refreshToken || req.body?.refreshToken;
+        if (!token) {
+            return res.status(401).json({
+                success: false,
+                message: "Refresh token is required"
+            });
+        }
+
+        const decoded = verifyRefreshToken(token);
+        if (!decoded?.sub || decoded.type !== "refresh") {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid refresh token"
+            });
+        }
+
+        const user = await User.findById(decoded.sub).select("+refreshTokenHash");
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        const newAccessToken = createAccessToken(user._id.toString());
+        const newRefreshToken = createRefreshToken(user._id.toString());
+
+        user.refreshTokenHash = hashRefreshToken(newRefreshToken);
+        await user.save();
+
+        res.cookie("refreshToken", newRefreshToken, refreshCookieOptions);
+
+        return res.status(200).json({
+            success: true,
+            message: "Token refreshed successfully",
+            data: {
+                accessToken: newAccessToken,
+                user: {
+                    id: user._id,
+                    name: user.name,
+                    username: user.username,
+                    email: user.email,
+                    role: user.role,
+                    credits: user.credits,
+                    rating: user.rating
+                }
+            }
+        });
+    } catch (error) {
+        return res.status(401).json({
+            success: false,
+            message: "Invalid or expired refresh token"
+        });
     }
 };

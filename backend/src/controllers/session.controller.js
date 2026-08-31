@@ -36,23 +36,15 @@ export const autoCompleteExpiredSessions = async () => {
                         User.findByIdAndUpdate(learnerId, { $inc: { credits: -1 } })
                     ]);
 
-                    // Audit ledger entries
-                    await CreditLedger.insertMany([
-                        {
-                            sender: learnerId,
-                            receiver: teacherId,
-                            amount: 1,
-                            type: "earned",
-                            description: `Taught ${session.skill} to ${learnerName} (Auto-settled after session duration)`
-                        },
-                        {
-                            sender: learnerId,
-                            receiver: teacherId,
-                            amount: 1,
-                            type: "spent",
-                            description: `Learned ${session.skill} from ${teacherName} (Auto-settled after session duration)`
-                        }
-                    ]);
+                    // Audit ledger entry (Single transfer from learner to teacher)
+                    await CreditLedger.create({
+                        sender: learnerId,
+                        receiver: teacherId,
+                        session: session._id,
+                        amount: 1,
+                        transactionType: "session_reward",
+                        description: `Skill Swap: ${session.skill}`
+                    });
 
                     // Notifications
                     await Notification.insertMany([
@@ -676,23 +668,15 @@ export const completeSession =
                 User.findByIdAndUpdate(session.learner._id, { $inc: { credits: -1 } })
             ]);
 
-            // 2. Audit Trail: Create CreditLedger records
-            await CreditLedger.insertMany([
-                {
-                    sender: session.learner._id,
-                    receiver: session.teacher._id,
-                    amount: 1,
-                    type: "earned",
-                    description: `Taught ${session.skill} to ${learnerName}`
-                },
-                {
-                    sender: session.learner._id,
-                    receiver: session.teacher._id,
-                    amount: 1,
-                    type: "spent",
-                    description: `Learned ${session.skill} from ${teacherName}`
-                }
-            ]);
+            // 2. Audit Trail: Create single CreditLedger record (Transfer from learner to teacher)
+            await CreditLedger.create({
+                sender: session.learner._id,
+                receiver: session.teacher._id,
+                session: session._id,
+                amount: 1,
+                transactionType: "session_reward",
+                description: `Skill Swap: ${session.skill}`
+            });
 
             // 3. In-App Notifications: Live notifications for both parties
             await Notification.insertMany([

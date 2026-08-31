@@ -7,6 +7,7 @@ import MobileNav from '../components/MobileNav';
 import WelcomeBanner from '../components/WelcomeBanner';
 import KpiStatsGrid from '../components/KpiStatsGrid';
 import RecommendedMatchesSection from '../components/RecommendedMatchesSection';
+import { fetchWithAuth, getAuthStatus } from '../utils/auth';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -30,20 +31,25 @@ export default function DashboardPage() {
         console.error(e);
       }
     }
-    return { id: null, name: 'Member', username: '@user', teachSkills: [], learnSkills: [], credits: 10 };
+    return {
+      name: 'Member',
+      username: '@user',
+      teachSkills: [],
+      learnSkills: [],
+      credits: 10
+    };
   });
 
   const [stats, setStats] = useState({
-    credits: 10,
     activeSwaps: 0,
-    rating: '0.0',
-    sessionsTaught: 0,
-    pendingRequests: 0,
-    upcomingSessions: 0
+    hoursLearned: 0,
+    rating: '5.0',
+    creditsBalance: 10
   });
 
   const [recommendations, setRecommendations] = useState([]);
-  const [greeting, setGreeting] = useState('Good evening');
+  const [loading, setLoading] = useState(true);
+  const [greeting, setGreeting] = useState('Welcome back');
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -56,27 +62,18 @@ export default function DashboardPage() {
     }
 
     const fetchDashboardData = async () => {
-      const accessToken = localStorage.getItem('accessToken');
-      if (!accessToken) {
+      const { isAuthenticated } = getAuthStatus();
+      if (!isAuthenticated) {
         navigate('/login');
         return;
       }
 
-      const headers = { Authorization: `Bearer ${accessToken}` };
-
       try {
         const [userRes, statsRes, recsRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/users/me`, { headers, credentials: 'include' }),
-          fetch(`${API_BASE_URL}/users/dashboard-stats`, { headers, credentials: 'include' }),
-          fetch(`${API_BASE_URL}/matches/recommendations`, { headers, credentials: 'include' })
+          fetchWithAuth(`${API_BASE_URL}/users/me`),
+          fetchWithAuth(`${API_BASE_URL}/users/dashboard-stats`),
+          fetchWithAuth(`${API_BASE_URL}/matches/recommendations`)
         ]);
-
-        if (userRes.status === 401 || statsRes.status === 401) {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('skillloop_user');
-          navigate('/login');
-          return;
-        }
 
         const userData = await userRes.json();
         const statsData = await statsRes.json();

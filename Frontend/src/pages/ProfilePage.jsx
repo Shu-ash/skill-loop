@@ -10,6 +10,7 @@ import ProfileSkillsTagsCard from '../components/ProfileSkillsTagsCard';
 import EditProfileModal from '../components/EditProfileModal';
 import ImageCropperModal from '../components/ImageCropperModal';
 import ChangePasswordModal from '../components/ChangePasswordModal';
+import { fetchWithAuth, getAuthStatus } from '../utils/auth';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -88,20 +89,9 @@ export default function ProfilePage() {
   }, [user]);
 
   const fetchUserProfile = async () => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
-
     try {
-      const res = await fetch(`${API_BASE_URL}/users/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-        credentials: 'include'
-      });
-      if (res.status === 401) {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('skillloop_user');
-        navigate('/login');
-        return;
-      }
+      const res = await fetchWithAuth(`${API_BASE_URL}/users/me`);
+      if (!res.ok) return;
 
       const data = await res.json();
       if (data.success && data.data?.user) {
@@ -173,17 +163,12 @@ export default function ProfilePage() {
 
   // Helper to persist single fields to Backend MongoDB
   const saveProfileFieldToDB = async (updatePayload) => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
-
     try {
-      const res = await fetch(`${API_BASE_URL}/users/profile`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/users/profile`, {
         method: 'PATCH',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
-        credentials: 'include',
         body: JSON.stringify(updatePayload)
       });
       const data = await res.json();

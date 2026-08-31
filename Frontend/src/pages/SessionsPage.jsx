@@ -5,9 +5,10 @@ import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import MobileNav from '../components/MobileNav';
 import SessionCard from '../components/SessionCard';
+import { fetchWithAuth, getAuthStatus } from '../utils/auth';
 
 const API_URL = 'http://localhost:5000/api';
-const ALLOWED_DURATIONS = [30, 45, 60, 90, 120];
+const ALLOWED_DURATIONS = [15, 30, 45, 60, 90, 120];
 
 export default function SessionsPage() {
   const navigate = useNavigate();
@@ -103,9 +104,8 @@ export default function SessionsPage() {
   };
 
   const loadSessions = async (userOverride = currentUser) => {
-    const accessToken = localStorage.getItem('accessToken');
-
-    if (!accessToken) {
+    const { isAuthenticated } = getAuthStatus();
+    if (!isAuthenticated) {
       navigate('/login');
       return;
     }
@@ -113,23 +113,13 @@ export default function SessionsPage() {
     try {
       setError('');
 
-      const response = await fetch(`${API_URL}/sessions`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        },
-        credentials: 'include'
+      const response = await fetchWithAuth(`${API_URL}/sessions`, {
+        method: 'GET'
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        if (response.status === 401 || data.message?.toLowerCase().includes('token')) {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('skillloop_user');
-          navigate('/login');
-          return;
-        }
         throw new Error(data.message || 'Failed to load sessions');
       }
 
@@ -143,7 +133,6 @@ export default function SessionsPage() {
     } catch (err) {
       console.error('Failed to load sessions:', err);
       setError(err.message || 'Failed to load sessions');
-      setSessions([]);
     } finally {
       setLoading(false);
     }
@@ -185,16 +174,11 @@ export default function SessionsPage() {
 
     // Call backend to record join timestamp & learnerJoined status
     if (sessionId) {
-      const accessToken = localStorage.getItem('accessToken');
-      if (accessToken) {
-        try {
-          fetch(`${API_URL}/sessions/${sessionId}/join`, {
-            method: 'PATCH',
-            headers: { Authorization: `Bearer ${accessToken}` },
-            credentials: 'include'
-          }).then(() => loadSessions(currentUser)).catch(() => {});
-        } catch (e) {}
-      }
+      try {
+        fetchWithAuth(`${API_URL}/sessions/${sessionId}/join`, {
+          method: 'PATCH'
+        }).then(() => loadSessions(currentUser)).catch(() => {});
+      } catch (e) {}
     }
 
     const normalizedLink =
@@ -206,33 +190,17 @@ export default function SessionsPage() {
   };
 
   const handleStartSession = async (sessionId) => {
-    const accessToken = localStorage.getItem('accessToken');
-    if (!accessToken) {
-      navigate('/login');
-      return;
-    }
-
     try {
       setActionLoading(true);
       setError('');
 
-      const response = await fetch(`${API_URL}/sessions/${sessionId}/start`, {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        },
-        credentials: 'include'
+      const response = await fetchWithAuth(`${API_URL}/sessions/${sessionId}/start`, {
+        method: 'PATCH'
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        if (response.status === 401) {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('skillloop_user');
-          navigate('/login');
-          return;
-        }
         throw new Error(data.message || 'Failed to start session');
       }
 
@@ -251,15 +219,9 @@ export default function SessionsPage() {
   };
 
   const handleScheduleSession = async (sessionId, scheduledAt, mode, meetLink, duration) => {
-    const accessToken = localStorage.getItem('accessToken');
-    if (!accessToken) {
-      navigate('/login');
-      return;
-    }
-
     const selectedDuration = Number(duration);
     if (!ALLOWED_DURATIONS.includes(selectedDuration)) {
-      setError('Duration must be 30, 45, 60, 90, or 120 minutes.');
+      setError('Duration must be 15, 30, 45, 60, 90, or 120 minutes.');
       return;
     }
 
@@ -277,13 +239,11 @@ export default function SessionsPage() {
       setActionLoading(true);
       setError('');
 
-      const response = await fetch(`${API_URL}/sessions/${sessionId}/schedule`, {
+      const response = await fetchWithAuth(`${API_URL}/sessions/${sessionId}/schedule`, {
         method: 'PATCH',
         headers: {
-          Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json'
         },
-        credentials: 'include',
         body: JSON.stringify({
           scheduledAt,
           mode,
@@ -295,12 +255,6 @@ export default function SessionsPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        if (response.status === 401) {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('skillloop_user');
-          navigate('/login');
-          return;
-        }
         throw new Error(data.message || 'Failed to schedule session');
       }
 
@@ -319,33 +273,17 @@ export default function SessionsPage() {
   };
 
   const handleMarkComplete = async (sessionId) => {
-    const accessToken = localStorage.getItem('accessToken');
-    if (!accessToken) {
-      navigate('/login');
-      return;
-    }
-
     try {
       setActionLoading(true);
       setError('');
 
-      const response = await fetch(`${API_URL}/sessions/${sessionId}/complete`, {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        },
-        credentials: 'include'
+      const response = await fetchWithAuth(`${API_URL}/sessions/${sessionId}/complete`, {
+        method: 'PATCH'
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        if (response.status === 401) {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('skillloop_user');
-          navigate('/login');
-          return;
-        }
         throw new Error(data.message || 'Failed to complete session');
       }
 
@@ -367,33 +305,17 @@ export default function SessionsPage() {
     const confirmed = window.confirm('Are you sure you want to cancel this session?');
     if (!confirmed) return;
 
-    const accessToken = localStorage.getItem('accessToken');
-    if (!accessToken) {
-      navigate('/login');
-      return;
-    }
-
     try {
       setActionLoading(true);
       setError('');
 
-      const response = await fetch(`${API_URL}/sessions/${sessionId}/cancel`, {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        },
-        credentials: 'include'
+      const response = await fetchWithAuth(`${API_URL}/sessions/${sessionId}/cancel`, {
+        method: 'PATCH'
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        if (response.status === 401) {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('skillloop_user');
-          navigate('/login');
-          return;
-        }
         throw new Error(data.message || 'Failed to cancel session');
       }
 

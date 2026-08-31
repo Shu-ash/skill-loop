@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { register, login, me } from "../controllers/auth.controller.js";
+import { register, login, me, refresh } from "../controllers/auth.controller.js";
 import { 
     sendAuthOtp, 
     verifyRegisterOtp, 
@@ -18,6 +18,7 @@ const router = Router();
 // Traditional Password Auth
 router.post("/register", authLimiter, validate(registerSchema), register);
 router.post("/login", authLimiter, validate(loginSchema), login);
+router.post("/refresh", refresh);
 router.get("/me", protect, me);
 
 // OTP Email Authentication Routes
