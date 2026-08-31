@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Session from "../models/session.js";
 import User from "../models/user.js";
 import CreditLedger from "../models/creditLedger.js";
@@ -9,6 +10,8 @@ import Notification from "../models/notification.js";
  */
 export const autoCompleteExpiredSessions = async () => {
     try {
+        if (mongoose.connection.readyState !== 1) return;
+
         const now = new Date();
         const activeSessions = await Session.find({
             status: { $in: ["scheduled", "in_progress"] },

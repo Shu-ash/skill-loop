@@ -1,5 +1,6 @@
 // src/components/Sidebar.jsx
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { clearAuthSession } from '../utils/auth';
 
@@ -212,17 +213,48 @@ export default function Sidebar({ user: propUser }) {
         </div>
       </aside>
 
-      {/* Logout Confirmation Modal */}
-      {showLogoutModal && (
-        <div className="custom-modal-overlay">
-          <div className="glass-panel custom-modal-card">
-            <h3>Confirm Logout</h3>
-            <p>Are you sure you want to sign out of your SkillLoop account?</p>
-            <div className="modal-actions-row">
+      {/* Logout Confirmation Modal Portal */}
+      {showLogoutModal && typeof document !== 'undefined' && createPortal(
+        <div 
+          className="modal-overlay" 
+          onClick={() => setShowLogoutModal(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.65)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            zIndex: 999999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.25rem'
+          }}
+        >
+          <div 
+            className="glass-panel clay-card-3d" 
+            onClick={(e) => e.stopPropagation()} 
+            style={{
+              maxWidth: '420px',
+              width: '100%',
+              borderRadius: '24px',
+              padding: '2.2rem 2rem',
+              textAlign: 'center'
+            }}
+          >
+            <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '0.6rem' }}>🚪</span>
+            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.35rem', fontFamily: 'var(--font-display)' }}>
+              Confirm Logout
+            </h3>
+            <p style={{ margin: '0 0 1.5rem 0', color: 'var(--slate-500)', fontSize: '0.92rem' }}>
+              Are you sure you want to sign out of your SkillLoop account?
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.85rem' }}>
               <button 
                 type="button" 
                 className="btn btn-secondary" 
                 onClick={() => setShowLogoutModal(false)}
+                style={{ padding: '0.7rem 1.4rem', borderRadius: '14px' }}
               >
                 Cancel
               </button>
@@ -230,12 +262,14 @@ export default function Sidebar({ user: propUser }) {
                 type="button" 
                 className="btn btn-primary btn-danger" 
                 onClick={handleLogout}
+                style={{ padding: '0.7rem 1.6rem', borderRadius: '14px', background: 'var(--coral-primary, #ff7675)', borderColor: 'var(--coral-primary, #ff7675)', fontWeight: 700 }}
               >
-                Logout
+                Sign Out ↪
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
