@@ -29,10 +29,10 @@ const envSchema = z.object({
         .min(32),
 
     JWT_ACCESS_EXPIRES:
-        z.string().default("15m"),
+        z.string().default("30d"),
 
     JWT_REFRESH_EXPIRES:
-        z.string().default("7d"),
+        z.string().default("90d"),
 
     CLIENT_URL:
         z.string().url(),

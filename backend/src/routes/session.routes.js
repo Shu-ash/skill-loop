@@ -6,7 +6,8 @@ import {
     startSession,
     completeSession,
     cancelSession,
-    scheduleSession
+    scheduleSession,
+    joinSession
 } from "../controllers/session.controller.js";
 
 import { protect } from "../middleware/auth.middleware.js";
@@ -20,6 +21,12 @@ const router = express.Router();
 
 router.get(
     "/",
+    protect,
+    getMySessions
+);
+
+router.get(
+    "/my-sessions",
     protect,
     getMySessions
 );
@@ -44,6 +51,17 @@ router.patch(
     "/:sessionId/schedule",
     protect,
     scheduleSession
+);
+
+
+// =========================
+// JOIN
+// =========================
+
+router.patch(
+    "/:sessionId/join",
+    protect,
+    joinSession
 );
 
 

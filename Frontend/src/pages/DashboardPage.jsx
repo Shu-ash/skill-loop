@@ -5,29 +5,54 @@ import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import MobileNav from '../components/MobileNav';
 import WelcomeBanner from '../components/WelcomeBanner';
-import SkillLoopSummaryCard from '../components/SkillLoopSummaryCard';
 import KpiStatsGrid from '../components/KpiStatsGrid';
 import RecommendedMatchesSection from '../components/RecommendedMatchesSection';
+import { fetchWithAuth, getAuthStatus } from '../utils/auth';
 
+const API_BASE_URL = 'http://localhost:5000/api';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
 
-  const [user, setUser] = useState({
-    name: '',
-    username: '',
-    teachSkills: [],
-    learnSkills: [],
-    credits: 0
+  const [user, setUser] = useState(() => {
+    const stored = localStorage.getItem('skillloop_user');
+    if (stored) {
+      try {
+        const u = JSON.parse(stored);
+        return {
+          id: u._id || u.id,
+          name: u.name || `${u.firstName || ''} ${u.lastName || ''}`.trim() || 'Member',
+          username: u.username ? `@${u.username.replace(/^@/, '')}` : '@user',
+          teachSkills: Array.isArray(u.skillsCanTeach) ? u.skillsCanTeach : [],
+          learnSkills: Array.isArray(u.skillsWantToLearn) ? u.skillsWantToLearn : [],
+          credits: u.credits ?? 10
+        };
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return {
+      name: 'Member',
+      username: '@user',
+      teachSkills: [],
+      learnSkills: [],
+      credits: 10
+    };
+  });
+
+  const [stats, setStats] = useState({
+    activeSwaps: 0,
+    hoursLearned: 0,
+    rating: '5.0',
+    creditsBalance: 10
   });
 
   const [recommendations, setRecommendations] = useState([]);
-
-  const [greeting, setGreeting] = useState('Good evening');
+  const [loading, setLoading] = useState(true);
+  const [greeting, setGreeting] = useState('Welcome back');
 
   useEffect(() => {
     const hour = new Date().getHours();
-
     if (hour < 12) {
       setGreeting('Good morning');
     } else if (hour < 18) {
@@ -36,164 +61,109 @@ export default function DashboardPage() {
       setGreeting('Good evening');
     }
 
-    const fetchUser = async () => {
-      const accessToken =
-        localStorage.getItem('accessToken');
-
-      if (!accessToken) {
+    const fetchDashboardData = async () => {
+      const { isAuthenticated } = getAuthStatus();
+      if (!isAuthenticated) {
         navigate('/login');
         return;
       }
 
       try {
-        const response = await fetch(
-          'http://localhost:5000/api/users/me',
-          {
-            method: 'GET',
+        const [userRes, statsRes, recsRes] = await Promise.all([
+          fetchWithAuth(`${API_BASE_URL}/users/me`),
+          fetchWithAuth(`${API_BASE_URL}/users/dashboard-stats`),
+          fetchWithAuth(`${API_BASE_URL}/matches/recommendations`)
+        ]);
 
-            headers: {
-              Authorization: `Bearer ${accessToken}`
-            },
+        const userData = await userRes.json();
+        const statsData = await statsRes.json();
+        const recsData = await recsRes.json();
 
-            credentials: 'include'
-          }
-        );
+        let loggedInUserId = null;
+        let loggedInEmail = null;
 
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(
-            data.message || 'Failed to load user'
-          );
-        }
-
-        const backendUser =
-          data?.data?.user || data?.data;
-
-        setUser({
-          name:
-            backendUser.name ||
-            `${backendUser.firstName || ''} ${backendUser.lastName || ''}`.trim(),
-
-          username:
-            backendUser.username
-              ? `@${backendUser.username.replace(/^@/, '')}`
-              : '@user',
-
-          teachSkills:
-            backendUser.skillsCanTeach || [],
-
-          learnSkills:
-            backendUser.skillsWantToLearn || [],
-
-          credits:
-            backendUser.credits ?? 0
-        });
-
-        localStorage.setItem(
-          'skillloop_user',
-          JSON.stringify({
-            ...backendUser,
-            onboardingCompleted: true
-          })
-        );
-
-      } catch (error) {
-        console.error(
-          'Failed to fetch dashboard user:',
-          error
-        );
-      }
-    };
-
-    const fetchRecommendations = async () => {
-      const accessToken = localStorage.getItem('accessToken');
-
-      if (!accessToken) {
-        return;
-      }
-
-      try {
-        const response = await fetch(
-          'http://localhost:5000/api/matches/recommendations',
-          {
-            method: 'GET',
-            headers: {
-              Authorization: `Bearer ${accessToken}`
-            },
-            credentials: 'include'
-          }
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(
-            data.message || 'Failed to load recommendations'
-          );
-        }
-
-        const backendRecommendations =
-          data?.data?.recommendations || [];
-
-        const formattedRecommendations =
-          backendRecommendations.map((match) => {
-            const matchUser = match.user || match;
-
-            const name =
-              matchUser.name ||
-              `${matchUser.firstName || ''} ${matchUser.lastName || ''}`.trim() ||
-              'Skill Loop User';
-
-            return {
-              id: matchUser._id || matchUser.id,
-
-              name,
-
-              avatar: name
-                .split(' ')
-                .map((part) => part[0])
-                .join('')
-                .slice(0, 2)
-                .toUpperCase(),
-
-              avatarBg: 'var(--violet-primary)',
-
-              title:
-                matchUser.headline ||
-                'Skill Loop Member',
-
-              teachSkills:
-                matchUser.skillsCanTeach || [],
-
-              learnSkills:
-                matchUser.skillsWantToLearn || [],
-
-              rating:
-                `${matchUser.rating ?? 0} ★`
-            };
+        if (userRes.ok && userData.data?.user) {
+          const backendUser = userData.data.user;
+          loggedInUserId = backendUser._id || backendUser.id;
+          loggedInEmail = backendUser.email?.toLowerCase();
+          const fullName = backendUser.name || `${backendUser.firstName || ''} ${backendUser.lastName || ''}`.trim() || 'Member';
+          setUser({
+            id: loggedInUserId,
+            name: fullName,
+            username: backendUser.username ? `@${backendUser.username.replace(/^@/, '')}` : '@user',
+            teachSkills: Array.isArray(backendUser.skillsCanTeach) ? backendUser.skillsCanTeach : [],
+            learnSkills: Array.isArray(backendUser.skillsWantToLearn) ? backendUser.skillsWantToLearn : [],
+            credits: backendUser.credits ?? 10
           });
+          localStorage.setItem('skillloop_user', JSON.stringify({ ...backendUser, name: fullName }));
+        }
 
-        setRecommendations(formattedRecommendations);
+        if (statsRes.ok && statsData.data) {
+          setStats(statsData.data);
+        }
 
-      } catch (error) {
-        console.error(
-          'Failed to fetch recommendations:',
-          error
-        );
+        if (recsRes.ok && recsData.data?.recommendations?.length) {
+          const formatted = recsData.data.recommendations
+            .filter((match) => {
+              const matchUser = match.user || match;
+              const matchId = matchUser._id || matchUser.id;
+              const matchEmail = (matchUser.email || '').toLowerCase();
+              if (loggedInUserId && String(matchId) === String(loggedInUserId)) return false;
+              if (loggedInEmail && matchEmail === loggedInEmail) return false;
+              return true;
+            })
+            .map((match) => {
+              const matchUser = match.user || match;
+              const name = matchUser.name || `${matchUser.firstName || ''} ${matchUser.lastName || ''}`.trim() || 'Member';
+              return {
+                id: matchUser._id || matchUser.id,
+                name,
+                avatar: name.split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase() || 'SL',
+                avatarBg: 'var(--violet-primary)',
+                title: matchUser.headline || 'SkillLoop Member',
+                teachSkills: matchUser.skillsCanTeach || [],
+                learnSkills: matchUser.skillsWantToLearn || [],
+                rating: `${(matchUser.rating || 0).toFixed(1)} ★`
+              };
+            });
+          setRecommendations(formatted);
+        } else {
+          // Fallback other members from users API (always strictly exclude self)
+          const usersRes = await fetch(`${API_BASE_URL}/users`, { headers, credentials: 'include' });
+          const usersData = await usersRes.json();
+          if (usersRes.ok && usersData.data?.users?.length) {
+            const formatted = usersData.data.users
+              .filter((u) => {
+                const uId = u.id || u._id;
+                const uEmail = (u.email || '').toLowerCase();
+                if (loggedInUserId && String(uId) === String(loggedInUserId)) return false;
+                if (loggedInEmail && uEmail === loggedInEmail) return false;
+                return true;
+              })
+              .slice(0, 3)
+              .map((u) => ({
+                id: u.id || u._id,
+                name: u.name,
+                avatar: (u.name || 'SL').split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase() || 'SL',
+                avatarBg: 'var(--violet-primary)',
+                title: u.headline || 'SkillLoop Member',
+                teachSkills: u.skillsCanTeach || [],
+                learnSkills: u.skillsWantToLearn || [],
+                rating: `${(u.rating || 0).toFixed(1)} ★`
+              }));
+            setRecommendations(formatted);
+          } else {
+            setRecommendations([]);
+          }
+        }
 
-        setRecommendations([]);
+      } catch (err) {
+        console.error('Failed to load dashboard data:', err);
       }
     };
 
-
-    fetchUser();
-    fetchRecommendations();
+    fetchDashboardData();
   }, [navigate]);
-
-  const handleRequestSwap = (matchUser) => {
-    navigate('/browse');
-  };
 
   return (
     <>
@@ -207,41 +177,24 @@ export default function DashboardPage() {
         <Navbar />
 
         <div className="app-layout">
-          <Sidebar
-            user={{
-              name: user.name,
-              credits: user.credits,
-              avatar: user.name.slice(0, 2).toUpperCase()
-            }}
-          />
+          <Sidebar />
 
           <main className="main-content">
-            {/* Component 1: Welcome Greeting Banner */}
             <WelcomeBanner
               greeting={greeting}
               name={user.name}
+              subtitle="Ready to exchange knowledge and earn skill credits today."
               onNewSwapClick={() => navigate('/browse')}
             />
 
-            {/* Component 2: Your Skill Loop Summary */}
-            <SkillLoopSummaryCard
-              teachSkills={user.teachSkills}
-              learnSkills={user.learnSkills}
-            />
-
-            {/* Component 3: KPI Metrics Grid */}
             <KpiStatsGrid
-              credits={user.credits}
-              activeSwaps={4}
-              rating="4.9"
-              sessionsTaught={12}
+              credits={stats.credits}
+              activeSwaps={stats.activeSwaps}
+              rating={stats.rating}
+              sessionsTaught={stats.sessionsTaught}
             />
 
-            {/* Component 4: Recommended Matches Section & Match Cards */}
-            <RecommendedMatchesSection
-              matches={recommendations}
-              onRequestSwap={handleRequestSwap}
-            />
+            <RecommendedMatchesSection recommendations={recommendations} />
           </main>
         </div>
 

@@ -1,6 +1,5 @@
 // src/pages/OnboardingPage.jsx
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import Navbar from '../components/Navbar';
@@ -9,35 +8,6 @@ import OnboardingProfileSection from '../components/OnboardingProfileSection';
 import OnboardingSkillsSection from '../components/OnboardingSkillsSection';
 
 const API_URL = 'http://localhost:5000';
-
-const POPULAR_TEACH_SKILLS = [
-  'HTML',
-  'CSS',
-  'JavaScript',
-  'React',
-  'Node.js',
-  'Figma',
-  'UI/UX Design',
-  'Python',
-  'Guitar',
-  'Spanish',
-  'Photography',
-  'Video Editing'
-];
-
-const POPULAR_LEARN_SKILLS = [
-  'Photoshop',
-  'Illustrator',
-  'Python',
-  'Machine Learning',
-  'Public Speaking',
-  'Piano',
-  'French',
-  'Data Science',
-  'Sourdough Baking',
-  'Chess',
-  '3D Modeling'
-];
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
@@ -54,15 +24,46 @@ export default function OnboardingPage() {
   const [learnSkills, setLearnSkills] = useState([]);
   const [customLearn, setCustomLearn] = useState('');
 
-  // IMPORTANT:
-  // Backend expects lowercase enum values.
   const [skillLevel, setSkillLevel] = useState('intermediate');
+
+  // Dynamic Live Categories from MongoDB
+  const [categoriesList, setCategoriesList] = useState([]);
 
   // UI state
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // TEACH SKILLS
+  useEffect(() => {
+    // Fetch live categories with nested skills from MongoDB database
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/categories`);
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data?.categories)) {
+          setCategoriesList(data.data.categories);
+        }
+      } catch (err) {
+        console.error('Failed to load categories in onboarding:', err);
+      }
+    };
+    fetchCategories();
+
+    const stored = localStorage.getItem('skillloop_user');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (parsed.username) setUsername(parsed.username.replace(/^@/, ''));
+        if (parsed.profilePhotoUrl || parsed.avatarUrl) setAvatarUrl(parsed.profilePhotoUrl || parsed.avatarUrl);
+        if (parsed.bio) setBio(parsed.bio);
+        if (Array.isArray(parsed.skillsCanTeach)) setTeachSkills(parsed.skillsCanTeach);
+        else if (Array.isArray(parsed.teachSkills)) setTeachSkills(parsed.teachSkills);
+        if (Array.isArray(parsed.skillsWantToLearn)) setLearnSkills(parsed.skillsWantToLearn);
+        else if (Array.isArray(parsed.learnSkills)) setLearnSkills(parsed.learnSkills);
+      } catch (e) {
+        console.error('Error loading onboarding state:', e);
+      }
+    }
+  }, []);
 
   const toggleTeachSkill = (skill) => {
     setTeachSkills((current) =>
@@ -74,17 +75,12 @@ export default function OnboardingPage() {
 
   const addCustomTeach = () => {
     const skill = customTeach.trim();
-
     if (!skill) return;
-
     if (!teachSkills.includes(skill)) {
       setTeachSkills((current) => [...current, skill]);
     }
-
     setCustomTeach('');
   };
-
-  // LEARN SKILLS
 
   const toggleLearnSkill = (skill) => {
     setLearnSkills((current) =>
@@ -96,190 +92,93 @@ export default function OnboardingPage() {
 
   const addCustomLearn = () => {
     const skill = customLearn.trim();
-
     if (!skill) return;
-
     if (!learnSkills.includes(skill)) {
       setLearnSkills((current) => [...current, skill]);
     }
-
     setCustomLearn('');
   };
 
-  // SUBMIT
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     setErrorMsg('');
 
-    // Validate username
     if (!username.trim()) {
       setErrorMsg('Please enter a valid username.');
       return;
     }
 
-    // Validate teach skills
     if (teachSkills.length === 0) {
-      setErrorMsg(
-        'Please select at least 1 skill you can teach.'
-      );
+      setErrorMsg('Please select at least 1 skill you can teach.');
       return;
     }
 
-    // Validate learn skills
     if (learnSkills.length === 0) {
-      setErrorMsg(
-        'Please select at least 1 skill you want to learn.'
-      );
-      return;
-    }
-
-    // Get JWT created during signup/login
-    const accessToken = localStorage.getItem('accessToken');
-
-    if (!accessToken) {
-      setErrorMsg(
-        'Authentication expired. Please log in again.'
-      );
-
-      navigate('/login');
+      setErrorMsg('Please select at least 1 skill you want to learn.');
       return;
     }
 
     setIsSubmitting(true);
+    const accessToken = localStorage.getItem('accessToken');
+    const existingUser = JSON.parse(localStorage.getItem('skillloop_user') || '{}');
+
+    const cleanUsername = username.trim().replace(/^@/, '');
+
+    const payload = {
+      username: cleanUsername,
+      profilePhotoUrl: avatarUrl.trim(),
+      bio: bio.trim(),
+      headline: `${teachSkills.slice(0, 2).join(' & ')} Mentor`,
+      skillsCanTeach: teachSkills,
+      skillsWantToLearn: learnSkills,
+      skillLevel,
+      onboardingCompleted: true
+    };
 
     try {
-      // Backend expects lowercase values:
-      // beginner / intermediate / advanced
-      const normalizedSkillLevel =
-        skillLevel.toLowerCase();
-
-      const response = await fetch(
-        `${API_URL}/api/users/onboarding`,
-        {
+      if (accessToken) {
+        const response = await fetch(`${API_URL}/api/users/onboarding`, {
           method: 'PUT',
-
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${accessToken}`
           },
-
           credentials: 'include',
+          body: JSON.stringify(payload)
+        });
 
-          body: JSON.stringify({
-            username: username.trim(),
+        const data = await response.json();
 
-            profilePhotoUrl: avatarUrl.trim(),
-
-            bio: bio.trim(),
-
-            skillsCanTeach: teachSkills,
-
-            skillsWantToLearn: learnSkills,
-
-            skillLevel: normalizedSkillLevel
-          })
+        if (!response.ok) {
+          throw new Error(data.message || 'Onboarding failed');
         }
-      );
 
-      // Safely read response
-      const contentType =
-        response.headers.get('content-type');
+        const updatedUser = {
+          ...existingUser,
+          ...payload,
+          name: existingUser.name || cleanUsername,
+          teachSkills,
+          learnSkills
+        };
 
-      let data;
-
-      if (
-        contentType &&
-        contentType.includes('application/json')
-      ) {
-        data = await response.json();
-      } else {
-        const text = await response.text();
-
-        throw new Error(
-          text ||
-          `Server returned ${response.status}`
-        );
+        localStorage.setItem('skillloop_user', JSON.stringify(updatedUser));
+        navigate('/dashboard');
+        return;
       }
-
-      // Backend error
-      if (!response.ok) {
-        throw new Error(
-          data?.message ||
-          `Onboarding failed (${response.status})`
-        );
-      }
-
-      console.log(
-        'Onboarding successful:',
-        data
-      );
-
-      // UPDATE LOCAL USER
-
-      const existingUser =
-        JSON.parse(
-          localStorage.getItem(
-            'skillloop_user'
-          ) || '{}'
-        );
-
-      const backendUser =
-        data?.data?.user || {};
 
       const updatedUser = {
         ...existingUser,
-
-        ...backendUser,
-
-        username:
-          backendUser.username ||
-          username.trim(),
-
-        profilePhotoUrl:
-          backendUser.profilePhotoUrl ||
-          avatarUrl.trim(),
-
-        bio:
-          backendUser.bio ??
-          bio.trim(),
-
-        skillsCanTeach:
-          backendUser.skillsCanTeach ||
-          teachSkills,
-
-        skillsWantToLearn:
-          backendUser.skillsWantToLearn ||
-          learnSkills,
-
-        skillLevel:
-          backendUser.skillLevel ||
-          normalizedSkillLevel,
-
-        onboardingCompleted: true
+        ...payload,
+        name: existingUser.name || cleanUsername,
+        teachSkills,
+        learnSkills
       };
 
-      localStorage.setItem(
-        'skillloop_user',
-        JSON.stringify(updatedUser)
-      );
-
-      // GO TO DASHBOARD
-
+      localStorage.setItem('skillloop_user', JSON.stringify(updatedUser));
       navigate('/dashboard');
-
-    } catch (error) {
-      console.error(
-        'Onboarding error:',
-        error
-      );
-
-      setErrorMsg(
-        error.message ||
-        'Unable to connect to the server.'
-      );
-
+    } catch (err) {
+      console.error('Onboarding submit error:', err);
+      setErrorMsg(err.message || 'Failed to complete onboarding. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -288,32 +187,25 @@ export default function OnboardingPage() {
   return (
     <>
       <div className="liquid-bg">
-        <div className="liquid-blob blob-1"></div>
-        <div className="liquid-blob blob-2"></div>
-        <div className="liquid-blob blob-3"></div>
+        <div className="liquid-blob blob-1" />
+        <div className="liquid-blob blob-2" />
+        <div className="liquid-blob blob-3" />
       </div>
 
       <div id="app">
         <Navbar />
 
-        <main className="onboarding-container">
+        <div className="onboarding-container">
           <div className="glass-panel onboarding-card">
-
             <OnboardingHeader />
 
             {errorMsg && (
-              <div className="onboarding-error-banner">
-                ⚠️ {errorMsg}
+              <div className="glass-panel onboarding-error-banner">
+                {errorMsg}
               </div>
             )}
 
-            <form
-              onSubmit={handleSubmit}
-              className="onboarding-form"
-            >
-
-              {/* PROFILE */}
-
+            <form onSubmit={handleSubmit}>
               <OnboardingProfileSection
                 username={username}
                 setUsername={setUsername}
@@ -323,50 +215,36 @@ export default function OnboardingPage() {
                 setBio={setBio}
               />
 
-              {/* SKILLS */}
-
               <OnboardingSkillsSection
                 teachSkills={teachSkills}
                 toggleTeachSkill={toggleTeachSkill}
                 customTeach={customTeach}
                 setCustomTeach={setCustomTeach}
                 addCustomTeach={addCustomTeach}
-
                 learnSkills={learnSkills}
                 toggleLearnSkill={toggleLearnSkill}
                 customLearn={customLearn}
                 setCustomLearn={setCustomLearn}
                 addCustomLearn={addCustomLearn}
-
                 skillLevel={skillLevel}
                 setSkillLevel={setSkillLevel}
-
-                popularTeachSkills={
-                  POPULAR_TEACH_SKILLS
-                }
-
-                popularLearnSkills={
-                  POPULAR_LEARN_SKILLS
-                }
+                categoriesList={categoriesList}
               />
 
-              {/* SUBMIT */}
-
-              <div className="onboarding-submit-wrap">
+              <div className="onboarding-submit-row">
                 <button
                   type="submit"
                   className="btn btn-primary btn-full onboarding-submit-btn"
                   disabled={isSubmitting}
                 >
                   {isSubmitting
-                    ? 'Saving Profile...'
-                    : 'Complete Profile →'}
+                    ? 'Saving your profile...'
+                    : 'Complete setup & enter SkillLoop →'}
                 </button>
               </div>
-
             </form>
           </div>
-        </main>
+        </div>
       </div>
     </>
   );

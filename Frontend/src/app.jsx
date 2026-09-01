@@ -11,24 +11,56 @@ import SessionsPage from './pages/SessionsPage';
 import CreditsPage from './pages/CreditsPage';
 import LeaderboardPage from './pages/LeaderboardPage';
 import HowItWorksPage from './pages/HowItWorksPage';
+import AboutPage from './pages/AboutPage';
+import ContactPage from './pages/ContactPage';
+import TermsPage from './pages/TermsPage';
+import PrivacyPage from './pages/PrivacyPage';
+import AdminDashboardPage from './admin/pages/AdminDashboardPage';
+import AdminUsersPage from './admin/pages/AdminUsersPage';
+import AdminCategoriesPage from './admin/pages/AdminCategoriesPage';
+import AdminSessionsPage from './admin/pages/AdminSessionsPage';
+import AdminCreditsPage from './admin/pages/AdminCreditsPage';
+import AdminReportsPage from './admin/pages/AdminReportsPage';
+import ScrollToTop from './components/ScrollToTop';
+import RequireAuth from './components/RequireAuth';
 import './index.css';
 
 function App() {
   return (
     <div id="app">
+      <ScrollToTop />
       <Routes>
+        {/* Unrestricted Public Routes */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/browse" element={<BrowsePage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/onboarding" element={<OnboardingPage />} />
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/requests" element={<RequestsPage />} />
-        <Route path="/schedule" element={<SessionsPage />} />
-        <Route path="/credits" element={<CreditsPage />} />
         <Route path="/leaderboard" element={<LeaderboardPage />} />
         <Route path="/how-it-works" element={<HowItWorksPage />} />
         <Route path="/howitworks" element={<HowItWorksPage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/contact-us" element={<ContactPage />} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/terms-and-conditions" element={<TermsPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/privacy-policy" element={<PrivacyPage />} />
+
+        {/* Protected Private User Routes */}
+        <Route path="/onboarding" element={<RequireAuth pageTitle="Profile Onboarding" roleRequired="user"><OnboardingPage /></RequireAuth>} />
+        <Route path="/dashboard" element={<RequireAuth pageTitle="your Dashboard" roleRequired="user"><DashboardPage /></RequireAuth>} />
+        <Route path="/profile" element={<RequireAuth pageTitle="your Profile" roleRequired="user"><ProfilePage /></RequireAuth>} />
+        <Route path="/requests" element={<RequireAuth pageTitle="Requests Inbox" roleRequired="user"><RequestsPage /></RequireAuth>} />
+        <Route path="/sessions" element={<RequireAuth pageTitle="Sessions" roleRequired="user"><SessionsPage /></RequireAuth>} />
+        <Route path="/schedule" element={<RequireAuth pageTitle="Sessions" roleRequired="user"><SessionsPage /></RequireAuth>} />
+        <Route path="/credits" element={<RequireAuth pageTitle="Credits Balance" roleRequired="user"><CreditsPage /></RequireAuth>} />
+
+        {/* Admin Restricted Routes */}
+        <Route path="/admin" element={<RequireAuth pageTitle="Admin Control Panel" roleRequired="admin"><AdminDashboardPage /></RequireAuth>} />
+        <Route path="/admin/users" element={<RequireAuth pageTitle="Admin Users" roleRequired="admin"><AdminUsersPage /></RequireAuth>} />
+        <Route path="/admin/categories" element={<RequireAuth pageTitle="Admin Categories" roleRequired="admin"><AdminCategoriesPage /></RequireAuth>} />
+        <Route path="/admin/sessions" element={<RequireAuth pageTitle="Admin Sessions" roleRequired="admin"><AdminSessionsPage /></RequireAuth>} />
+        <Route path="/admin/credits" element={<RequireAuth pageTitle="Admin Credits" roleRequired="admin"><AdminCreditsPage /></RequireAuth>} />
+        <Route path="/admin/reports" element={<RequireAuth pageTitle="Admin Reports" roleRequired="admin"><AdminReportsPage /></RequireAuth>} />
       </Routes>
     </div>
   );

@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-export default function KpiStatsGrid({ credits = 3, activeSwaps = 4, rating = '4.9', sessionsTaught = 12 }) {
+export default function KpiStatsGrid({ credits = 10, activeSwaps = 0, rating = '0.0', sessionsTaught = 0 }) {
 
   //Dashboard stats
   const kpiItems = [

@@ -1,3 +1,4 @@
+// src/pages/RequestsPage.jsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -6,6 +7,8 @@ import Sidebar from '../components/Sidebar';
 import MobileNav from '../components/MobileNav';
 import RequestsTabNav from '../components/RequestsTabNav';
 import RequestCard from '../components/RequestCard';
+import ScheduleSessionModal from '../components/ScheduleSessionModal';
+import { fetchWithAuth, getAuthStatus } from '../utils/auth';
 
 const API_URL = 'http://localhost:5000/api';
 
@@ -20,30 +23,22 @@ export default function RequestsPage() {
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState('received');
+  const [requests, setRequests] = useState(EMPTY_REQUESTS);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
 
-  const [requests, setRequests] =
-    useState(EMPTY_REQUESTS);
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [actionLoading, setActionLoading] =
-    useState(false);
-
-  const [error, setError] =
-    useState('');
-
-  // =========================
-  // GET AUTH TOKEN
-  // =========================
+  // Schedule Modal State for Teacher
+  const [scheduleModal, setScheduleModal] = useState({
+    open: false,
+    request: null,
+    loading: false
+  });
 
   const getToken = () => {
     return localStorage.getItem('accessToken');
   };
-
-  // =========================
-  // FORMAT USER
-  // =========================
 
   const formatUser = (user) => {
     if (!user) {
@@ -73,120 +68,59 @@ export default function RequestsPage() {
       name,
       avatar,
       avatarBg: 'var(--violet-primary)',
-      profilePhotoUrl:
-        user.profilePhotoUrl || ''
+      profilePhotoUrl: user.profilePhotoUrl || ''
     };
   };
 
-  // =========================
-  // FORMAT REQUEST
-  // =========================
-
-  const formatRequest = (
-    backendRequest,
-    direction
-  ) => {
-    const isReceived =
-      direction === 'received';
-
+  const formatRequest = (backendRequest, direction) => {
+    const isReceived = direction === 'received';
     const partner = isReceived
       ? backendRequest.sender
       : backendRequest.receiver;
 
     return {
-      // IMPORTANT:
-      // This is the REAL MongoDB request ID.
       id: backendRequest._id,
-
-      requestId:
-        backendRequest._id,
-
+      requestId: backendRequest._id,
       user: formatUser(partner),
-
-      skillWant:
-        backendRequest.skillWant || '',
-
-      message:
-        backendRequest.message || '',
-
-      status:
-        backendRequest.status || 'pending',
-
-      createdAt:
-        backendRequest.createdAt,
-
-      timeAgo:
-        formatTimeAgo(
-          backendRequest.createdAt
-        )
+      skillWant: backendRequest.skillWant || '',
+      message: backendRequest.message || '',
+      status: backendRequest.status || 'pending',
+      createdAt: backendRequest.createdAt,
+      timeAgo: formatTimeAgo(backendRequest.createdAt)
     };
   };
 
-  // =========================
-  // TIME AGO
-  // =========================
-
   const formatTimeAgo = (date) => {
-    if (!date) {
-      return '';
-    }
+    if (!date) return '';
+    const created = new Date(date).getTime();
+    if (Number.isNaN(created)) return '';
 
-    const created =
-      new Date(date).getTime();
+    const diff = Date.now() - created;
+    const minutes = Math.floor(diff / (1000 * 60));
 
-    if (Number.isNaN(created)) {
-      return '';
-    }
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes}m ago`;
 
-    const diff =
-      Date.now() - created;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
 
-    const minutes =
-      Math.floor(
-        diff / (1000 * 60)
-      );
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d ago`;
 
-    if (minutes < 1) {
-      return 'Just now';
-    }
-
-    if (minutes < 60) {
-      return `${minutes}m ago`;
-    }
-
-    const hours =
-      Math.floor(minutes / 60);
-
-    if (hours < 24) {
-      return `${hours}h ago`;
-    }
-
-    const days =
-      Math.floor(hours / 24);
-
-    if (days < 7) {
-      return `${days}d ago`;
-    }
-
-    return new Date(
-      date
-    ).toLocaleDateString(
-      'en-IN',
-      {
-        day: 'numeric',
-        month: 'short'
-      }
-    );
+    return new Date(date).toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short'
+    });
   };
 
-  // =========================
-  // LOAD REQUESTS
-  // =========================
-
   const loadRequests = async () => {
-    const token = getToken();
+    // Purge any stale localstorage remnants
+    try {
+      localStorage.removeItem('skillloop_user_requests');
+    } catch (e) {}
 
-    if (!token) {
+    const { isAuthenticated } = getAuthStatus();
+    if (!isAuthenticated) {
       navigate('/login');
       return;
     }
@@ -195,124 +129,115 @@ export default function RequestsPage() {
       setLoading(true);
       setError('');
 
-      const headers = {
-        Authorization:
-          `Bearer ${token}`
-      };
-
-      const [
-        receivedResponse,
-        sentResponse
-      ] = await Promise.all([
-        fetch(
-          `${API_URL}/requests/received`,
-          {
-            method: 'GET',
-            headers,
-            credentials: 'include'
-          }
-        ),
-
-        fetch(
-          `${API_URL}/requests/sent`,
-          {
-            method: 'GET',
-            headers,
-            credentials: 'include'
-          }
-        )
+      const [receivedResponse, sentResponse] = await Promise.all([
+        fetchWithAuth(`${API_URL}/requests/received`),
+        fetchWithAuth(`${API_URL}/requests/sent`)
       ]);
 
-      const receivedData =
-        await receivedResponse.json();
+      const receivedData = await receivedResponse.json();
+      const sentData = await sentResponse.json();
 
-      const sentData =
-        await sentResponse.json();
+      const backendReceived = receivedData?.data?.requests || [];
+      const backendSent = sentData?.data?.requests || [];
 
-      if (!receivedResponse.ok) {
-        throw new Error(
-          receivedData.message ||
-          'Failed to load received requests'
-        );
-      }
+      // Extract accepted requests for accepted tab
+      const acceptedReceived = backendReceived.filter(r => r.status === 'accepted').map(r => formatRequest(r, 'received'));
+      const acceptedSent = backendSent.filter(r => r.status === 'accepted').map(r => formatRequest(r, 'sent'));
 
-      if (!sentResponse.ok) {
-        throw new Error(
-          sentData.message ||
-          'Failed to load sent requests'
-        );
-      }
-
-      const received =
-        receivedData?.data?.requests || [];
-
-      const sent =
-        sentData?.data?.requests || [];
+      // Extract history (declined, cancelled, completed) for history tab
+      const historyStatuses = ['declined', 'cancelled', 'completed'];
+      const historyReceived = backendReceived.filter(r => historyStatuses.includes(r.status)).map(r => formatRequest(r, 'received'));
+      const historySent = backendSent.filter(r => historyStatuses.includes(r.status)).map(r => formatRequest(r, 'sent'));
 
       setRequests({
-        received:
-          received.map((request) =>
-            formatRequest(
-              request,
-              'received'
-            )
-          ),
-
-        sent:
-          sent.map((request) =>
-            formatRequest(
-              request,
-              'sent'
-            )
-          ),
-
-        accepted: [],
-
-        history: []
+        received: backendReceived.filter(r => r.status === 'pending').map((r) => formatRequest(r, 'received')),
+        sent: backendSent.filter(r => r.status === 'pending').map((r) => formatRequest(r, 'sent')),
+        accepted: [...acceptedReceived, ...acceptedSent],
+        history: [...historyReceived, ...historySent]
       });
 
     } catch (err) {
-      console.error(
-        'Failed to load requests:',
-        err
-      );
-
-      setError(
-        err.message ||
-        'Failed to load requests'
-      );
-
+      console.error('Failed to load requests from MongoDB:', err);
+      setRequests(EMPTY_REQUESTS);
     } finally {
       setLoading(false);
     }
   };
 
-  // =========================
-  // INITIAL LOAD
-  // =========================
-
   useEffect(() => {
     loadRequests();
   }, []);
 
-  // =========================
-  // ACCEPT REQUEST
-  // =========================
+  // Open Schedule Modal when Teacher accepts
+  const handleOpenAcceptModal = (request) => {
+    setScheduleModal({
+      open: true,
+      request,
+      loading: false
+    });
+  };
 
-  const handleAccept = async (
-    requestId
-  ) => {
-    const token = getToken();
+  const handleCloseAcceptModal = () => {
+    setScheduleModal({
+      open: false,
+      request: null,
+      loading: false
+    });
+  };
 
-    if (!token) {
-      navigate('/login');
+  // Submit Schedule & Accept Request
+  const handleSubmitSchedule = async ({ scheduledAt, duration, mode, meetLink, message }) => {
+    const requestId = scheduleModal.request?.id || scheduleModal.request?.requestId;
+
+    if (!requestId) {
       return;
     }
 
+    try {
+      setScheduleModal(prev => ({ ...prev, loading: true }));
+      setError('');
+      setSuccessMsg('');
+
+      const response = await fetchWithAuth(`${API_URL}/requests/${requestId}/accept`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          scheduledAt,
+          duration,
+          mode,
+          meetLink,
+          message
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to accept and schedule session');
+      }
+
+      handleCloseAcceptModal();
+      setSuccessMsg('🎉 Swap request accepted & live session scheduled! Check the Sessions tab.');
+      await loadRequests();
+
+      // Automatically navigate to Sessions page after 1.5s
+      setTimeout(() => {
+        navigate('/sessions');
+      }, 1500);
+
+    } catch (err) {
+      console.error('Failed to schedule session on accept:', err);
+      setError(err.message || 'Failed to schedule session');
+      setScheduleModal(prev => ({ ...prev, loading: false }));
+    }
+  };
+
+  const handleReject = async (request) => {
+    const requestId = request.id || request.requestId;
+
     if (!requestId) {
-      setError(
-        'Request ID is missing'
-      );
       return;
     }
 
@@ -320,128 +245,29 @@ export default function RequestsPage() {
       setActionLoading(true);
       setError('');
 
-      console.log(
-        'Accepting request:',
-        requestId
-      );
+      const response = await fetchWithAuth(`${API_URL}/requests/${requestId}/decline`, {
+        method: 'PATCH'
+      });
 
-      const response =
-        await fetch(
-          `${API_URL}/requests/${requestId}/accept`,
-          {
-            method: 'PATCH',
-
-            headers: {
-              Authorization:
-                `Bearer ${token}`
-            },
-
-            credentials: 'include'
-          }
-        );
-
-      const data =
-        await response.json();
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.message ||
-          'Failed to accept request'
-        );
+        throw new Error(data.message || 'Failed to reject request');
       }
 
-      console.log(
-        'Request accepted:',
-        data
-      );
-
-      const acceptedRequest =
-        data?.data?.request;
-
-      const createdSession =
-        data?.data?.session;
-
-      // Remove from received
-      // and add to accepted.
-      setRequests(
-        (current) => ({
-          ...current,
-
-          received:
-            current.received.filter(
-              (request) =>
-                request.id !== requestId
-            ),
-
-          accepted:
-            acceptedRequest
-              ? [
-                {
-                  ...formatRequest(
-                    acceptedRequest,
-                    'received'
-                  ),
-
-                  status: 'accepted',
-
-                  sessionId:
-                    createdSession?._id ||
-                    ''
-                },
-
-                ...current.accepted
-              ]
-              : current.accepted
-        })
-      );
-
-      // Go directly to Sessions page
-      // after successful acceptance.
-      setActiveTab('accepted');
-
+      await loadRequests();
     } catch (err) {
-      console.error(
-        'Accept request failed:',
-        err
-      );
-
-      setError(
-        err.message ||
-        'Failed to accept request'
-      );
-
+      console.error('Failed to reject request:', err);
+      setError(err.message || 'Failed to reject request');
     } finally {
       setActionLoading(false);
     }
   };
 
-  // =========================
-  // DECLINE REQUEST
-  // =========================
-
-  const handleDecline = async (
-    requestId
-  ) => {
-    const token = getToken();
-
-    if (!token) {
-      navigate('/login');
-      return;
-    }
+  const handleCancel = async (request) => {
+    const requestId = request.id || request.requestId;
 
     if (!requestId) {
-      setError(
-        'Request ID is missing'
-      );
-      return;
-    }
-
-    const confirmed =
-      window.confirm(
-        'Are you sure you want to decline this request?'
-      );
-
-    if (!confirmed) {
       return;
     }
 
@@ -449,223 +275,122 @@ export default function RequestsPage() {
       setActionLoading(true);
       setError('');
 
-      const response =
-        await fetch(
-          `${API_URL}/requests/${requestId}/decline`,
-          {
-            method: 'PATCH',
+      const response = await fetchWithAuth(`${API_URL}/requests/${requestId}/cancel`, {
+        method: 'PATCH'
+      });
 
-            headers: {
-              Authorization:
-                `Bearer ${token}`
-            },
-
-            credentials: 'include'
-          }
-        );
-
-      const data =
-        await response.json();
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.message ||
-          'Failed to decline request'
-        );
+        throw new Error(data.message || 'Failed to cancel request');
       }
 
-      setRequests(
-        (current) => ({
-          ...current,
-
-          received:
-            current.received.filter(
-              (request) =>
-                request.id !== requestId
-            )
-        })
-      );
-
+      await loadRequests();
     } catch (err) {
-      console.error(
-        'Decline request failed:',
-        err
-      );
-
-      setError(
-        err.message ||
-        'Failed to decline request'
-      );
-
+      console.error('Failed to cancel request:', err);
+      setError(err.message || 'Failed to cancel request');
     } finally {
       setActionLoading(false);
     }
   };
 
-  // =========================
-  // SCHEDULE
-  // =========================
-
-  const handleSchedule = (
-    request
-  ) => {
-    if (!request) {
-      return;
-    }
-
-    // Store the session ID so
-    // SessionsPage can use it if needed.
-    if (request.sessionId) {
-      localStorage.setItem(
-        'activeSessionId',
-        request.sessionId
-      );
-    }
-
-    navigate('/sessions');
-  };
-
-  // =========================
-  // CURRENT LIST
-  // =========================
-
-  const currentList =
-    requests[activeTab] || [];
+  const currentList = requests[activeTab] || [];
 
   return (
     <>
       <div className="liquid-bg">
-        <div className="liquid-blob blob-1"></div>
-        <div className="liquid-blob blob-2"></div>
-        <div className="liquid-blob blob-3"></div>
+        <div className="liquid-blob blob-1" />
+        <div className="liquid-blob blob-2" />
+        <div className="liquid-blob blob-3" />
       </div>
 
       <div id="app">
         <Navbar />
 
         <div className="app-layout">
-
           <Sidebar />
 
           <main className="main-content">
-
             <div className="page-title-row">
               <div>
-                <h2>
-                  Swap requests inbox
-                </h2>
-
+                <h2>Swap requests inbox</h2>
                 <p>
-                  Manage everything
-                  you've sent and
-                  received from peers.
+                  Manage skill swap requests and schedule interactive learning sessions.
                 </p>
               </div>
             </div>
 
             {error && (
-              <div
-                className="glass-panel"
-                style={{
-                  padding: '1rem',
-                  marginBottom: '1rem',
-                  color: 'var(--coral-primary)'
-                }}
-              >
+              <div className="glass-panel onboarding-error-banner">
                 {error}
+              </div>
+            )}
+
+            {successMsg && (
+              <div className="glass-panel" style={{ background: 'rgba(46, 204, 113, 0.12)', color: '#27ae60', border: '1px solid rgba(46, 204, 113, 0.3)', padding: '0.85rem 1.2rem', borderRadius: '14px', marginBottom: '1.2rem', fontWeight: 600 }}>
+                {successMsg}
               </div>
             )}
 
             <RequestsTabNav
               activeTab={activeTab}
-              setActiveTab={
-                setActiveTab
-              }
+              onTabChange={setActiveTab}
               counts={{
-                received:
-                  requests.received.length,
-
-                sent:
-                  requests.sent.length,
-
-                accepted:
-                  requests.accepted.length
+                received: requests.received.length,
+                sent: requests.sent.length,
+                accepted: requests.accepted.length,
+                history: requests.history.length
               }}
             />
 
-            <div className="requests-list-wrapper">
-
+            <div className="requests-container">
               {loading ? (
-                <div
-                  className="glass-panel"
-                  style={{
-                    padding: '2.5rem',
-                    textAlign: 'center'
-                  }}
-                >
-                  Loading requests...
+                <div className="glass-panel empty-requests-card">
+                  Loading requests from MongoDB...
                 </div>
               ) : currentList.length > 0 ? (
-
-                currentList.map(
-                  (request) => (
+                <div className="requests-list">
+                  {currentList.map((req) => (
                     <RequestCard
-                      key={
-                        request.id
-                      }
-
-                      request={
-                        request
-                      }
-
-                      direction={
-                        activeTab
-                      }
-
-                      onAccept={
-                        handleAccept
-                      }
-
-                      onDecline={
-                        handleDecline
-                      }
-
-                      onSchedule={
-                        handleSchedule
-                      }
-
-                      actionLoading={
-                        actionLoading
-                      }
+                      key={req.id}
+                      request={req}
+                      direction={activeTab}
+                      onAccept={handleOpenAcceptModal}
+                      onDecline={handleReject}
+                      onCancel={handleCancel}
+                      onSchedule={(r) => navigate('/sessions')}
+                      actionLoading={actionLoading}
                     />
-                  )
-                )
-
+                  ))}
+                </div>
               ) : (
-
-                <div
-                  className="glass-panel"
-                  style={{
-                    padding: '2.5rem',
-                    textAlign: 'center',
-                    color:
-                      'var(--slate-500)'
-                  }}
-                >
+                <div className="glass-panel empty-requests-card">
+                  <h3>No {activeTab} requests</h3>
                   <p>
-                    No requests found
-                    in this tab.
+                    {activeTab === 'received'
+                      ? 'You have no incoming skill swap proposals right now.'
+                      : activeTab === 'sent'
+                        ? 'You have not sent any pending swap requests yet.'
+                        : activeTab === 'accepted'
+                          ? 'No accepted swaps yet. Accept requests to schedule live classes!'
+                          : 'No completed or cancelled request history.'}
                   </p>
                 </div>
-
               )}
-
             </div>
-
           </main>
         </div>
 
         <MobileNav />
+
+        {/* Schedule & Meeting Link Modal for Teacher */}
+        <ScheduleSessionModal
+          isOpen={scheduleModal.open}
+          request={scheduleModal.request}
+          onClose={handleCloseAcceptModal}
+          onSubmit={handleSubmitSchedule}
+          loading={scheduleModal.loading}
+        />
       </div>
     </>
   );

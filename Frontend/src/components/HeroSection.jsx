@@ -1,13 +1,15 @@
 // src/components/HeroSection.jsx
-
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { getAuthStatus } from '../utils/auth';
 
 export default function HeroSection() {
-  return (
-    <main className="landing-hero">
+  const { isAuthenticated } = getAuthStatus();
+  const targetLink = isAuthenticated ? '/browse' : '/login?mode=signup';
 
-        {/* Left side: Hero text and stats */}
+  return (
+    <section className="landing-hero">
+      {/* Left side: Hero text and stats */}
       <div className="hero-left">
         <div className="hero-tag">
           <span className="pill-badge pill-violet">✦ No fees. No tutors. Just trade skills.</span>
@@ -23,8 +25,10 @@ export default function HeroSection() {
 
         {/* Call-to-action buttons */}
         <div className="hero-btns">
-          <Link className="btn btn-primary" to="/login">Join the loop →</Link>
-          <a className="btn btn-secondary" href="#how-it-works">See how it works</a>
+          <Link className="btn btn-primary" to={targetLink}>
+            {isAuthenticated ? 'Browse skills to learn →' : 'Join the loop →'}
+          </Link>
+          <Link className="btn btn-secondary" to="/how-it-works">See how it works</Link>
         </div>
 
         {/* Hero stats */}
@@ -44,8 +48,7 @@ export default function HeroSection() {
         </div>
       </div>
 
-
-        {/* Right side: Hero visual */}
+      {/* Right side: Hero visual */}
       <div className="hero-visual">
         <div className="hero-visual-card">
           <div className="orbit-container">
@@ -57,7 +60,6 @@ export default function HeroSection() {
                 <span className="loop-label">THE LOOP</span>
               </div>
             </div>
-
 
             {/* Orbit cards for teaching and learning */}
             <div className="orbit-card orbit-card-teach">
@@ -74,6 +76,6 @@ export default function HeroSection() {
           </div>
         </div>
       </div>
-    </main>
+    </section>
   );
 }

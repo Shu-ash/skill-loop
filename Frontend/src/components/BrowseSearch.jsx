@@ -1,40 +1,48 @@
 // src/components/BrowseSearch.jsx
-
 import React from 'react';
+
 export default function BrowseSearch({ 
   searchQuery, 
+  onSearchChange,
   setSearchQuery, 
   selectedCategory, 
-  setSelectedCategory 
+  onCategorySelect,
+  setSelectedCategory,
+  categories = ['All categories']
 }) {
-    // Categories for filtering
-  const categories = ['All categories', 'Design', 'Code & Data', 'Languages', 'Music', 'Cooking'];
+  const handleSearch = onSearchChange || setSearchQuery;
+  const handleCategory = onCategorySelect || setSelectedCategory;
+
+  const categoryList = Array.isArray(categories) && categories.length > 0
+    ? categories
+    : ['All categories'];
 
   return (
-    <div className="glass-panel card-padding">
+    <div className="glass-panel card-padding margin-bottom">
       <div className="browse-search-bar">
         <input
           className="form-input flex-1"
           type="text"
-          placeholder="Search a skill — 'Photoshop', 'Spanish', 'guitar'..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search a skill — 'Photoshop', 'Spanish', 'guitar', 'React'..."
+          value={searchQuery || ''}
+          onChange={(e) => handleSearch && handleSearch(e.target.value)}
         />
         <span className="text-subtle">📍 Online + In-person</span>
-        <button className="btn btn-primary btn-pill-sm">Search</button>
+        <button type="button" className="btn btn-primary btn-pill-sm">Search</button>
       </div>
 
-      {/* Category filter */}
-      <div className="filter-chips" style={{ marginTop: '0.85rem' }}>
-        {categories.map((cat) => (
-          <span
+      {/* Live Category Filter Chips from MongoDB */}
+      <div className="filter-chips form-group-spaced">
+        {categoryList.map((cat) => (
+          <button
+            type="button"
             key={cat}
-            className={`pill-badge cursor-pointer ${selectedCategory === cat ? 'pill-violet' : 'pill-white'}`}
-            style={{ cursor: 'pointer', marginRight: '0.4rem' }}
-            onClick={() => setSelectedCategory(cat)}
+            className={`pill-badge tag-margin-right ${selectedCategory === cat ? 'pill-violet' : 'pill-white'}`}
+            onClick={() => handleCategory && handleCategory(cat)}
+            style={{ cursor: 'pointer', border: 'none', font: 'inherit' }}
           >
             {cat}
-          </span>
+          </button>
         ))}
       </div>
     </div>

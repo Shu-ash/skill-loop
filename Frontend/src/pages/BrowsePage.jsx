@@ -1,3 +1,4 @@
+// src/pages/BrowsePage.jsx
 import React, { useEffect, useMemo, useState } from 'react';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
@@ -19,164 +20,127 @@ const getInitials = (name = '') => {
   return initials || 'SL';
 };
 
-const getRatingStars = (rating) => {
-  const value = Number(rating);
-
-  if (!Number.isFinite(value) || value <= 0) {
-    return '☆☆☆☆☆';
-  }
-
-  const rounded = Math.round(value);
-
-  return '★'.repeat(rounded) + '☆'.repeat(5 - rounded);
-};
-
-const getCategory = (skills = []) => {
-  const text = skills.join(' ').toLowerCase();
-
-  if (
-    text.includes('english') ||
-    text.includes('language') ||
-    text.includes('communication')
-  ) {
-    return 'Languages';
-  }
-
-  if (
-    text.includes('design') ||
-    text.includes('figma') ||
-    text.includes('photoshop') ||
-    text.includes('ui')
-  ) {
-    return 'Design';
-  }
-
-  return 'Code & Data';
-};
-
 export default function BrowsePage() {
   const [members, setMembers] = useState([]);
-  const [selectedCategory, setSelectedCategory] =
-    useState('All categories');
+  const [categories, setCategories] = useState(['All categories']);
+  const [categoriesData, setCategoriesData] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('All categories');
   const [searchQuery, setSearchQuery] = useState('');
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const accessToken =
-    localStorage.getItem('accessToken');
+  const accessToken = localStorage.getItem('accessToken');
 
+  const currentStoredUser = useMemo(() => {
+    try {
+      const stored = localStorage.getItem('skillloop_user');
+      return stored ? JSON.parse(stored) : null;
+    } catch (e) {
+      return null;
+    }
+  }, []);
+
+  // Fetch live categories from MongoDB database
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/categories`);
+        const data = await response.json();
+        if (data.success && Array.isArray(data.data?.categories)) {
+          setCategoriesData(data.data.categories);
+          const names = ['All categories', ...data.data.categories.map(c => c.name)];
+          setCategories(names);
+        }
+      } catch (err) {
+        console.error('Failed to load categories:', err);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // Fetch live members from MongoDB database
   useEffect(() => {
     const fetchMembers = async () => {
-      if (!accessToken) {
-        setError('Please login to browse members.');
-        setLoading(false);
-        return;
-      }
-
       try {
         setLoading(true);
         setError('');
 
-        const response = await fetch(
-          `${API_BASE_URL}/users`,
-          {
-            method: 'GET',
-            headers: {
-              Authorization: `Bearer ${accessToken}`
-            },
-            credentials: 'include'
-          }
-        );
+        const headers = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
+
+        const response = await fetch(`${API_BASE_URL}/users`, {
+          method: 'GET',
+          headers,
+          credentials: 'include'
+        });
 
         const data = await response.json();
 
-        if (!response.ok) {
-          throw new Error(
-            data.message ||
-            'Unable to load members.'
-          );
+        if (response.ok && Array.isArray(data?.data?.users)) {
+          const currentId = currentStoredUser?._id || currentStoredUser?.id || currentStoredUser?.userId;
+          const currentEmail = (currentStoredUser?.email || '').toLowerCase();
+          const currentUsername = (currentStoredUser?.username || '').replace(/^@/, '').toLowerCase();
+
+          const formattedMembers = data.data.users
+            .filter((u) => {
+              const uId = u._id || u.id;
+              const uEmail = (u.email || '').toLowerCase();
+              const uUsername = (u.username || '').replace(/^@/, '').toLowerCase();
+
+              // ALWAYS Exclude logged-in user themselves
+              if (currentId && String(uId) === String(currentId)) return false;
+              if (currentEmail && uEmail && uEmail === currentEmail) return false;
+              if (currentUsername && uUsername && uUsername === currentUsername) return false;
+              return true;
+            })
+            .map((user) => {
+              const skills = user.skillsCanTeach || [];
+              return {
+                id: user._id || user.id,
+                name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'SkillLoop Member',
+                avatar: user.profilePhotoUrl || getInitials(user.name),
+                profilePhotoUrl: user.profilePhotoUrl || '',
+                avatarBg: 'var(--violet-primary)',
+                title: user.headline || user.bio || 'SkillLoop Community Member 🚀',
+                rating: `⭐ ${(user.rating || 0).toFixed(1)} (${user.ratingCount || 0} reviews)`,
+                ratingValue: user.rating || 0,
+                skills: skills.length ? skills : ['Community Member'],
+                username: user.username || '',
+                email: user.email || ''
+              };
+            });
+
+          setMembers(formattedMembers);
+        } else {
+          setMembers([]);
         }
-
-        const users =
-          data?.data?.users ||
-          data?.data ||
-          data?.users ||
-          [];
-
-        const formattedMembers = users.map(
-          (user) => {
-            const skills =
-              user.skillsCanTeach || [];
-
-            const rating =
-              Number(user.rating) || 0;
-
-            return {
-              id: user._id || user.id,
-
-              name:
-                user.name ||
-                'SkillLoop Member',
-
-              avatar:
-                user.avatar ||
-                getInitials(user.name),
-
-              avatarBg:
-                'var(--violet-primary)',
-
-              title:
-                user.headline ||
-                user.bio ||
-                'SkillLoop member',
-
-              rating:
-                getRatingStars(rating),
-
-              ratingValue: rating,
-
-              skills,
-
-              categories: [
-                getCategory(skills)
-              ],
-
-              username:
-                user.username || ''
-            };
-          }
-        );
-
-        setMembers(formattedMembers);
       } catch (err) {
-        console.error(
-          'Browse members error:',
-          err
-        );
-
-        setError(
-          err.message ||
-          'Unable to load members.'
-        );
+        console.log('Error fetching live members from database:', err);
+        setMembers([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchMembers();
-  }, [accessToken]);
+  }, [accessToken, currentStoredUser]);
 
   const filteredMembers = useMemo(() => {
-    const searchLower =
-      searchQuery.trim().toLowerCase();
+    const searchLower = searchQuery.trim().toLowerCase();
+
+    // Find skills belonging to currently selected category
+    const selectedCatObj = categoriesData.find(c => c.name.toLowerCase() === selectedCategory.toLowerCase());
+    const catSkills = selectedCatObj ? (selectedCatObj.skills || []).map(s => s.toLowerCase().trim()) : [];
+    const catNameLower = selectedCategory.toLowerCase().trim();
 
     return members.filter((member) => {
+      const memberSkillsLower = member.skills.map(s => s.toLowerCase().trim());
+
       const matchesCategory =
-        selectedCategory ===
-        'All categories' ||
-        member.categories.includes(
-          selectedCategory
+        selectedCategory === 'All categories' ||
+        memberSkillsLower.some(ms => 
+          catSkills.some(cs => cs.includes(ms) || ms.includes(cs)) ||
+          ms.includes(catNameLower) ||
+          catNameLower.includes(ms)
         );
 
       if (!searchLower) {
@@ -184,30 +148,15 @@ export default function BrowsePage() {
       }
 
       const matchesSearch =
-        member.name
-          .toLowerCase()
-          .includes(searchLower) ||
-
-        member.title
-          .toLowerCase()
-          .includes(searchLower) ||
-
+        member.name.toLowerCase().includes(searchLower) ||
+        member.title.toLowerCase().includes(searchLower) ||
         member.skills.some((skill) =>
-          skill
-            .toLowerCase()
-            .includes(searchLower)
+          skill.toLowerCase().includes(searchLower)
         );
 
-      return (
-        matchesCategory &&
-        matchesSearch
-      );
+      return matchesCategory && matchesSearch;
     });
-  }, [
-    members,
-    selectedCategory,
-    searchQuery
-  ]);
+  }, [members, selectedCategory, searchQuery, categoriesData]);
 
   return (
     <>
@@ -224,86 +173,50 @@ export default function BrowsePage() {
           <Sidebar />
 
           <main className="main-content">
-
             <div className="page-title-row">
               <div>
-                <h2>
-                  Browse the loop
-                </h2>
-
+                <h2>Browse the loop</h2>
                 <p>
-                  {loading
-                    ? 'Finding members...'
-                    : `${members.length} members ready to trade knowledge.`}
+                  {filteredMembers.length} {filteredMembers.length === 1 ? 'member' : 'members'} ready to trade knowledge.
                 </p>
               </div>
             </div>
 
-            <BrowseSearch
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              selectedCategory={
-                selectedCategory
-              }
-              setSelectedCategory={
-                setSelectedCategory
-              }
-            />
-
-            {loading && (
-              <div
-                className="glass-panel"
-                style={{
-                  padding: '2rem',
-                  textAlign: 'center'
-                }}
-              >
-                Loading members...
-              </div>
-            )}
-
-            {!loading && error && (
-              <div
-                className="glass-panel"
-                style={{
-                  padding: '1.5rem',
-                  textAlign: 'center',
-                  color: 'var(--coral-primary)'
-                }}
-              >
+            {error && (
+              <div className="glass-panel onboarding-error-banner">
                 {error}
               </div>
             )}
 
-            {!loading &&
-              !error &&
-              filteredMembers.length === 0 && (
-                <div
-                  className="glass-panel"
-                  style={{
-                    padding: '2rem',
-                    textAlign: 'center'
-                  }}
-                >
-                  No members found.
+            {/* Dynamic Search & Live Categories Filter */}
+            <BrowseSearch
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              selectedCategory={selectedCategory}
+              onCategorySelect={setSelectedCategory}
+              categories={categories}
+            />
+
+            <div className="browse-grid">
+              {loading ? (
+                <div className="glass-panel empty-requests-card" style={{ gridColumn: '1 / -1', padding: '3rem 1rem', textAlign: 'center' }}>
+                  <span style={{ fontSize: '2rem', display: 'block', marginBottom: '0.5rem' }}>⏳</span>
+                  <p style={{ margin: 0, fontWeight: 600, color: 'var(--slate-600)' }}>Loading live community members from MongoDB...</p>
+                </div>
+              ) : filteredMembers.length > 0 ? (
+                filteredMembers.map((member) => (
+                  <MemberCard key={member.id} member={member} />
+                ))
+              ) : (
+                <div className="glass-panel empty-requests-card" style={{ gridColumn: '1 / -1', padding: '3.5rem 1.5rem', textAlign: 'center', borderRadius: '24px' }}>
+                  <span style={{ fontSize: '3rem', display: 'block', marginBottom: '0.75rem' }}>🔍</span>
+                  <h3 style={{ margin: '0 0 0.5rem 0', fontWeight: 700, color: 'var(--slate-800)' }}>No Other Members Found</h3>
+                  <p style={{ color: 'var(--slate-500)', fontSize: '0.92rem', maxWidth: '420px', margin: '0 auto', lineHeight: '1.6' }}>
+                    {searchQuery ? `No members matched "${searchQuery}". Try searching for another skill.` : selectedCategory !== 'All categories' ? `No other members found offering skills in "${selectedCategory}".` : 'When other members or friends sign up, they will appear here!'}
+                  </p>
                 </div>
               )}
-
-            {!loading &&
-              !error &&
-              filteredMembers.length > 0 && (
-                <div className="browse-grid">
-                  {filteredMembers.map(
-                    (member) => (
-                      <MemberCard
-                        key={member.id}
-                        member={member}
-                      />
-                    )
-                  )}
-                </div>
-              )}
-
+            </div>
           </main>
         </div>
 

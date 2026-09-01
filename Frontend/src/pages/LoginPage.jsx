@@ -1,18 +1,26 @@
-//src/pages/LoginPage.jsx
+// src/pages/LoginPage.jsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import AuthVisualSide from '../components/AuthVisualSide';
 import AuthTabNav from '../components/AuthTabNav';
 import LoginForm from '../components/LoginForm';
 import SignupForm from '../components/SignupForm';
-import SocialAuthBtns from '../components/SocialAuthBtns';
 
 export default function LoginPage() {
   const location = useLocation();
-  // Default to 'login' mode, unless location state explicitly requests 'signup'
-  const initialMode = location.state?.mode || 'login';
-  const [authMode, setAuthMode] = useState(initialMode); // 'login' | 'signup'
+  const searchParams = new URLSearchParams(location.search);
+  const requestedMode = location.state?.mode || (searchParams.get('mode') === 'signup' ? 'signup' : 'login');
+  
+  const [authMode, setAuthMode] = useState(requestedMode); // 'login' | 'signup'
+
+  useEffect(() => {
+    if (location.state?.mode) {
+      setAuthMode(location.state.mode);
+    } else if (searchParams.get('mode') === 'signup') {
+      setAuthMode('signup');
+    }
+  }, [location]);
 
   return (
     <>
@@ -41,12 +49,12 @@ export default function LoginPage() {
 
         <main className="auth-portal-theme">
           <div className="auth-glass-portal">
-            {/* Component 1: Visual Left Side */}
+            {/* Visual Left Side */}
             <AuthVisualSide />
 
             {/* Right Side Auth Box */}
             <div className="auth-form-side">
-              {/* Component 2: Tab Nav */}
+              {/* Tab Nav: Log In vs Create Account */}
               <AuthTabNav authMode={authMode} setAuthMode={setAuthMode} />
 
               {/* Form Container with Smooth Transition Key */}
@@ -57,13 +65,10 @@ export default function LoginPage() {
                   <SignupForm onSwitchToLogin={() => setAuthMode('login')} />
                 )}
               </div>
-
-              {/* Component 5: Social Sign-In Buttons */}
-              <SocialAuthBtns />
             </div>
           </div>
         </main>
       </div>
     </>
   );
-}
+}

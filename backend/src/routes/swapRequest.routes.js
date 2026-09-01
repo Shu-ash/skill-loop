@@ -5,7 +5,8 @@ import {
     getReceivedRequests,
     getSentRequests,
     acceptSwapRequest,
-    declineSwapRequest
+    declineSwapRequest,
+    cancelSwapRequest
 } from "../controllers/swapRequest.controller.js";
 
 import { protect } from "../middleware/auth.middleware.js";
@@ -33,6 +34,13 @@ router.patch(
     "/:requestId/decline",
     protect,
     declineSwapRequest
+);
+
+// Cancel request (sender cancels own pending request)
+router.patch(
+    "/:requestId/cancel",
+    protect,
+    cancelSwapRequest
 );
 
 export default router;

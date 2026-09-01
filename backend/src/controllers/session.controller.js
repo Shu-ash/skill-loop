@@ -1,4 +1,83 @@
+import mongoose from "mongoose";
 import Session from "../models/session.js";
+import User from "../models/user.js";
+import CreditLedger from "../models/creditLedger.js";
+import Notification from "../models/notification.js";
+
+/**
+ * Automatically complete active sessions whose scheduled duration has passed
+ * and automatically settle the credits (+1 Teacher, -1 Learner).
+ */
+export const autoCompleteExpiredSessions = async () => {
+    try {
+        if (mongoose.connection.readyState !== 1) return;
+
+        const now = new Date();
+        const activeSessions = await Session.find({
+            status: { $in: ["scheduled", "in_progress"] },
+            scheduledAt: { $ne: null }
+        }).populate("teacher learner");
+
+        for (const session of activeSessions) {
+            const durationMs = (Number(session.duration) || 45) * 60 * 1000;
+            const sessionEnd = new Date(new Date(session.scheduledAt).getTime() + durationMs);
+
+            if (now >= sessionEnd) {
+                session.status = "completed";
+                session.completedAt = sessionEnd;
+                await session.save();
+
+                const teacherId = session.teacher?._id || session.teacher;
+                const learnerId = session.learner?._id || session.learner;
+                const teacherName = session.teacher?.name || 'Teacher';
+                const learnerName = session.learner?.name || 'Learner';
+
+                if (teacherId && learnerId) {
+                    // Update user credits: Teacher +1, Learner -1
+                    await Promise.all([
+                        User.findByIdAndUpdate(teacherId, { $inc: { credits: 1, ratingCount: 1 } }),
+                        User.findByIdAndUpdate(learnerId, { $inc: { credits: -1 } })
+                    ]);
+
+                    // Audit ledger entry (Single transfer from learner to teacher)
+                    await CreditLedger.create({
+                        sender: learnerId,
+                        receiver: teacherId,
+                        session: session._id,
+                        amount: 1,
+                        transactionType: "session_reward",
+                        description: `Skill Swap: ${session.skill}`
+                    });
+
+                    // Notifications
+                    await Notification.insertMany([
+                        {
+                            user: teacherId,
+                            title: "🎉 +1 Skill Credit Earned!",
+                            text: `Session completed! You earned +1 credit for teaching ${session.skill} to ${learnerName}.`,
+                            type: "credit_earned",
+                            link: "/credits"
+                        },
+                        {
+                            user: learnerId,
+                            title: "🎓 Class Completed (-1 Credit)",
+                            text: `Completed ${session.skill} class with ${teacherName}. 1 credit deducted.`,
+                            type: "credit_spent",
+                            link: "/credits"
+                        }
+                    ]);
+                }
+            }
+        }
+    } catch (err) {
+        console.error("Error in autoCompleteExpiredSessions:", err);
+    }
+};
+
+// Background interval to auto-check expired sessions every 15s
+setInterval(() => {
+    autoCompleteExpiredSessions().catch(() => {});
+}, 15000);
 
 /**
  * GET /api/sessions
@@ -10,6 +89,8 @@ export const getMySessions = async (
     next
 ) => {
     try {
+        await autoCompleteExpiredSessions();
+
         const sessions = await Session.find({
             $or: [
                 {
@@ -197,6 +278,7 @@ export const scheduleSession = async (
             Number(duration ?? 45);
 
         const allowedDurations = [
+            15,
             30,
             45,
             60,
@@ -215,7 +297,7 @@ export const scheduleSession = async (
             return res.status(400).json({
                 success: false,
                 message:
-                    "Duration must be 30, 45, 60, 90, or 120 minutes"
+                    "Duration must be 15, 30, 45, 60, 90, or 120 minutes"
             });
         }
 
@@ -339,6 +421,69 @@ export const scheduleSession = async (
 
 
 /**
+ * PATCH /api/sessions/:sessionId/join
+ * Record participant joining the meeting
+ */
+export const joinSession = async (req, res, next) => {
+    try {
+        const session = await Session.findOne({
+            _id: req.params.sessionId,
+            $or: [
+                { teacher: req.user._id },
+                { learner: req.user._id }
+            ]
+        });
+
+        if (!session) {
+            return res.status(404).json({
+                success: false,
+                message: "Session not found"
+            });
+        }
+
+        const isTeacher = String(session.teacher) === String(req.user._id);
+        const isLearner = String(session.learner) === String(req.user._id);
+
+        if (isLearner) {
+            session.learnerJoined = true;
+            session.learnerJoinedAt = new Date();
+            if (session.status === "scheduled") {
+                session.status = "in_progress";
+            }
+        }
+
+        if (isTeacher) {
+            session.teacherJoined = true;
+            session.teacherJoinedAt = new Date();
+        }
+
+        await session.save();
+
+        await session.populate([
+            {
+                path: "teacher",
+                select: "firstName lastName name username profilePhotoUrl headline rating credits"
+            },
+            {
+                path: "learner",
+                select: "firstName lastName name username profilePhotoUrl headline rating credits"
+            }
+        ]);
+
+        return res.status(200).json({
+            success: true,
+            message: "Joined session",
+            data: {
+                session
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
+/**
  * PATCH /api/sessions/:sessionId/start
  * Start a scheduled session
  */
@@ -394,42 +539,7 @@ export const startSession = async (
             });
         }
 
-        // =========================
-        // START TIME CHECK
-        // =========================
-
-        const now = new Date();
-
-        const scheduledTime =
-            new Date(
-                session.scheduledAt
-            );
-
-        /*
-         * Allow starting up to 15 minutes
-         * before the scheduled time.
-         */
-        const earliestStart =
-            new Date(
-                scheduledTime.getTime() -
-                15 * 60 * 1000
-            );
-
-        if (now < earliestStart) {
-            return res.status(400).json({
-                success: false,
-                message:
-                    `Session can be started 15 minutes before the scheduled time`
-            });
-        }
-
-        // =========================
-        // START
-        // =========================
-
-        session.status =
-            "in_progress";
-
+        session.status = "in_progress";
         await session.save();
 
         await session.populate([
@@ -520,43 +630,78 @@ export const completeSession =
             }
 
             if (
-                session.status !==
-                "in_progress"
+                session.status !== "in_progress" &&
+                session.status !== "scheduled"
             ) {
                 return res.status(400).json({
                     success: false,
-                    message:
-                        "Session must be in progress before it can be completed"
+                    message: "Session must be active before it can be completed"
                 });
             }
 
-            session.status =
-                "completed";
+            // Only allow completion once the learner has joined the meeting
+            if (!session.learnerJoined && session.status !== "in_progress") {
+                return res.status(400).json({
+                    success: false,
+                    message: "Student has not joined the meeting yet. You can mark the class complete once the student joins."
+                });
+            }
 
-            session.completedAt =
-                new Date();
-
+            session.status = "completed";
+            session.completedAt = new Date();
             await session.save();
 
             await session.populate([
                 {
                     path: "teacher",
-                    select:
-                        "firstName lastName name username profilePhotoUrl headline rating"
+                    select: "firstName lastName name username profilePhotoUrl headline rating credits"
                 },
                 {
                     path: "learner",
-                    select:
-                        "firstName lastName name username profilePhotoUrl headline rating"
+                    select: "firstName lastName name username profilePhotoUrl headline rating credits"
+                }
+            ]);
+
+            const teacherName = session.teacher?.name || `${session.teacher?.firstName || ''} ${session.teacher?.lastName || ''}`.trim() || 'Teacher';
+            const learnerName = session.learner?.name || `${session.learner?.firstName || ''} ${session.learner?.lastName || ''}`.trim() || 'Learner';
+
+            // 1. Credit Economy: Teacher earns +1, Learner spends -1
+            await Promise.all([
+                User.findByIdAndUpdate(session.teacher._id, { $inc: { credits: 1, ratingCount: 1 } }),
+                User.findByIdAndUpdate(session.learner._id, { $inc: { credits: -1 } })
+            ]);
+
+            // 2. Audit Trail: Create single CreditLedger record (Transfer from learner to teacher)
+            await CreditLedger.create({
+                sender: session.learner._id,
+                receiver: session.teacher._id,
+                session: session._id,
+                amount: 1,
+                transactionType: "session_reward",
+                description: `Skill Swap: ${session.skill}`
+            });
+
+            // 3. In-App Notifications: Live notifications for both parties
+            await Notification.insertMany([
+                {
+                    user: session.teacher._id,
+                    title: "🎉 +1 Skill Credit Earned!",
+                    text: `Session completed! You earned +1 credit for teaching ${session.skill} to ${learnerName}.`,
+                    type: "credit_earned",
+                    link: "/credits"
+                },
+                {
+                    user: session.learner._id,
+                    title: "🎓 Class Completed (-1 Credit)",
+                    text: `Completed ${session.skill} class with ${teacherName}. 1 credit deducted.`,
+                    type: "credit_spent",
+                    link: "/credits"
                 }
             ]);
 
             return res.status(200).json({
                 success: true,
-
-                message:
-                    "Session completed successfully",
-
+                message: "Session completed successfully! Credits and ledger updated.",
                 data: {
                     session
                 }

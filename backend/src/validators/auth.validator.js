@@ -11,46 +11,28 @@ const email = z
 
 const password = z
     .string()
-    .min(8)
+    .min(6)
     .max(128);
 
 export const registerSchema = z.object({
     body: z.object({
-        firstName: z
-            .string()
-            .trim()
-            .min(1)
-            .max(50),
-
-        lastName: z
-            .string()
-            .trim()
-            .min(1)
-            .max(50),
-
+        firstName: z.string().trim().min(1).max(50).optional(),
+        lastName: z.string().trim().min(1).max(50).optional(),
+        name: z.string().trim().min(1).max(100).optional(),
+        username: z.string().trim().min(2).max(50).optional(),
         email,
-
         password,
-
-        termsAccepted: z.literal(true)
-    }),
-
-    params: z.object({}),
-
-    query: z.object({})
+        termsAccepted: z.boolean().optional().default(true)
+    }).passthrough(),
+    params: z.any().optional(),
+    query: z.any().optional()
 });
 
 export const loginSchema = z.object({
     body: z.object({
         email,
-
-        password: z
-            .string()
-            .min(1)
-            .max(128)
-    }),
-
-    params: z.object({}),
-
-    query: z.object({})
+        password: z.string().min(1).max(128)
+    }).passthrough(),
+    params: z.any().optional(),
+    query: z.any().optional()
 });
