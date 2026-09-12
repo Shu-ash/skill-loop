@@ -220,13 +220,14 @@ export const scheduleSession = async (
             });
         }
 
+        const gracePeriod = new Date(Date.now() - 15 * 60 * 1000);
         if (
-            parsedDate <= new Date()
+            parsedDate < gracePeriod
         ) {
             return res.status(400).json({
                 success: false,
                 message:
-                    "Scheduled time must be in the future"
+                    "Scheduled time must be in the present or future"
             });
         }
 

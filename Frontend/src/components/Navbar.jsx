@@ -62,6 +62,25 @@ export default function Navbar() {
     }
   };
 
+  const deleteNotification = async (notifId, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    setNotifications(prev => prev.filter(n => n.id !== notifId));
+
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      try {
+        await fetch(`${API_BASE_URL}/notifications/${notifId}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } catch (err) {
+        console.error('Error deleting notification:', err);
+      }
+    }
+  };
+
   const closeMobileMenu = () => {
     setMobileMenuOpen(false);
   };
@@ -138,13 +157,33 @@ export default function Navbar() {
                         to={n.link || '/dashboard'} 
                         className={`notif-item ${!n.read ? 'unread' : ''}`}
                         onClick={() => setShowNotifs(false)}
-                        style={{ textDecoration: 'none', color: 'inherit' }}
+                        style={{ textDecoration: 'none', color: 'inherit', position: 'relative' }}
                       >
                         <div className="notif-icon-circle">{getNotifIcon(n.type)}</div>
-                        <div className="notif-body">
+                        <div className="notif-body" style={{ flex: 1 }}>
                           <p className="notif-text" style={{ fontWeight: n.read ? 500 : 700 }}>{n.text || n.title}</p>
                           <span className="notif-time">{n.time || 'Recent'}</span>
                         </div>
+                        <button
+                          type="button"
+                          onClick={(e) => deleteNotification(n.id, e)}
+                          title="Remove notification"
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            fontSize: '0.85rem',
+                            color: 'var(--slate-400, #94a3b8)',
+                            padding: '4px 6px',
+                            borderRadius: '6px',
+                            transition: 'all 0.15s ease',
+                            flexShrink: 0
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.background = 'rgba(239,68,68,0.1)'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--slate-400, #94a3b8)'; e.currentTarget.style.background = 'none'; }}
+                        >
+                          ✕
+                        </button>
                       </Link>
                     ))
                   ) : (

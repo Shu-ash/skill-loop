@@ -8,6 +8,7 @@ export default function SessionCard({
   onMarkComplete,
   onCancelSession,
   onScheduleSession,
+  onOpenReview,
   actionLoading
 }) {
   if (!session) return null;
@@ -41,38 +42,97 @@ export default function SessionCard({
     return () => clearInterval(timer);
   }, []);
 
-  const durationMins = Number(duration) || 45;
-  const scheduledTimestamp = scheduledAt ? new Date(scheduledAt).getTime() : 0;
-  const endTimestamp = scheduledTimestamp > 0 ? scheduledTimestamp + durationMins * 60 * 1000 : 0;
+  const sessionStartTime = scheduledAt ? new Date(scheduledAt) : null;
+  const validSessionStartTime = sessionStartTime && !Number.isNaN(sessionStartTime.getTime());
 
-  // Check if session duration has passed
-  const isDurationExpired = Boolean(scheduledTimestamp > 0 && currentTime >= endTimestamp);
+  // Compute session end time
+  const sessionEndTime = validSessionStartTime
+    ? new Date(sessionStartTime.getTime() + (Number(duration) || 45) * 60 * 1000)
+    : null;
 
-  // Live active window: between scheduled start time and duration end time
-  const isLiveWindow = Boolean(
-    scheduledTimestamp > 0 &&
-    currentTime >= scheduledTimestamp &&
-    currentTime < endTimestamp
-  );
+  // Session time window status
+  const isBeforeSession = validSessionStartTime && currentTime < sessionStartTime;
+  const isDuringSession = validSessionStartTime && sessionEndTime && currentTime >= sessionStartTime && currentTime < sessionEndTime;
+  const isAfterSession = validSessionStartTime && sessionEndTime && currentTime >= sessionEndTime;
 
-  // Unlocked only during the scheduled duration window
-  const isUnlocked = Boolean(
-    !isDurationExpired &&
-    status !== 'cancelled' &&
-    status !== 'completed' &&
-    (status === 'in_progress' || isLiveWindow)
-  );
+  const [hasJoined, setHasJoined] = useState(() => {
+    try {
+      return localStorage.getItem(`skillloop_session_joined_${id}`) === 'true';
+    } catch {
+      return false;
+    }
+  });
 
-  // Effectively completed either in database or automatically when duration has passed
-  const isCompleted = Boolean(
-    status === 'completed' ||
-    (isDurationExpired && status !== 'cancelled')
-  );
+  const [autoCompleting, setAutoCompleting] = useState(false);
 
-  // Teacher can mark complete during active session if student joined
-  const canTeacherComplete = Boolean(
-    isTeacher && (learnerJoined || status === 'in_progress')
-  );
+  // Sync hasJoined if status is in_progress
+  useEffect(() => {
+    if (status === 'in_progress' && !hasJoined) {
+      setHasJoined(true);
+      try {
+        localStorage.setItem(`skillloop_session_joined_${id}`, 'true');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, [status, hasJoined, id]);
+
+  const isJoined = hasJoined || status === 'in_progress';
+
+  // Format countdown helper until session starts
+  const getCountdown = () => {
+    if (!validSessionStartTime || !isBeforeSession) return '';
+    const diffMs = sessionStartTime.getTime() - currentTime.getTime();
+    if (diffMs <= 0) return '0s';
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    const secs = Math.floor((diffMs % (1000 * 60)) / 1000);
+    if (days > 0) return `${days}d ${hours}h ${mins}m`;
+    if (hours > 0) return `${hours}h ${mins}m ${secs}s`;
+    if (mins > 0) return `${mins}m ${secs}s`;
+    return `${secs}s`;
+  };
+
+  // Format countdown helper for remaining time in active session
+  const getSessionRemainingCountdown = () => {
+    if (!sessionEndTime || !isDuringSession) return '';
+    const diffMs = sessionEndTime.getTime() - currentTime.getTime();
+    if (diffMs <= 0) return '0m 0s';
+    const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    const secs = Math.floor((diffMs % (1000 * 60)) / 1000);
+    return `${mins}m ${secs}s`;
+  };
+
+  // Auto-complete if join button was clicked but mark as complete wasn't clicked within duration
+  useEffect(() => {
+    if (
+      isAfterSession &&
+      isJoined &&
+      status !== 'completed' &&
+      status !== 'cancelled' &&
+      !autoCompleting &&
+      onMarkComplete
+    ) {
+      setAutoCompleting(true);
+      onMarkComplete(id);
+    }
+  }, [isAfterSession, isJoined, status, autoCompleting, id, onMarkComplete]);
+
+  const handleJoinClick = () => {
+    if (!canJoin) return;
+    try {
+      localStorage.setItem(`skillloop_session_joined_${id}`, 'true');
+    } catch (e) {
+      console.error(e);
+    }
+    setHasJoined(true);
+    if (onJoinCall) {
+      onJoinCall(meetLink, id);
+    }
+  };
+
+  const canJoin = Boolean(meetLink) && Boolean(validSessionStartTime) && currentTime >= sessionStartTime && !(sessionEndTime && currentTime >= sessionEndTime) && status !== 'completed' && status !== 'cancelled';
 
   const getStatusLabel = () => {
     if (status === 'cancelled') return 'CANCELLED';
@@ -82,16 +142,72 @@ export default function SessionCard({
     return 'SCHEDULED';
   };
 
-  const handleOpenLink = () => {
-    if (!meetLink || !isUnlocked) return;
-    if (onJoinCall) {
-      onJoinCall(session);
-    } else {
-      const url = meetLink.startsWith('http://') || meetLink.startsWith('https://')
-        ? meetLink
-        : `https://${meetLink}`;
-      window.open(url, '_blank', 'noopener,noreferrer');
+  const getMinDateTime = () => {
+    // 15-minute grace period to allow present time & slight clock differences
+    const now = new Date(Date.now() - 15 * 60 * 1000);
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
+  const setPresetDateTime = (offsetMinutes) => {
+    const target = new Date(Date.now() + offsetMinutes * 60 * 1000);
+    const y = target.getFullYear();
+    const m = String(target.getMonth() + 1).padStart(2, '0');
+    const d = String(target.getDate()).padStart(2, '0');
+    const h = String(target.getHours()).padStart(2, '0');
+    const min = String(target.getMinutes()).padStart(2, '0');
+    setScheduledAtInput(`${y}-${m}-${d}T${h}:${min}`);
+  };
+
+  const handleSchedule = () => {
+    if (!onScheduleSession) return;
+
+    if (!scheduledAtInput) {
+      alert('Please select a date and time.');
+      return;
     }
+
+    const selectedDate = new Date(scheduledAtInput);
+    if (Number.isNaN(selectedDate.getTime())) {
+      alert('Please select a valid date and time.');
+      return;
+    }
+
+    // Allow present time (with 15-min grace buffer for clock skew) or any future date/time
+    const graceWindow = new Date(Date.now() - 15 * 60 * 1000);
+    if (selectedDate < graceWindow) {
+      alert('Please select a present or future date and time.');
+      return;
+    }
+
+    const finalDuration = Number(selectedDuration);
+    const allowedDurations = [30, 45, 60, 90, 120];
+    if (!allowedDurations.includes(finalDuration)) {
+      alert('Please select a valid duration.');
+      return;
+    }
+
+    if (sessionMode !== 'online' && sessionMode !== 'in_person') {
+      alert('Please select a valid session mode.');
+      return;
+    }
+
+    if (sessionMode === 'online' && !meetLinkInput.trim()) {
+      alert('Please enter the Google Meet link.');
+      return;
+    }
+
+    onScheduleSession(
+      id,
+      selectedDate.toISOString(),
+      sessionMode,
+      sessionMode === 'online' ? meetLinkInput.trim() : '',
+      finalDuration
+    );
   };
 
   return (
@@ -137,50 +253,96 @@ export default function SessionCard({
         </div>
       </div>
 
-      {message && (
-        <div style={{ background: 'rgba(241, 245, 249, 0.6)', padding: '0.75rem 1rem', borderRadius: '12px', fontSize: '0.86rem', color: 'var(--slate-600)', marginBottom: '1.1rem', fontStyle: 'italic' }}>
-          💬 Note: "{message}"
-        </div>
-      )}
+      {/* Schedule Form for Teacher if unscheduled */}
+      {isTeacher && (status === 'pending' || (status === 'scheduled' && !scheduledAt && !meetLink)) && (
+        <div className="glass-panel request-inline-form">
+          <h4>📅 Schedule Session</h4>
+          <p>Choose when you want to conduct this session.</p>
 
-      {/* Video Meeting Room Link Banner (LOCKED vs UNLOCKED during duration) */}
-      {meetLink && status !== 'cancelled' && (
-        <div 
-          className="session-meet-banner session-link-banner" 
-          style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            padding: '1.1rem 1.35rem', 
-            borderRadius: '18px', 
-            marginBottom: '1.2rem', 
-            gap: '1rem', 
-            flexWrap: 'wrap',
-            background: isUnlocked ? 'rgba(240, 237, 255, 0.85)' : 'rgba(248, 250, 252, 0.95)',
-            border: isUnlocked ? '1.5px solid rgba(108, 92, 231, 0.35)' : '1.5px dashed rgba(148, 163, 184, 0.5)'
-          }}
-        >
-          <div className="meet-info" style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', minWidth: '240px' }}>
-            <span className="meet-icon" style={{ fontSize: '1.8rem' }}>
-              {isUnlocked ? '🎥' : '🔒'}
-            </span>
-            <div>
-              <strong style={{ fontSize: '0.92rem', display: 'block', color: isUnlocked ? 'var(--slate-900)' : 'var(--slate-700)' }}>
-                {isUnlocked ? 'Video Meeting Room (Unlocked & Live)' : isDurationExpired ? 'Video Meeting Room (Duration Ended)' : 'Video Meeting Room (Locked)'}
-              </strong>
-              {isUnlocked ? (
-                <p style={{ margin: 0, fontSize: '0.86rem', color: 'var(--violet-primary, #6c5ce7)', wordBreak: 'break-all', fontWeight: 600 }}>
-                  {meetLink}
-                </p>
-              ) : isDurationExpired ? (
-                <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--slate-500)' }}>
-                  🔒 Session duration of {durationMins} minutes has ended. Meeting room is now closed.
-                </p>
-              ) : (
-                <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--slate-500)' }}>
-                  🔒 Link will automatically unlock on <strong>{date}</strong> at <strong>{time}</strong> for {durationMins} mins
-                </p>
-              )}
+          <div className="form-group">
+            <label htmlFor="scheduledAt">Date &amp; Time</label>
+            <input
+              id="scheduledAt"
+              type="datetime-local"
+              value={scheduledAtInput}
+              min={getMinDateTime()}
+              onChange={(e) => setScheduledAtInput(e.target.value)}
+              disabled={actionLoading}
+            />
+            <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="btn btn-secondary btn-pill-sm"
+                style={{ fontSize: '0.75rem', padding: '3px 8px' }}
+                onClick={() => setPresetDateTime(0)}
+                disabled={actionLoading}
+                title="Schedule for right now"
+              >
+                ⚡ Today (Now)
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-pill-sm"
+                style={{ fontSize: '0.75rem', padding: '3px 8px' }}
+                onClick={() => setPresetDateTime(10)}
+                disabled={actionLoading}
+                title="Schedule for 10 minutes from now"
+              >
+                ⚡ Today (+10 mins)
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-pill-sm"
+                style={{ fontSize: '0.75rem', padding: '3px 8px' }}
+                onClick={() => setPresetDateTime(24 * 60)}
+                disabled={actionLoading}
+                title="Schedule for tomorrow at current time"
+              >
+                📅 Tomorrow (Same time)
+              </button>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="sessionDuration">Duration</label>
+            <select
+              id="sessionDuration"
+              value={selectedDuration}
+              onChange={(e) => setSelectedDuration(Number(e.target.value))}
+              disabled={actionLoading}
+            >
+              <option value={30}>30 minutes</option>
+              <option value={45}>45 minutes</option>
+              <option value={60}>60 minutes</option>
+              <option value={90}>90 minutes</option>
+              <option value={120}>120 minutes</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="sessionMode">Session Mode</label>
+            <select
+              id="sessionMode"
+              value={sessionMode}
+              onChange={(e) => setSessionMode(e.target.value)}
+              disabled={actionLoading}
+            >
+              <option value="online">Online</option>
+              <option value="in_person">In Person</option>
+            </select>
+          </div>
+
+          {sessionMode === 'online' && (
+            <div className="form-group">
+              <label htmlFor="meetLink">Google Meet Link</label>
+              <input
+                id="meetLink"
+                type="url"
+                value={meetLinkInput}
+                onChange={(e) => setMeetLinkInput(e.target.value)}
+                placeholder="https://meet.google.com/abc-defg-hij"
+                disabled={actionLoading}
+              />
             </div>
           </div>
 
@@ -293,12 +455,263 @@ export default function SessionCard({
             </>
           )}
 
-          {isCompleted && (
-            <span className="pill-badge pill-mint" style={{ padding: '0.4rem 0.85rem', fontSize: '0.85rem', fontWeight: 700 }}>
-              ✓ Class Completed &amp; Credits Settled
-            </span>
+          <button
+            type="button"
+            className="btn btn-primary btn-full"
+            onClick={handleSchedule}
+            disabled={
+              actionLoading ||
+              !scheduledAtInput ||
+              (sessionMode === 'online' && !meetLinkInput.trim())
+            }
+          >
+            {actionLoading ? 'Scheduling...' : '📅 Schedule Session'}
+          </button>
+        </div>
+      )}
+
+      {/* Scheduled Details Banner */}
+      {status === 'scheduled' && scheduledAt && (
+        <div className="glass-panel scheduled-banner">
+          <strong>📅 Session scheduled</strong>
+          <p>{date} • {time}</p>
+        </div>
+      )}
+
+      {/* Session Lock/Unlock/Expired Status */}
+      {status === 'scheduled' && scheduledAt && validSessionStartTime && (
+        <div className="glass-panel scheduled-banner" style={{
+          background: isBeforeSession
+            ? 'rgba(251, 191, 36, 0.1)'
+            : isDuringSession
+              ? 'rgba(16, 185, 129, 0.1)'
+              : isJoined
+                ? 'rgba(16, 185, 129, 0.1)'
+                : 'rgba(239, 68, 68, 0.1)',
+          border: `1px solid ${isBeforeSession
+            ? 'rgba(251, 191, 36, 0.3)'
+            : isDuringSession
+              ? 'rgba(16, 185, 129, 0.3)'
+              : isJoined
+                ? 'rgba(16, 185, 129, 0.3)'
+                : 'rgba(239, 68, 68, 0.3)'}`,
+          padding: '0.75rem 1rem',
+          borderRadius: '12px',
+          marginTop: '0.5rem'
+        }}>
+          {isBeforeSession && (
+            <>
+              <strong style={{ color: '#d97706' }}>🔒 Session Locked</strong>
+              <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: '#92400e' }}>
+                Starts in {getCountdown()} ({date} at {time})
+              </p>
+            </>
+          )}
+          {isDuringSession && (
+            <>
+              <strong style={{ color: '#059669' }}>🔓 Session is LIVE</strong>
+              <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: '#065f46' }}>
+                {isJoined
+                  ? `In session — ${getSessionRemainingCountdown()} remaining`
+                  : `Active now — ${getSessionRemainingCountdown()} remaining. Click Join button below to enter.`}
+              </p>
+            </>
+          )}
+          {isAfterSession && status !== 'completed' && (
+            <>
+              <strong style={{ color: isJoined ? '#059669' : '#dc2626' }}>
+                {isJoined ? '⏳ Session Ended' : '⏰ Session Expired — Not Completed'}
+              </strong>
+              <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: isJoined ? '#065f46' : '#991b1b' }}>
+                {isJoined
+                  ? 'Booked duration has ended. Auto-completing session...'
+                  : 'The scheduled time window has passed without attendance.'}
+              </p>
+            </>
           )}
         </div>
+      )}
+
+      {/* Meeting Room Link Banner */}
+      {meetLink && (
+        <div className="session-meet-banner session-link-banner">
+          <div className="meet-info">
+            <span className="meet-icon">🎥</span>
+            <div>
+              <strong>Google Meet Link</strong>
+              <p>
+                {canJoin
+                  ? meetLink
+                  : isAfterSession
+                    ? 'Session expired'
+                    : `🔒 Link unlocks during session (${time})`}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={handleJoinClick}
+            disabled={actionLoading || !canJoin}
+          >
+            {isAfterSession
+              ? '⏰ Session Expired'
+              : canJoin
+                ? (isJoined ? '🎥 Rejoin Google Meet →' : '🎥 Join Google Meet →')
+                : `🔒 Starts in ${getCountdown() || time}`}
+          </button>
+        </div>
+      )}
+
+      {/* Bottom Session Meta Details */}
+      <div className="session-meta-grid">
+        <div className="meta-item">
+          <span>Mode</span>
+          <strong>{mode}</strong>
+        </div>
+
+        <div className="meta-item">
+          <span>Duration</span>
+          <strong>{Number(duration) || 45} mins</strong>
+        </div>
+
+        <div className="meta-item">
+          <span>Credit Reward</span>
+          <strong className="session-credit-earn">+1 Credit to {partnerName}</strong>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="session-card-actions" style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem', flexWrap: 'wrap' }}>
+        {(status === 'scheduled' || status === 'in_progress') && (
+          <>
+            {isAfterSession ? (
+              isJoined ? (
+                <div
+                  className="glass-panel"
+                  style={{
+                    flex: 1,
+                    padding: '0.75rem',
+                    textAlign: 'center',
+                    borderRadius: '12px',
+                    background: 'rgba(16, 185, 129, 0.08)',
+                    color: '#059669',
+                    fontWeight: 700
+                  }}
+                >
+                  ⏳ Auto-completing session...
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-full"
+                  disabled={true}
+                  style={{
+                    flex: 1,
+                    minWidth: '180px',
+                    opacity: 0.65,
+                    cursor: 'not-allowed',
+                    borderColor: 'rgba(239, 68, 68, 0.3)',
+                    color: '#dc2626'
+                  }}
+                >
+                  ❌ Not Completed
+                </button>
+              )
+            ) : isBeforeSession ? (
+              <button
+                type="button"
+                className="btn btn-secondary btn-full"
+                disabled={true}
+                style={{
+                  flex: 1,
+                  minWidth: '180px',
+                  opacity: 0.65,
+                  cursor: 'not-allowed'
+                }}
+              >
+                🔒 Unlocks during session
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="btn btn-primary btn-full"
+                onClick={() => isJoined && onMarkComplete && onMarkComplete(id)}
+                disabled={actionLoading || !isJoined}
+                style={{
+                  flex: 1,
+                  minWidth: '180px',
+                  opacity: isJoined ? 1 : 0.6,
+                  cursor: isJoined ? 'pointer' : 'not-allowed'
+                }}
+                title={isJoined ? 'Click to complete session' : 'Join call first to enable completion'}
+              >
+                {actionLoading
+                  ? 'Completing...'
+                  : isJoined
+                    ? '✓ Mark session as completed'
+                    : '🔒 Join call first to mark complete'}
+              </button>
+            )}
+
+            {onCancelSession && status === 'scheduled' && !isAfterSession && (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => onCancelSession(id)}
+                disabled={actionLoading}
+              >
+                Cancel Session
+              </button>
+            )}
+          </>
+        )}
+
+        {status === 'completed' && (
+          <div style={{ display: 'flex', width: '100%', gap: '0.75rem', alignItems: 'center' }}>
+            <div
+              className="glass-panel"
+              style={{
+                flex: 1,
+                padding: '0.75rem',
+                textAlign: 'center',
+                borderRadius: '12px',
+                background: 'rgba(16, 185, 129, 0.08)',
+                color: '#059669',
+                fontWeight: 700
+              }}
+            >
+              ✓ Session completed
+            </div>
+            {onOpenReview && (
+              <button
+                type="button"
+                className="btn btn-secondary btn-pill-sm"
+                onClick={() => onOpenReview(session)}
+              >
+                ⭐ Rate &amp; Review
+              </button>
+            )}
+          </div>
+        )}
+
+        {status === 'cancelled' && (
+          <div
+            className="glass-panel"
+            style={{
+              width: '100%',
+              padding: '0.75rem',
+              textAlign: 'center',
+              borderRadius: '12px',
+              background: 'rgba(239, 68, 68, 0.08)',
+              color: '#dc2626',
+              fontWeight: 600
+            }}
+          >
+            Session cancelled
+          </div>
+        )}
       </div>
     </div>
   );

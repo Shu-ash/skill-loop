@@ -1,5 +1,6 @@
 // src/components/ProfileHeaderCard.jsx
 import React, { useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // ProfileHeaderCard: Shows cover banner, user avatar, display name, handle, rating, with local file pickers & Change Password
 export default function ProfileHeaderCard({ 
@@ -13,6 +14,7 @@ export default function ProfileHeaderCard({
   onChangePassword,
   onOpenPasswordModal
 }) {
+  const navigate = useNavigate();
   const coverInputRef = useRef(null);
   const avatarInputRef = useRef(null);
 
@@ -133,7 +135,14 @@ export default function ProfileHeaderCard({
         <div className="profile-text-meta">
           <div className="name-rating-line">
             <h2>{user.name}</h2>
-            <span className="profile-rating-badge">⭐ {Number(user.rating || 0).toFixed(1)} ({user.ratingCount || 0} reviews)</span>
+            <span 
+              className="profile-rating-badge" 
+              style={{ cursor: 'pointer' }}
+              onClick={() => navigate('/reviews')}
+              title="Click to view all your received reviews"
+            >
+              ⭐ {user.rating ? Number(user.rating).toFixed(1) : '5.0'} ({user.ratingCount || 0} reviews)
+            </span>
           </div>
           <p className="profile-username">{user.username || '@user'}</p>
           <p className="profile-headline">{user.headline || 'SkillLoop Community Member 🚀'}</p>

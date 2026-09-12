@@ -9,6 +9,7 @@ import ProfilePage from './pages/ProfilePage';
 import RequestsPage from './pages/RequestsPage';
 import SessionsPage from './pages/SessionsPage';
 import CreditsPage from './pages/CreditsPage';
+import ReviewsPage from './pages/ReviewsPage';
 import LeaderboardPage from './pages/LeaderboardPage';
 import HowItWorksPage from './pages/HowItWorksPage';
 import AboutPage from './pages/AboutPage';
@@ -53,6 +54,7 @@ function App() {
         <Route path="/sessions" element={<RequireAuth pageTitle="Sessions" roleRequired="user"><SessionsPage /></RequireAuth>} />
         <Route path="/schedule" element={<RequireAuth pageTitle="Sessions" roleRequired="user"><SessionsPage /></RequireAuth>} />
         <Route path="/credits" element={<RequireAuth pageTitle="Credits Balance" roleRequired="user"><CreditsPage /></RequireAuth>} />
+        <Route path="/reviews" element={<RequireAuth pageTitle="Reviews & Feedback" roleRequired="user"><ReviewsPage /></RequireAuth>} />
 
         {/* Admin Restricted Routes */}
         <Route path="/admin" element={<RequireAuth pageTitle="Admin Control Panel" roleRequired="admin"><AdminDashboardPage /></RequireAuth>} />

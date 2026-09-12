@@ -107,6 +107,29 @@ export default function Sidebar({ user: propUser }) {
     loadActiveUser();
   }, [propUser]);
 
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
+
+  useEffect(() => {
+    const fetchPendingRequests = async () => {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+      try {
+        const res = await fetch('http://localhost:5000/api/requests/received', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const pending = (data?.data?.requests || []).filter((r) => r.status === 'pending');
+          setPendingRequestsCount(pending.length);
+        }
+      } catch (e) {
+        // silent fallback
+      }
+    };
+
+    fetchPendingRequests();
+  }, []);
+
   const [isCollapsed, setIsCollapsed] = useState(() => {
     return localStorage.getItem('user_sidebar_collapsed') === 'true';
   });
@@ -116,8 +139,18 @@ export default function Sidebar({ user: propUser }) {
   const menuItems = [
     { label: 'Dashboard', icon: '🏠', path: '/dashboard' },
     { label: 'Browse skills', icon: '🔍', path: '/browse' },
+<<<<<<< HEAD
     { label: 'My requests', icon: '📥', path: '/requests', badge: pendingRequestsCount > 0 ? pendingRequestsCount : null },
+=======
+    {
+      label: 'My requests',
+      icon: '📥',
+      path: '/requests',
+      badge: pendingRequestsCount > 0 ? pendingRequestsCount : null
+    },
+>>>>>>> 963078f (feat: add session lifecycle, dynamic reviews, and live metrics)
     { label: 'Sessions', icon: '📅', path: '/sessions' },
+    { label: 'My reviews', icon: '⭐', path: '/reviews' },
     { label: 'Credits', icon: '🪙', path: '/credits' },
     { label: 'Leaderboard', icon: '🏆', path: '/leaderboard' },
     { label: 'My profile', icon: '👤', path: '/profile' },

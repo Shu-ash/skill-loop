@@ -1,11 +1,37 @@
 // src/components/HeroSection.jsx
-import React from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getAuthStatus } from '../utils/auth';
 
+const API_BASE_URL = 'http://localhost:5000/api';
+
 export default function HeroSection() {
-  const { isAuthenticated } = getAuthStatus();
-  const targetLink = isAuthenticated ? '/browse' : '/login?mode=signup';
+  const [stats, setStats] = useState({
+    members: '10+',
+    sessions: '20+',
+    rating: '5.0 ★'
+  });
+
+  useEffect(() => {
+    const fetchCommunityStats = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/users/community-stats`);
+        const data = await res.json();
+        if (data.success && data.data) {
+          setStats({
+            members: String(data.data.totalMembers || 0),
+            sessions: String(data.data.totalSessionsSwapped || 0),
+            rating: data.data.averageRating || '5.0 ★'
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load community stats:', err);
+      }
+    };
+
+    fetchCommunityStats();
+  }, []);
 
   return (
     <section className="landing-hero">
@@ -34,15 +60,15 @@ export default function HeroSection() {
         {/* Hero stats */}
         <div className="hero-stats">
           <div className="stat-item">
-            <h3>2,140</h3>
+            <h3>{stats.members}</h3>
             <p>active members</p>
           </div>
           <div className="stat-item">
-            <h3>5,600+</h3>
+            <h3>{stats.sessions}</h3>
             <p>sessions swapped</p>
           </div>
           <div className="stat-item">
-            <h3>4.9 ★</h3>
+            <h3>{stats.rating}</h3>
             <p>average rating</p>
           </div>
         </div>

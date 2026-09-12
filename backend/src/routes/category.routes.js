@@ -1,9 +1,8 @@
-import { Router } from "express";
-import { getActiveCategories } from "../controllers/category.controller.js";
+﻿import express from "express";
+import { getPublicCategories } from "../controllers/category.controller.js";
 
-const router = Router();
+const router = express.Router();
 
-// GET /api/categories - Public / User live categories and skills
-router.get("/", getActiveCategories);
+router.get("/", getPublicCategories);
 
 export default router;

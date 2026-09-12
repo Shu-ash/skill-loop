@@ -52,3 +52,31 @@ export const protect = async (req, res, next) => {
         });
     }
 };
+
+/**
+ * Optional auth middleware — sets req.user if a valid token
+ * is present, but does NOT reject unauthenticated requests.
+ */
+export const optionalAuth = async (req, res, next) => {
+    try {
+        const authorization = req.headers.authorization;
+
+        if (!authorization || !authorization.startsWith("Bearer ")) {
+            return next();
+        }
+
+        const token = authorization.split(" ")[1];
+        const decoded = verifyAccessToken(token);
+
+        if (decoded?.sub && decoded.type === "access") {
+            const user = await User.findById(decoded.sub);
+            if (user) {
+                req.user = user;
+            }
+        }
+    } catch (_err) {
+        // Silently ignore — unauthenticated is fine
+    }
+
+    next();
+};

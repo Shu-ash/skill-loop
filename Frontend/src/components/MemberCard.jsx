@@ -112,7 +112,7 @@ export default function MemberCard({ member }) {
             </div>
 
             <span className="rating-text">
-              {rating || '⭐ 5.0 (24 reviews)'}
+              {rating || '⭐ 5.0'}
             </span>
           </div>
 
@@ -198,7 +198,7 @@ export default function MemberCard({ member }) {
                   <div className="swap-modal-name-row" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <h3 style={{ margin: 0 }}>{name}</h3>
                     <span className="rating-text" style={{ fontSize: '0.82rem', color: '#f59e0b', fontWeight: '600' }}>
-                      {rating || '⭐ 5.0 (24 reviews)'}
+                      {rating || '⭐ 5.0'}
                     </span>
                   </div>
                   <p className="text-subtle" style={{ margin: '0.15rem 0 0 0', fontSize: '0.85rem' }}>{title}</p>

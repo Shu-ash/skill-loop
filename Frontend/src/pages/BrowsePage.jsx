@@ -22,8 +22,7 @@ const getInitials = (name = '') => {
 
 export default function BrowsePage() {
   const [members, setMembers] = useState([]);
-  const [categories, setCategories] = useState(['All categories']);
-  const [categoriesData, setCategoriesData] = useState([]);
+  const [categories, setCategories] = useState(['All categories', 'Design & UI', 'Code & Data', 'Languages', 'Music & Arts', 'Marketing & Growth']);
   const [selectedCategory, setSelectedCategory] = useState('All categories');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -59,6 +58,22 @@ export default function BrowsePage() {
   }, []);
 
   // Fetch live members from MongoDB database
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/categories`);
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data?.categories) && data.data.categories.length > 0) {
+          setCategories(['All categories', ...data.data.categories.map((c) => c.name)]);
+        }
+      } catch (err) {
+        console.error('Failed to load dynamic categories in browse:', err);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
   useEffect(() => {
     const fetchMembers = async () => {
       try {
@@ -137,11 +152,11 @@ export default function BrowsePage() {
 
       const matchesCategory =
         selectedCategory === 'All categories' ||
-        memberSkillsLower.some(ms => 
-          catSkills.some(cs => cs.includes(ms) || ms.includes(cs)) ||
-          ms.includes(catNameLower) ||
-          catNameLower.includes(ms)
-        );
+        member.categories.includes(selectedCategory) ||
+        member.skills.some((skill) => {
+          const catWords = selectedCategory.toLowerCase().split(/[\s&,/]+/);
+          return catWords.some(w => w.length > 2 && skill.toLowerCase().includes(w));
+        });
 
       if (!searchLower) {
         return matchesCategory;

@@ -1,44 +1,47 @@
-// src/components/CategoriesSection.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
-const PILL_COLORS = ['pill-violet', 'pill-mint', 'pill-coral', 'pill-gold'];
-const BADGES = ['Trending', 'Live now', 'Popular', 'Featured'];
+const PILL_COLORS = ['pill-mint', 'pill-violet', 'pill-coral', 'pill-gold'];
+const BADGES = ['Live now', 'Trending', 'Popular', 'Top category'];
 
 export default function CategoriesSection() {
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState([
+    { name: 'Design & Product', badge: 'Live now', pill: 'pill-mint', teachers: 'Teachers available', cat: 'Design' },
+    { name: 'Code & Data', badge: 'Trending', pill: 'pill-violet', teachers: 'Teachers available', cat: 'Code' },
+    { name: 'Languages', badge: 'New', pill: 'pill-coral', teachers: 'Teachers available', cat: 'Languages' },
+    { name: 'Music & Craft', badge: 'Popular', pill: 'pill-gold', teachers: 'Teachers available', cat: 'Music' }
+  ]);
 
   useEffect(() => {
-    const fetchCats = async () => {
+    const fetchCategories = async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/categories`);
         const data = await res.json();
-        if (data.success && Array.isArray(data.data?.categories)) {
-          const formatted = data.data.categories.map((item, idx) => ({
-            id: item.id || idx,
-            name: `${item.icon ? item.icon + ' ' : ''}${item.name}`,
-            badge: BADGES[idx % BADGES.length],
-            pill: PILL_COLORS[idx % PILL_COLORS.length],
-            skillsCount: (item.skills || []).length,
-            teachers: `${(item.skills || []).length} skills active`,
-            cat: item.name
+        if (data.success && Array.isArray(data.data?.categories) && data.data.categories.length > 0) {
+          const dynamicCategories = data.data.categories.slice(0, 6).map((c, i) => ({
+            name: c.name,
+            badge: BADGES[i % BADGES.length],
+            pill: PILL_COLORS[i % PILL_COLORS.length],
+            teachers: `${c.teacherCount || 1} teacher${(c.teacherCount || 1) > 1 ? 's' : ''} offering skills`,
+            cat: c.name
           }));
-          setCategories(formatted);
+          setCategories(dynamicCategories);
         }
       } catch (err) {
-        console.error('Failed to load categories in CategoriesSection:', err);
+        console.error('Failed to load dynamic categories:', err);
       }
     };
-    fetchCats();
+
+    fetchCategories();
   }, []);
 
   return (
     <section className="categories-section">
       <div className="categories-feed">
-        {categories.map((item) => (
-          <Link key={item.id} className="glass-card category-card" to={`/browse?category=${encodeURIComponent(item.cat)}`}>
+        {categories.map((item, idx) => (
+          <Link key={idx} className="glass-card category-card" to={`/browse?category=${encodeURIComponent(item.cat)}`}>
             <div>
               <span className={`pill-badge ${item.pill}`}>{item.badge}</span>
               <h4>{item.name}</h4>
