@@ -4,7 +4,11 @@
 
 .admin-page-container {
   min-height: 100vh;
-  background: #f8fafc;
+  background-color: #F3F7FA;
+  background-image: 
+    radial-gradient(circle at 10% 10%, rgba(37, 99, 235, 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 90% 15%, rgba(16, 185, 129, 0.05) 0%, transparent 40%),
+    linear-gradient(180deg, #F0F6FA 0%, #F5FAF8 50%, #EFF8F5 100%);
   color: var(--slate-900, #0f172a);
   font-family: var(--font-body, 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif);
   position: relative;
@@ -23,12 +27,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.94) 0%, rgba(250, 248, 255, 0.86) 100%);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.96) 0%, rgba(246, 250, 254, 0.92) 100%);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(219, 234, 254, 0.85);
   border-radius: 9999px;
-  box-shadow: 0 12px 36px rgba(108, 92, 231, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.95);
+  box-shadow: 0 12px 36px rgba(37, 99, 235, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.95);
 }
 
 .admin-brand {
@@ -58,16 +62,16 @@
   border-radius: 50%;
 }
 
-.circle-violet { background: var(--violet-primary, #6c5ce7); top: 0; left: 0; }
+.circle-violet { background: var(--violet-primary, #2563EB); top: 0; left: 0; }
 .circle-mint { background: var(--mint-primary, #10b981); bottom: 0; right: 0; opacity: 0.85; }
 
-.brand-name span { color: var(--violet-primary, #6c5ce7); }
+.brand-name span { color: var(--violet-primary, #2563EB); }
 
 .admin-tag {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--violet-primary, #6c5ce7) !important;
+  background: var(--violet-primary, #2563EB) !important;
   color: #ffffff !important;
   font-size: 0.68rem !important;
   font-weight: 700 !important;
@@ -75,7 +79,7 @@
   border-radius: 9999px !important;
   letter-spacing: 0.8px !important;
   line-height: 1 !important;
-  box-shadow: 0 2px 8px rgba(108, 92, 231, 0.35) !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35) !important;
 }
 
 .admin-nav-right {
