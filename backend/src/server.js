@@ -19,8 +19,12 @@ import sessionRoutes from "./routes/session.routes.js";
 import creditRoutes from "./routes/credit.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
-import reviewRoutes from "./routes/review.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
+import skillRoutes from "./routes/skill.routes.js";
+import reviewRoutes from "./routes/review.routes.js";
+import messageRoutes from "./routes/message.routes.js";
+import availabilityRoutes from "./routes/availability.routes.js";
+import badgeRoutes from "./routes/badge.routes.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -78,17 +82,12 @@ app.use("/api/credits", creditRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/notifications", notificationRoutes);
-<<<<<<< HEAD
 app.use("/api/categories", categoryRoutes);
 app.use("/api/skills", skillRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/availability", availabilityRoutes);
 app.use("/api/badges", badgeRoutes);
-=======
-app.use("/api/reviews", reviewRoutes);
-app.use("/api/categories", categoryRoutes);
->>>>>>> 963078f (feat: add session lifecycle, dynamic reviews, and live metrics)
 
 // 404 & ERROR HANDLERS
 app.use(notFound);

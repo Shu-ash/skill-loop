@@ -7,6 +7,9 @@ import { getAuthStatus } from '../utils/auth';
 const API_BASE_URL = 'http://localhost:5000/api';
 
 export default function HeroSection() {
+  const { isAuthenticated } = getAuthStatus();
+  const targetLink = isAuthenticated ? '/browse' : '/login?mode=signup';
+
   const [stats, setStats] = useState({
     members: '10+',
     sessions: '20+',
