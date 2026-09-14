@@ -6,17 +6,21 @@ import {
   updateMyProfile,
   changePassword,
   getLeaderboard,
-  getDashboardStats
+  getDashboardStats,
+  getCommunityStats
 } from "../controllers/user.controller.js";
-import { protect } from "../middleware/auth.middleware.js";
+import { protect, optionalAuth } from "../middleware/auth.middleware.js";
 
 const router = Router();
+
+// Public Community Stats for Landing Page
+router.get("/community-stats", getCommunityStats);
 
 // Public Leaderboard
 router.get("/leaderboard", getLeaderboard);
 
-// Browse users (open to all, filtered by status)
-router.get("/", getUsers);
+// Browse users (open to all, optionalAuth to exclude self)
+router.get("/", optionalAuth, getUsers);
 
 // Get logged-in user's profile
 router.get("/me", protect, getMyProfile);

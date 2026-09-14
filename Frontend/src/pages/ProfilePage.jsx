@@ -103,12 +103,11 @@ export default function ProfilePage() {
           bio: u.bio || '',
           profilePhotoUrl: u.profilePhotoUrl || '',
           coverPhotoUrl: u.coverPhotoUrl || '',
-          rating: (u.rating || 0).toString(),
-          ratingCount: u.ratingCount || 0,
-          credits: u.credits ?? 10,
+          rating: u.rating ? u.rating.toString() : '5.0',
+          credits: u.credits ?? 3,
           teachSkills: Array.isArray(u.skillsCanTeach) ? u.skillsCanTeach : [],
           learnSkills: Array.isArray(u.skillsWantToLearn) ? u.skillsWantToLearn : [],
-          skillLevel: u.skillLevel || 'beginner',
+          skillLevel: u.skillLevel || 'intermediate',
           onboardingCompleted: u.onboardingCompleted ?? false
         };
         setUser(liveUser);

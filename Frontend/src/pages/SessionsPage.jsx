@@ -5,6 +5,7 @@ import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import MobileNav from '../components/MobileNav';
 import SessionCard from '../components/SessionCard';
+import ReviewModal from '../components/ReviewModal';
 import { fetchWithAuth, getAuthStatus } from '../utils/auth';
 
 const API_URL = 'http://localhost:5000/api';
@@ -18,6 +19,10 @@ export default function SessionsPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewSession, setReviewSession] = useState(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewedSessionIds, setReviewedSessionIds] = useState(new Set());
 
   const getCurrentUser = () => {
     try {
@@ -163,10 +168,7 @@ export default function SessionsPage() {
     );
   };
 
-  const handleJoinCall = async (session) => {
-    const meetLink = typeof session === 'string' ? session : session?.meetLink;
-    const sessionId = typeof session === 'object' ? session?.id : null;
-
+  const handleJoinCall = (meetLink, sessionId) => {
     if (!meetLink) {
       setError('Meeting link is not available.');
       return;
@@ -187,6 +189,10 @@ export default function SessionsPage() {
         : `https://${meetLink}`;
 
     window.open(normalizedLink, '_blank', 'noopener,noreferrer');
+
+    if (sessionId) {
+      handleStartSession(sessionId);
+    }
   };
 
   const handleStartSession = async (sessionId) => {
@@ -293,6 +299,13 @@ export default function SessionsPage() {
       } else {
         await loadSessions(currentUser);
       }
+
+      // Auto-open review modal after completing session
+      const completedSessionForReview = formatSession(updatedSession || { ...data?.data?.session }, currentUser);
+      if (completedSessionForReview) {
+        setReviewSession(completedSessionForReview);
+        setReviewModalOpen(true);
+      }
     } catch (err) {
       console.error('Failed to complete session:', err);
       setError(err.message || 'Failed to complete session');
@@ -330,6 +343,43 @@ export default function SessionsPage() {
       setError(err.message || 'Failed to cancel session');
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleSubmitReview = async (sessionId, rating, comment) => {
+    const accessToken = localStorage.getItem('accessToken');
+    if (!accessToken) {
+      navigate('/login');
+      return;
+    }
+
+    try {
+      setReviewLoading(true);
+
+      const response = await fetch(`${API_URL}/reviews`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ sessionId, rating, comment })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to submit review');
+      }
+
+      setReviewedSessionIds(prev => new Set([...prev, sessionId]));
+      setReviewModalOpen(false);
+      setReviewSession(null);
+    } catch (err) {
+      console.error('Failed to submit review:', err);
+      setError(err.message || 'Failed to submit review');
+    } finally {
+      setReviewLoading(false);
     }
   };
 
@@ -376,6 +426,10 @@ export default function SessionsPage() {
                     onMarkComplete={handleMarkComplete}
                     onCancelSession={handleCancelSession}
                     onScheduleSession={handleScheduleSession}
+                    onOpenReview={(s) => {
+                      setReviewSession(s);
+                      setReviewModalOpen(true);
+                    }}
                     actionLoading={actionLoading}
                   />
                 ))}
@@ -391,6 +445,17 @@ export default function SessionsPage() {
 
         <MobileNav />
       </div>
+
+      <ReviewModal
+        isOpen={reviewModalOpen}
+        onClose={() => {
+          setReviewModalOpen(false);
+          setReviewSession(null);
+        }}
+        session={reviewSession}
+        onSubmitReview={handleSubmitReview}
+        loading={reviewLoading}
+      />
     </>
   );
 }

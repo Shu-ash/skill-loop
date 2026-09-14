@@ -22,7 +22,7 @@ const getInitials = (name = '') => {
 
 export default function BrowsePage() {
   const [members, setMembers] = useState([]);
-  const [categories, setCategories] = useState(['All categories']);
+  const [categories, setCategories] = useState(['All categories', 'Design & UI', 'Code & Data', 'Languages', 'Music & Arts', 'Marketing & Growth']);
   const [categoriesData, setCategoriesData] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All categories');
   const [searchQuery, setSearchQuery] = useState('');
@@ -58,7 +58,6 @@ export default function BrowsePage() {
     fetchCategories();
   }, []);
 
-  // Fetch live members from MongoDB database
   useEffect(() => {
     const fetchMembers = async () => {
       try {
@@ -128,7 +127,7 @@ export default function BrowsePage() {
     const searchLower = searchQuery.trim().toLowerCase();
 
     // Find skills belonging to currently selected category
-    const selectedCatObj = categoriesData.find(c => c.name.toLowerCase() === selectedCategory.toLowerCase());
+    const selectedCatObj = (categoriesData || []).find(c => c.name?.toLowerCase() === selectedCategory.toLowerCase());
     const catSkills = selectedCatObj ? (selectedCatObj.skills || []).map(s => s.toLowerCase().trim()) : [];
     const catNameLower = selectedCategory.toLowerCase().trim();
 
@@ -137,11 +136,11 @@ export default function BrowsePage() {
 
       const matchesCategory =
         selectedCategory === 'All categories' ||
-        memberSkillsLower.some(ms => 
-          catSkills.some(cs => cs.includes(ms) || ms.includes(cs)) ||
-          ms.includes(catNameLower) ||
-          catNameLower.includes(ms)
-        );
+        member.categories.includes(selectedCategory) ||
+        member.skills.some((skill) => {
+          const catWords = selectedCategory.toLowerCase().split(/[\s&,/]+/);
+          return catWords.some(w => w.length > 2 && skill.toLowerCase().includes(w));
+        });
 
       if (!searchLower) {
         return matchesCategory;

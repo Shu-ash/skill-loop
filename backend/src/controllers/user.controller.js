@@ -1,8 +1,7 @@
 import User from "../models/user.js";
 import Session from "../models/session.js";
 import SwapRequest from "../models/swapRequest.js";
-import bcrypt from "bcryptjs";
-import { verifyAccessToken } from "../utils/jwt.js";
+import Review from "../models/review.js";
 
 /**
  * GET /api/users/me
@@ -244,12 +243,11 @@ export const getUsers = async (req, res, next) => {
       username: u.username ? `@${u.username.replace(/^@/, '')}` : `@${(u.email || '').split('@')[0]}`,
       headline: u.headline || u.bio || 'SkillLoop Community Member 🚀',
       bio: u.bio || '',
-      profilePhotoUrl: u.profilePhotoUrl || '',
-      skillsCanTeach: Array.isArray(u.skillsCanTeach) ? u.skillsCanTeach : [],
-      skillsWantToLearn: Array.isArray(u.skillsWantToLearn) ? u.skillsWantToLearn : [],
-      rating: u.rating || 0.0,
-      ratingCount: u.ratingCount || 0,
-      credits: u.credits || 10
+      skillsCanTeach: u.skillsCanTeach || [],
+      skillsWantToLearn: u.skillsWantToLearn || [],
+      rating: u.rating !== undefined ? u.rating : 5.0,
+      credits: u.credits !== undefined ? u.credits : 0,
+      profilePhotoUrl: u.profilePhotoUrl || ""
     }));
 
     return res.status(200).json({
@@ -271,49 +269,50 @@ export const getUsers = async (req, res, next) => {
 
 /**
  * GET /api/users/leaderboard
- * Top teachers ranked by real sessions taught and rating
+ * Top teachers ranked by sessions taught and rating (dynamic from MongoDB)
  */
 export const getLeaderboard = async (req, res, next) => {
   try {
     const users = await User.find({ status: { $ne: "banned" }, role: { $nin: ["superadmin", "admin"] } })
-      .select("name firstName lastName username rating ratingCount credits skillsCanTeach profilePhotoUrl")
+      .select("name firstName lastName username rating credits skillsCanTeach profilePhotoUrl")
       .lean();
 
-    const usersWithSessions = await Promise.all(
+    // Dynamically query actual completed sessions taught for each user
+    const usersWithStats = await Promise.all(
       users.map(async (u) => {
-        const completedSessions = await Session.countDocuments({
+        const completedSessionsCount = await Session.countDocuments({
           teacher: u._id,
           status: "completed"
         });
         return {
           ...u,
-          completedSessions
+          sessionsCount: completedSessionsCount
         };
       })
     );
 
-    usersWithSessions.sort((a, b) => {
-      if (b.completedSessions !== a.completedSessions) {
-        return b.completedSessions - a.completedSessions;
+    // Sort by sessions taught descending, then rating descending, then credits descending
+    usersWithStats.sort((a, b) => {
+      if (b.sessionsCount !== a.sessionsCount) {
+        return b.sessionsCount - a.sessionsCount;
       }
-      if (b.rating !== a.rating) {
-        return (b.rating || 0) - (a.rating || 0);
-      }
-      return (b.credits || 0) - (a.credits || 0);
+      return (b.rating || 5.0) - (a.rating || 5.0);
     });
 
-    const formattedList = usersWithSessions.map((u, idx) => {
+    const topUsers = usersWithStats.slice(0, 10);
+
+    const formattedList = topUsers.map((u, idx) => {
       const name = u.name || `${u.firstName || ''} ${u.lastName || ''}`.trim() || 'SkillLoop Member';
       const initials = name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase() || 'SL';
       return {
         rank: idx + 1,
         id: u._id,
         name,
-        avatar: initials,
+        avatar: u.profilePhotoUrl || initials,
         avatarBg: idx === 0 ? 'var(--violet-primary)' : idx === 1 ? 'var(--coral-primary)' : 'var(--mint-primary)',
-        sessions: u.completedSessions || 0,
-        rating: `${(u.rating || 0).toFixed(1)} ★`,
-        skills: Array.isArray(u.skillsCanTeach) && u.skillsCanTeach.length ? u.skillsCanTeach.slice(0, 2).join(' • ') : 'Community Member'
+        sessions: u.sessionsCount,
+        rating: `${(u.rating || 5.0).toFixed(1)} ★`,
+        skills: (u.skillsCanTeach || []).slice(0, 2).join(' • ') || 'Skill Swap'
       };
     });
 
@@ -331,41 +330,76 @@ export const getLeaderboard = async (req, res, next) => {
 
 /**
  * GET /api/users/dashboard-stats
- * Live real stats for current user
+ * Live stats for current user (dynamic from MongoDB)
  */
 export const getDashboardStats = async (req, res, next) => {
   try {
     const userId = req.user._id;
-    const user = await User.findById(userId).select("credits rating ratingCount skillsCanTeach skillsWantToLearn");
+    const user = await User.findById(userId).select("credits rating skillsCanTeach skillsWantToLearn");
 
-    const [activeSwaps, sessionsTaught, pendingRequests, upcomingSessions] = await Promise.all([
-      SwapRequest.countDocuments({
-        $or: [{ sender: userId }, { receiver: userId }],
-        status: { $in: ["pending", "accepted"] }
-      }),
-      Session.countDocuments({
-        teacher: userId,
-        status: "completed"
-      }),
-      SwapRequest.countDocuments({
-        receiver: userId,
-        status: "pending"
-      }),
-      Session.countDocuments({
-        $or: [{ teacher: userId }, { learner: userId }],
-        status: { $in: ["scheduled", "in_progress"] }
-      })
-    ]);
+    // Dynamic count of active swap requests
+    const activeSwaps = await SwapRequest.countDocuments({
+      $or: [{ sender: userId }, { receiver: userId }],
+      status: { $in: ["pending", "accepted"] }
+    });
+
+    // Dynamic count of completed sessions taught by this user
+    const sessionsTaught = await Session.countDocuments({
+      teacher: userId,
+      status: "completed"
+    });
+
+    // Dynamic rating from Review collection if any reviews exist
+    const reviews = await Review.find({ reviewee: userId }).select("rating");
+    let calculatedRating = user?.rating || 5.0;
+    if (reviews.length > 0) {
+      const sum = reviews.reduce((acc, r) => acc + (Number(r.rating) || 5), 0);
+      calculatedRating = sum / reviews.length;
+    }
 
     return res.status(200).json({
       success: true,
       data: {
-        credits: user?.credits ?? 10,
+        credits: user?.credits ?? 0,
         activeSwaps,
-        rating: (user?.rating || 0).toFixed(1),
-        sessionsTaught,
-        pendingRequests,
-        upcomingSessions
+        rating: Number(calculatedRating).toFixed(1),
+        sessionsTaught
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/users/community-stats
+ * Live platform-wide community statistics for public landing page
+ */
+export const getCommunityStats = async (req, res, next) => {
+  try {
+    const totalUsers = await User.countDocuments({
+      status: { $ne: "banned" },
+      role: { $nin: ["superadmin", "admin"] }
+    });
+
+    const completedSessions = await Session.countDocuments({ status: "completed" });
+    const allSessions = await Session.countDocuments();
+    const acceptedSwaps = await SwapRequest.countDocuments({ status: "accepted" });
+
+    // Reviews average
+    const reviews = await Review.find().select("rating");
+    let avgRating = 5.0;
+    if (reviews.length > 0) {
+      const total = reviews.reduce((sum, r) => sum + (Number(r.rating) || 5), 0);
+      avgRating = total / reviews.length;
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        totalMembers: totalUsers,
+        totalSessionsSwapped: completedSessions + acceptedSwaps || allSessions,
+        averageRating: `${Number(avgRating).toFixed(1)} ★`
       }
     });
   } catch (error) {

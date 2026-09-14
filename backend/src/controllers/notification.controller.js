@@ -84,6 +84,33 @@ export const markAllNotificationsAsRead = async (req, res, next) => {
   }
 };
 
+/**
+ * DELETE /api/notifications/:id
+ * Delete a single notification
+ */
+export const deleteNotification = async (req, res, next) => {
+  try {
+    const notification = await Notification.findOneAndDelete({
+      _id: req.params.id,
+      user: req.user._id
+    });
+
+    if (!notification) {
+      return res.status(404).json({
+        success: false,
+        message: "Notification not found"
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Notification deleted"
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 function formatTimeAgo(date) {
   const diffMs = Date.now() - new Date(date).getTime();
   const diffSec = Math.floor(diffMs / 1000);

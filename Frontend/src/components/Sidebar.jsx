@@ -116,8 +116,14 @@ export default function Sidebar({ user: propUser }) {
   const menuItems = [
     { label: 'Dashboard', icon: '🏠', path: '/dashboard' },
     { label: 'Browse skills', icon: '🔍', path: '/browse' },
-    { label: 'My requests', icon: '📥', path: '/requests', badge: pendingRequestsCount > 0 ? pendingRequestsCount : null },
+    {
+      label: 'My requests',
+      icon: '📥',
+      path: '/requests',
+      badge: pendingRequestsCount > 0 ? pendingRequestsCount : null
+    },
     { label: 'Sessions', icon: '📅', path: '/sessions' },
+    { label: 'My reviews', icon: '⭐', path: '/reviews' },
     { label: 'Credits', icon: '🪙', path: '/credits' },
     { label: 'Leaderboard', icon: '🏆', path: '/leaderboard' },
     { label: 'My profile', icon: '👤', path: '/profile' },

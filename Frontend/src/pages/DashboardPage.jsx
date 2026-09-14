@@ -41,10 +41,10 @@ export default function DashboardPage() {
   });
 
   const [stats, setStats] = useState({
+    credits: 0,
     activeSwaps: 0,
-    hoursLearned: 0,
     rating: '5.0',
-    creditsBalance: 10
+    sessionsTaught: 0
   });
 
   const [recommendations, setRecommendations] = useState([]);
