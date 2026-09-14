@@ -46,7 +46,7 @@ export default function AdminSidebar({ activeTab = 'dashboard' }) {
   return (
     <>
       <aside className={`admin-sidebar ${isCollapsed ? 'collapsed' : ''}`}>
-        <div>
+        <div className="sidebar-nav-wrap">
           <div className="sidebar-header-row">
             <span className="sidebar-title">ADMIN MENU</span>
             <button 

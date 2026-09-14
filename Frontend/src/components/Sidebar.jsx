@@ -143,9 +143,9 @@ export default function Sidebar({ user: propUser }) {
   return (
     <>
       <aside className={`user-sidebar ${isCollapsed ? 'collapsed' : ''}`}>
-        <div>
-          <div className="sidebar-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-            <span className="sidebar-title" style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--slate-400)', letterSpacing: '0.08em' }}>
+        <div className="user-sidebar-nav-wrap">
+          <div className="sidebar-header-row">
+            <span className="sidebar-title">
               NAVIGATION
             </span>
             <button 
@@ -153,7 +153,6 @@ export default function Sidebar({ user: propUser }) {
               className="toggle-btn"
               onClick={handleToggleSidebar}
               title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--slate-500)', padding: '4px' }}
             >
               {isCollapsed ? '▶' : '◀'}
             </button>

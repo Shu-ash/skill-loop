@@ -69,21 +69,11 @@ export default function AdminActionModal({
 
           {/* Structured Details Box if passed */}
           {details && (
-            <div className="admin-modal-details-card" style={{
-              background: 'rgba(241, 245, 249, 0.65)',
-              borderRadius: '14px',
-              padding: '0.9rem 1.1rem',
-              marginBottom: '1.4rem',
-              border: '1px solid rgba(226, 232, 240, 0.8)',
-              fontSize: '0.86rem',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.45rem'
-            }}>
+            <div className="admin-modal-details-card">
               {Object.entries(details).map(([key, value]) => (
-                <div key={key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: 'var(--slate-500, #64748b)', fontWeight: 600 }}>{key}:</span>
-                  <span style={{ color: 'var(--slate-800, #1e293b)', fontWeight: 700 }}>{value}</span>
+                <div key={key} className="admin-modal-detail-row">
+                  <span className="detail-key">{key}:</span>
+                  <span className="detail-val">{value}</span>
                 </div>
               ))}
             </div>

@@ -203,12 +203,12 @@ body {
 /* Navbar — CURVED FLOATING GLASS HEADER */
 .navbar {
   position: sticky;
-  top: 12px;
+  top: 14px;
   z-index: 100;
   height: 64px;
-  max-width: 1340px;
-  width: calc(100% - 2.5rem);
-  margin: 12px auto 0 auto;
+  max-width: 1480px;
+  width: calc(100% - 5rem);
+  margin: 14px auto 0 auto;
   padding: 0 1.5rem;
   display: flex;
   align-items: center;
@@ -1258,10 +1258,10 @@ select:focus {
   flex-direction: row;
   min-height: calc(100vh - 68px);
   gap: 1.5rem;
-  padding: 1.25rem clamp(1rem, 2.5vw, 2.5rem) 4rem;
-  max-width: 1360px;
-  margin: 0 auto;
-  width: 100%;
+  max-width: 1480px;
+  width: calc(100% - 5rem);
+  margin: 1.25rem auto 4rem auto;
+  padding: 0;
 }
 
 .main-content {
@@ -1281,7 +1281,8 @@ select:focus {
   padding: 1.25rem 0.85rem;
   position: sticky;
   top: 86px;
-  height: calc(100vh - 110px);
+  height: calc(100vh - 100px);
+  max-height: calc(100vh - 100px);
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -1290,6 +1291,57 @@ select:focus {
   will-change: width;
   overflow: hidden;
   z-index: 90;
+  box-sizing: border-box;
+}
+
+.user-sidebar .user-sidebar-nav-wrap {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.user-sidebar .sidebar-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.4rem 0.85rem 0.4rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px dashed var(--slate-200);
+  flex-shrink: 0;
+}
+
+.user-sidebar .sidebar-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--slate-400);
+  letter-spacing: 0.08em;
+}
+
+.user-sidebar .toggle-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--slate-200);
+  background: white;
+  color: var(--slate-700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.user-sidebar .toggle-btn:hover {
+  background: var(--violet-primary);
+  color: white;
+  border-color: var(--violet-primary);
+  transform: scale(1.08);
 }
 
 .sidebar-title,
@@ -1320,6 +1372,27 @@ select:focus {
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+}
+
+.user-sidebar-menu::-webkit-scrollbar {
+  width: 4px;
+}
+.user-sidebar-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+.user-sidebar-menu::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 4px;
+}
+.user-sidebar-menu::-webkit-scrollbar-thumb:hover {
+  background: var(--violet-primary);
 }
 
 .sidebar-icon-wrapper {
@@ -1417,6 +1490,8 @@ select:focus {
 
 /* User Sidebar Bottom Profile Section */
 .user-sidebar-bottom {
+  flex-shrink: 0;
+  margin-top: auto;
   padding-top: 0.75rem;
   border-top: 1px dashed var(--slate-200);
 }
@@ -5047,4 +5122,107 @@ body.dark-mode .reviews-bar-row:hover {
 html[data-theme="dark"] .reviews-score-col,
 body.dark-mode .reviews-score-col {
   border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* ==========================================================================
+   User Panel Dark Mode Text & Contrast Overrides
+   ========================================================================== */
+
+/* User Sidebar in Dark Mode */
+html[data-theme="dark"] .user-sidebar .sidebar-title {
+  color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .user-menu-item-btn {
+  color: #cbd5e1 !important;
+}
+
+html[data-theme="dark"] .user-menu-item-btn:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="dark"] .user-menu-item-btn.active {
+  background: var(--violet-primary) !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4) !important;
+}
+
+html[data-theme="dark"] .user-sidebar .toggle-btn {
+  background: rgba(30, 41, 59, 0.9) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  color: #e2e8f0 !important;
+}
+
+html[data-theme="dark"] .user-sidebar .toggle-btn:hover {
+  background: var(--violet-primary) !important;
+  color: #ffffff !important;
+  border-color: var(--violet-primary) !important;
+}
+
+html[data-theme="dark"] .user-chip-link {
+  background: rgba(15, 23, 42, 0.85) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+html[data-theme="dark"] .subnav-user-text div:first-child {
+  color: #ffffff !important;
+}
+
+html[data-theme="dark"] .subnav-user-text div:last-child {
+  color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .logout-item-btn,
+html[data-theme="dark"] .user-sidebar-bottom button {
+  color: #f87171 !important;
+}
+
+html[data-theme="dark"] .logout-item-btn:hover,
+html[data-theme="dark"] .user-sidebar-bottom button:hover {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #fca5a5 !important;
+}
+
+/* User Panel Page Header */
+html[data-theme="dark"] .page-title-row h2,
+html[data-theme="dark"] .welcome-banner h2 {
+  color: #ffffff !important;
+}
+
+html[data-theme="dark"] .page-title-row p,
+html[data-theme="dark"] .welcome-banner p {
+  color: #94a3b8 !important;
+}
+
+/* User Panel Cards & Text */
+html[data-theme="dark"] .member-card h3,
+html[data-theme="dark"] .match-card h3 {
+  color: #ffffff !important;
+}
+
+html[data-theme="dark"] .member-card p,
+html[data-theme="dark"] .match-card p {
+  color: #cbd5e1 !important;
+}
+
+html[data-theme="dark"] .member-title,
+html[data-theme="dark"] .match-title {
+  color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .category-filter-chip {
+  background: rgba(30, 41, 59, 0.8) !important;
+  color: #cbd5e1 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+html[data-theme="dark"] .category-filter-chip:hover {
+  background: rgba(45, 55, 72, 0.9) !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="dark"] .category-filter-chip.active {
+  background: var(--violet-primary) !important;
+  color: #ffffff !important;
 }

@@ -20,12 +20,12 @@
 /* Top Curved Glass Header Navbar */
 .admin-navbar {
   position: sticky;
-  top: 12px;
+  top: 14px;
   z-index: 100;
   height: 64px;
-  max-width: 1340px;
-  width: calc(100% - 2.5rem);
-  margin: 12px auto 0 auto;
+  max-width: 1480px;
+  width: calc(100% - 5rem);
+  margin: 14px auto 0 auto;
   padding: 0 1.5rem;
   display: flex;
   align-items: center;
@@ -229,9 +229,9 @@
 .admin-layout {
   display: flex;
   gap: 1.5rem;
-  max-width: 1340px;
-  width: calc(100% - 2.5rem);
-  margin: 1.5rem auto 3rem;
+  max-width: 1480px;
+  width: calc(100% - 5rem);
+  margin: 1.25rem auto 3rem;
 }
 
 /* Glassmorphic Sticky Collapsible Sidebar */
@@ -245,14 +245,24 @@
   box-shadow: 0 16px 42px rgba(108, 92, 231, 0.09), inset 0 3px 5px rgba(255, 255, 255, 0.95);
   padding: 1.25rem 0.85rem;
   position: sticky;
-  top: 90px;
-  height: calc(100vh - 110px);
+  top: 86px;
+  height: calc(100vh - 100px);
+  max-height: calc(100vh - 100px);
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1), padding 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   will-change: width;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.admin-sidebar .sidebar-nav-wrap {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -269,6 +279,7 @@
   padding: 0 0.4rem 0.85rem 0.4rem;
   margin-bottom: 0.75rem;
   border-bottom: 1px dashed var(--slate-200, #e2e8f0);
+  flex-shrink: 0;
 }
 
 .sidebar-title,
@@ -316,6 +327,27 @@
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+}
+
+.admin-menu::-webkit-scrollbar {
+  width: 4px;
+}
+.admin-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+.admin-menu::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 4px;
+}
+.admin-menu::-webkit-scrollbar-thumb:hover {
+  background: var(--violet-primary, #6c5ce7);
 }
 
 .menu-item-btn {
@@ -387,6 +419,8 @@
 
 /* Sidebar Logout Button */
 .sidebar-bottom-section {
+  flex-shrink: 0;
+  margin-top: auto;
   padding-top: 0.75rem;
   border-top: 1px dashed var(--slate-200, #e2e8f0);
 }
@@ -1334,5 +1368,293 @@ html[data-theme="dark"] .admin-reset-filters-btn {
   background: rgba(30, 41, 59, 0.8) !important;
   border-color: rgba(255, 255, 255, 0.15) !important;
   color: #cbd5e1 !important;
+}
+
+/* ==========================================================================
+   Admin Specific Component Classes
+   ========================================================================== */
+
+.category-nested-skill-tag {
+  background: rgba(241, 245, 249, 0.9);
+  color: var(--slate-700, #334155);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.18rem 0.48rem;
+  border-radius: 6px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  white-space: nowrap;
+  display: inline-block;
+  transition: all 0.2s ease;
+}
+
+.category-more-skills-link {
+  font-size: 0.72rem;
+  color: var(--violet-primary, #6c5ce7);
+  align-self: center;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.category-more-skills-link:hover {
+  text-decoration: underline;
+}
+
+.btn-quick-add-skill {
+  font-size: 0.72rem !important;
+  padding: 0.18rem 0.55rem !important;
+  border-radius: 8px !important;
+  background: rgba(16, 185, 129, 0.1) !important;
+  color: #10b981 !important;
+  border: 1px solid rgba(16, 185, 129, 0.25) !important;
+  font-weight: 600 !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-quick-add-skill:hover {
+  background: rgba(16, 185, 129, 0.2) !important;
+}
+
+.btn-manage-skills {
+  background: rgba(108, 92, 231, 0.1) !important;
+  color: var(--violet-primary, #6c5ce7) !important;
+  font-weight: 600 !important;
+  border-color: rgba(108, 92, 231, 0.25) !important;
+}
+
+.admin-user-credits {
+  font-weight: 700;
+  color: var(--violet-primary, #6c5ce7);
+  white-space: nowrap;
+}
+
+.protected-root-badge {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--violet-primary, #6c5ce7);
+  white-space: nowrap;
+  padding: 0 0.5rem;
+}
+
+.admin-modal-details-card {
+  background: rgba(241, 245, 249, 0.65);
+  border-radius: 14px;
+  padding: 0.9rem 1.1rem;
+  margin-bottom: 1.4rem;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  font-size: 0.86rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.admin-modal-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.detail-key {
+  color: var(--slate-500, #64748b);
+  font-weight: 600;
+}
+
+.detail-val {
+  color: var(--slate-800, #1e293b);
+  font-weight: 700;
+}
+
+.skills-modal-tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 0.85rem;
+  background: rgba(241, 245, 249, 0.75);
+  border-radius: 14px;
+  border: 1.5px solid rgba(226, 232, 240, 0.9);
+  margin-bottom: 1.4rem;
+}
+
+.skills-modal-tag-chip {
+  background: white;
+  color: var(--violet-primary, #6c5ce7);
+  border: 1px solid rgba(108, 92, 231, 0.25);
+  border-radius: 10px;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+/* ==========================================================================
+   Comprehensive Dark Mode Text & Contrast Overrides for Admin Panel
+   ========================================================================== */
+
+/* Page Header & Descriptions */
+html[data-theme="dark"] .page-header h2,
+body.dark-mode .page-header h2 {
+  color: #ffffff !important;
+}
+
+html[data-theme="dark"] .page-header p,
+body.dark-mode .page-header p {
+  color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .table-header-title {
+  color: #ffffff !important;
+}
+
+/* Admin Sidebar Inactive Items, Header & Toggle */
+html[data-theme="dark"] .admin-sidebar .sidebar-title {
+  color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .admin-sidebar .menu-item-btn {
+  color: #cbd5e1 !important;
+}
+
+html[data-theme="dark"] .admin-sidebar .menu-item-btn:hover {
+  background: rgba(255, 255, 255, 0.09) !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="dark"] .admin-sidebar .menu-item-btn.active {
+  background: var(--violet-primary, #2563eb) !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.45) !important;
+}
+
+html[data-theme="dark"] .admin-sidebar .toggle-btn {
+  background: rgba(30, 41, 59, 0.9) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: #e2e8f0 !important;
+}
+
+html[data-theme="dark"] .admin-sidebar .toggle-btn:hover {
+  background: var(--violet-primary, #2563eb) !important;
+  color: #ffffff !important;
+  border-color: var(--violet-primary, #2563eb) !important;
+}
+
+html[data-theme="dark"] .logout-btn {
+  color: #f87171 !important;
+}
+
+html[data-theme="dark"] .logout-btn:hover {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #fca5a5 !important;
+}
+
+/* Table Headers & Cells */
+html[data-theme="dark"] .admin-data-table th,
+html[data-theme="dark"] .admin-table th {
+  background: transparent !important;
+  color: #94a3b8 !important;
+  border-bottom-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+html[data-theme="dark"] .admin-data-table td,
+html[data-theme="dark"] .admin-table td {
+  color: #e2e8f0 !important;
+  border-bottom-color: rgba(255, 255, 255, 0.07) !important;
+}
+
+html[data-theme="dark"] .admin-data-table td strong {
+  color: #ffffff !important;
+}
+
+/* Category Nested Skill Tags in Dark Mode */
+html[data-theme="dark"] .category-nested-skill-tag {
+  background: rgba(30, 41, 59, 0.88) !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+html[data-theme="dark"] .category-more-skills-link {
+  color: #93c5fd !important;
+}
+
+html[data-theme="dark"] .category-more-skills-link:hover {
+  color: #bfdbfe !important;
+}
+
+html[data-theme="dark"] .btn-quick-add-skill {
+  background: rgba(16, 185, 129, 0.18) !important;
+  color: #34d399 !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
+}
+
+html[data-theme="dark"] .btn-manage-skills {
+  background: rgba(59, 130, 246, 0.18) !important;
+  color: #93c5fd !important;
+  border-color: rgba(59, 130, 246, 0.35) !important;
+}
+
+/* User & Category ID Badges */
+html[data-theme="dark"] .user-id-badge {
+  background: rgba(59, 130, 246, 0.16) !important;
+  color: #93c5fd !important;
+  border-color: rgba(96, 165, 250, 0.3) !important;
+}
+
+/* Count Pills */
+html[data-theme="dark"] .admin-count-pill {
+  background: rgba(59, 130, 246, 0.16) !important;
+  color: #93c5fd !important;
+  border-color: rgba(96, 165, 250, 0.28) !important;
+}
+
+/* Credits & Role Badges */
+html[data-theme="dark"] .admin-user-credits {
+  color: #60a5fa !important;
+}
+
+html[data-theme="dark"] .protected-root-badge {
+  color: #93c5fd !important;
+}
+
+/* Action Buttons */
+html[data-theme="dark"] .action-btn {
+  background: rgba(30, 41, 59, 0.85) !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+html[data-theme="dark"] .action-btn:hover {
+  background: rgba(59, 130, 246, 0.22) !important;
+  color: #93c5fd !important;
+  border-color: rgba(59, 130, 246, 0.4) !important;
+}
+
+/* Modals & Detail Cards */
+html[data-theme="dark"] .admin-modal-details-card {
+  background: rgba(15, 23, 42, 0.75) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+html[data-theme="dark"] .admin-modal-details-card .detail-key {
+  color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .admin-modal-details-card .detail-val {
+  color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .skills-modal-tags-container {
+  background: rgba(15, 23, 42, 0.75) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+html[data-theme="dark"] .skills-modal-tag-chip {
+  background: rgba(30, 41, 59, 0.85) !important;
+  color: #93c5fd !important;
+  border-color: rgba(96, 165, 250, 0.3) !important;
 }
 

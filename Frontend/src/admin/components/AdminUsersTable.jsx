@@ -74,7 +74,7 @@ export default function AdminUsersTable({
                       </span>
                     </td>
                   )}
-                  <td style={{ fontWeight: 700, color: 'var(--violet-primary, #6c5ce7)' }}>
+                  <td className="admin-user-credits">
                     🪙 {u.credits ?? 10}
                   </td>
                   <td>
@@ -97,7 +97,7 @@ export default function AdminUsersTable({
                         )}
 
                         {isSuperAdmin ? (
-                          <span className="text-subtle" style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--violet-primary, #6c5ce7)', whiteSpace: 'nowrap', padding: '0 0.5rem' }}>
+                          <span className="protected-root-badge">
                             Protected Root
                           </span>
                         ) : (

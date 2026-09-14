@@ -76,10 +76,9 @@ export default function AdminCategoriesTable({
 
                         <button
                           type="button"
-                          className="action-btn"
+                          className="action-btn btn-quick-add-skill"
                           onClick={() => onQuickAddSkill && onQuickAddSkill(cat)}
                           title={`Add new skill to ${cat.name}`}
-                          style={{ fontSize: '0.72rem', padding: '0.15rem 0.5rem', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.25)' }}
                         >
                           + Add Skill
                         </button>
@@ -90,23 +89,14 @@ export default function AdminCategoriesTable({
                           {skillsList.slice(0, 3).map((skill, idx) => (
                             <span 
                               key={idx} 
-                              style={{ 
-                                background: 'rgba(241, 245, 249, 0.9)', 
-                                color: 'var(--slate-700, #334155)', 
-                                fontSize: '0.72rem', 
-                                fontWeight: 600, 
-                                padding: '0.15rem 0.45rem', 
-                                borderRadius: '6px',
-                                border: '1px solid rgba(226, 232, 240, 0.9)',
-                                whiteSpace: 'nowrap'
-                              }}
+                              className="category-nested-skill-tag"
                             >
                               {skill}
                             </span>
                           ))}
                           {skillsList.length > 3 && (
                             <span 
-                              style={{ fontSize: '0.72rem', color: 'var(--violet-primary, #6c5ce7)', alignSelf: 'center', fontWeight: 600, cursor: 'pointer' }}
+                              className="category-more-skills-link"
                               onClick={() => onManageSkills && onManageSkills(cat)}
                               title="Click to view all skills"
                             >
@@ -130,10 +120,9 @@ export default function AdminCategoriesTable({
                       {onManageSkills && (
                         <button
                           type="button"
-                          className="action-btn"
+                          className="action-btn btn-manage-skills"
                           onClick={() => onManageSkills(cat)}
                           title="Manage Skills in this Category"
-                          style={{ background: 'rgba(108, 92, 231, 0.1)', color: 'var(--violet-primary, #6c5ce7)', fontWeight: 600 }}
                         >
                           🎯 Skills ({skillsList.length})
                         </button>

@@ -496,35 +496,12 @@ export default function AdminCategoriesPage() {
             </div>
 
             {/* Interactive Skills Grid */}
-            <div style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '0.5rem',
-              maxHeight: '260px',
-              overflowY: 'auto',
-              padding: '0.85rem',
-              background: 'rgba(241, 245, 249, 0.75)',
-              borderRadius: '14px',
-              border: '1.5px solid rgba(226, 232, 240, 0.9)',
-              marginBottom: '1.4rem'
-            }}>
+            <div className="skills-modal-tags-container">
               {managerFilteredSkills.length > 0 ? (
                 managerFilteredSkills.map((skill, idx) => (
                   <span
                     key={idx}
-                    style={{
-                      background: 'white',
-                      color: 'var(--violet-primary, #6c5ce7)',
-                      border: '1px solid rgba(108, 92, 231, 0.25)',
-                      borderRadius: '10px',
-                      padding: '0.4rem 0.75rem',
-                      fontSize: '0.84rem',
-                      fontWeight: 600,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.45rem',
-                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.04)'
-                    }}
+                    className="skills-modal-tag-chip"
                   >
                     <span>⚡</span>
                     <span>{skill}</span>
