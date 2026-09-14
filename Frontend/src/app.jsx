@@ -24,13 +24,15 @@ import AdminCreditsPage from './admin/pages/AdminCreditsPage';
 import AdminReportsPage from './admin/pages/AdminReportsPage';
 import ScrollToTop from './components/ScrollToTop';
 import RequireAuth from './components/RequireAuth';
+import ErrorBoundary from './components/ErrorBoundary';
 import './index.css';
 
 function App() {
   return (
     <div id="app">
       <ScrollToTop />
-      <Routes>
+      <ErrorBoundary>
+        <Routes>
         {/* Unrestricted Public Routes */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/browse" element={<BrowsePage />} />
@@ -64,6 +66,7 @@ function App() {
         <Route path="/admin/credits" element={<RequireAuth pageTitle="Admin Credits" roleRequired="admin"><AdminCreditsPage /></RequireAuth>} />
         <Route path="/admin/reports" element={<RequireAuth pageTitle="Admin Reports" roleRequired="admin"><AdminReportsPage /></RequireAuth>} />
       </Routes>
+      </ErrorBoundary>
     </div>
   );
 }
