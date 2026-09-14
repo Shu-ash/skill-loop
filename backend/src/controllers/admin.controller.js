@@ -36,7 +36,7 @@ export const getAdminMetrics = async (req, res) => {
       data: {
         totalUsers,
         totalSessions,
-        totalSkills: uniqueSkills.size,
+        totalSkills: allSkillsSet.size,
         disputedSessions,
         totalCategories,
         pendingReports,

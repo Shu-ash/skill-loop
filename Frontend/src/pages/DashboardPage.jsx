@@ -129,7 +129,7 @@ export default function DashboardPage() {
           setRecommendations(formatted);
         } else {
           // Fallback other members from users API (always strictly exclude self)
-          const usersRes = await fetch(`${API_BASE_URL}/users`, { headers, credentials: 'include' });
+          const usersRes = await fetchWithAuth(`${API_BASE_URL}/users`);
           const usersData = await usersRes.json();
           if (usersRes.ok && usersData.data?.users?.length) {
             const formatted = usersData.data.users

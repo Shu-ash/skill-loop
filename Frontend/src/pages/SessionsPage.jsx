@@ -6,6 +6,7 @@ import Sidebar from '../components/Sidebar';
 import MobileNav from '../components/MobileNav';
 import SessionCard from '../components/SessionCard';
 import ReviewModal from '../components/ReviewModal';
+import { fetchWithAuth, getAuthStatus } from '../utils/auth';
 
 const API_URL = 'http://localhost:5000/api';
 const ALLOWED_DURATIONS = [15, 30, 45, 60, 90, 120];
