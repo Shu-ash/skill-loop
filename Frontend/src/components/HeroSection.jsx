@@ -99,7 +99,7 @@ export default function HeroSection() {
 
             <div className="orbit-card orbit-card-learn">
               <span className="pill-badge pill-mint">YOU LEARN</span>
-              <h4>Conversational Spanish</h4>
+              <h4>Build Powerful Web APIs</h4>
               <p>-1 Skill Credit spent</p>
             </div>
           </div>
