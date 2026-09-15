@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Notification from "../models/notification.js";
 
 /**
@@ -90,8 +91,17 @@ export const markAllNotificationsAsRead = async (req, res, next) => {
  */
 export const deleteNotification = async (req, res, next) => {
   try {
+    const { id } = req.params;
+
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid notification ID"
+      });
+    }
+
     const notification = await Notification.findOneAndDelete({
-      _id: req.params.id,
+      _id: id,
       user: req.user._id
     });
 

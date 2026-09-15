@@ -44,16 +44,18 @@ export default function SessionCard({
 
   const sessionStartTime = scheduledAt ? new Date(scheduledAt) : null;
   const validSessionStartTime = sessionStartTime && !Number.isNaN(sessionStartTime.getTime());
+  const sessionStartMs = validSessionStartTime ? sessionStartTime.getTime() : 0;
 
   // Compute session end time
   const sessionEndTime = validSessionStartTime
-    ? new Date(sessionStartTime.getTime() + (Number(duration) || 45) * 60 * 1000)
+    ? new Date(sessionStartMs + (Number(duration) || 45) * 60 * 1000)
     : null;
+  const sessionEndMs = sessionEndTime ? sessionEndTime.getTime() : 0;
 
   // Session time window status
-  const isBeforeSession = validSessionStartTime && currentTime < sessionStartTime;
-  const isDuringSession = validSessionStartTime && sessionEndTime && currentTime >= sessionStartTime && currentTime < sessionEndTime;
-  const isAfterSession = validSessionStartTime && sessionEndTime && currentTime >= sessionEndTime;
+  const isBeforeSession = validSessionStartTime && currentTime < sessionStartMs;
+  const isDuringSession = validSessionStartTime && Boolean(sessionEndTime) && currentTime >= sessionStartMs && currentTime < sessionEndMs;
+  const isAfterSession = validSessionStartTime && Boolean(sessionEndTime) && currentTime >= sessionEndMs;
 
   const [hasJoined, setHasJoined] = useState(() => {
     try {
@@ -82,7 +84,7 @@ export default function SessionCard({
   // Format countdown helper until session starts
   const getCountdown = () => {
     if (!validSessionStartTime || !isBeforeSession) return '';
-    const diffMs = sessionStartTime.getTime() - currentTime.getTime();
+    const diffMs = sessionStartMs - currentTime;
     if (diffMs <= 0) return '0s';
     const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -97,7 +99,7 @@ export default function SessionCard({
   // Format countdown helper for remaining time in active session
   const getSessionRemainingCountdown = () => {
     if (!sessionEndTime || !isDuringSession) return '';
-    const diffMs = sessionEndTime.getTime() - currentTime.getTime();
+    const diffMs = sessionEndMs - currentTime;
     if (diffMs <= 0) return '0m 0s';
     const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
     const secs = Math.floor((diffMs % (1000 * 60)) / 1000);
@@ -132,7 +134,60 @@ export default function SessionCard({
     }
   };
 
-  const canJoin = Boolean(meetLink) && Boolean(validSessionStartTime) && currentTime >= sessionStartTime && !(sessionEndTime && currentTime >= sessionEndTime) && status !== 'completed' && status !== 'cancelled';
+  const canJoin = Boolean(meetLink) && Boolean(validSessionStartTime) && currentTime >= sessionStartMs && !(sessionEndMs && currentTime >= sessionEndMs) && status !== 'completed' && status !== 'cancelled';
+
+  const isCompleted = status === 'completed';
+  const durationMins = Number(duration) || 45;
+  const isLiveWindow = Boolean(canJoin || isDuringSession);
+  const isUnlocked = Boolean(isLiveWindow || status === 'in_progress' || isCompleted);
+
+  const [scheduledAtInput, setScheduledAtInput] = useState(() => {
+    if (!scheduledAt) return '';
+    try {
+      const d = new Date(scheduledAt);
+      if (Number.isNaN(d.getTime())) return '';
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const h = String(d.getHours()).padStart(2, '0');
+      const min = String(d.getMinutes()).padStart(2, '0');
+      return `${y}-${m}-${day}T${h}:${min}`;
+    } catch {
+      return '';
+    }
+  });
+  const [selectedDuration, setSelectedDuration] = useState(durationMins);
+  const [sessionMode, setSessionMode] = useState(mode === 'in_person' ? 'in_person' : 'online');
+  const [meetLinkInput, setMeetLinkInput] = useState(meetLink || '');
+
+  // Keep internal form inputs in sync with session prop updates
+  useEffect(() => {
+    if (meetLink) setMeetLinkInput(meetLink);
+  }, [meetLink]);
+
+  useEffect(() => {
+    if (duration) setSelectedDuration(Number(duration) || 45);
+  }, [duration]);
+
+  useEffect(() => {
+    if (mode) setSessionMode(mode === 'in_person' ? 'in_person' : 'online');
+  }, [mode]);
+
+  useEffect(() => {
+    if (scheduledAt) {
+      try {
+        const d = new Date(scheduledAt);
+        if (!Number.isNaN(d.getTime())) {
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          const h = String(d.getHours()).padStart(2, '0');
+          const min = String(d.getMinutes()).padStart(2, '0');
+          setScheduledAtInput(`${y}-${m}-${day}T${h}:${min}`);
+        }
+      } catch (e) {}
+    }
+  }, [scheduledAt]);
 
   const getStatusLabel = () => {
     if (status === 'cancelled') return 'CANCELLED';
@@ -185,7 +240,7 @@ export default function SessionCard({
     }
 
     const finalDuration = Number(selectedDuration);
-    const allowedDurations = [30, 45, 60, 90, 120];
+    const allowedDurations = [15, 30, 45, 60, 90, 120];
     if (!allowedDurations.includes(finalDuration)) {
       alert('Please select a valid duration.');
       return;
@@ -308,6 +363,7 @@ export default function SessionCard({
               onChange={(e) => setSelectedDuration(Number(e.target.value))}
               disabled={actionLoading}
             >
+              <option value={15}>15 minutes</option>
               <option value={30}>30 minutes</option>
               <option value={45}>45 minutes</option>
               <option value={60}>60 minutes</option>

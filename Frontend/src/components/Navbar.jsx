@@ -1,7 +1,5 @@
-// src/components/Navbar.jsx
-
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { getAuthStatus } from '../utils/auth';
 
@@ -9,6 +7,7 @@ const API_BASE_URL = 'http://localhost:5000/api';
 
 export default function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const [showNotifs, setShowNotifs] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -63,10 +62,15 @@ export default function Navbar() {
   };
 
   const deleteNotification = async (notifId, e) => {
-    e.preventDefault();
-    e.stopPropagation();
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
 
-    setNotifications(prev => prev.filter(n => n.id !== notifId));
+    if (!notifId) return;
+
+    // Remove ONLY this single notification from UI state
+    setNotifications(prev => prev.filter(n => (n.id || n._id) !== notifId));
 
     const token = localStorage.getItem('accessToken');
     if (token) {
@@ -169,10 +173,64 @@ export default function Navbar() {
                           title="Remove notification"
                           className="notif-del-btn"
                         >
-                          ✕
-                        </button>
-                      </Link>
-                    ))
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.75rem',
+                              flex: 1,
+                              cursor: 'pointer',
+                              minWidth: 0
+                            }}
+                            onClick={() => {
+                              setShowNotifs(false);
+                              if (n.link) {
+                                navigate(n.link);
+                              }
+                            }}
+                            title="Click to view details"
+                          >
+                            <div className="notif-icon-circle">{getNotifIcon(n.type)}</div>
+                            <div className="notif-body" style={{ flex: 1, minWidth: 0 }}>
+                              <p className="notif-text" style={{ fontWeight: n.read ? 500 : 700, margin: 0, fontSize: '0.86rem', wordBreak: 'break-word' }}>
+                                {n.text || n.title}
+                              </p>
+                              <span className="notif-time" style={{ fontSize: '0.75rem', color: 'var(--slate-400)' }}>
+                                {n.time || 'Recent'}
+                              </span>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={(e) => deleteNotification(notifId, e)}
+                            title="Delete this notification only"
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              cursor: 'pointer',
+                              fontSize: '0.85rem',
+                              color: 'var(--slate-400, #94a3b8)',
+                              padding: '5px 7px',
+                              borderRadius: '6px',
+                              transition: 'all 0.15s ease',
+                              flexShrink: 0,
+                              lineHeight: 1
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.color = '#ef4444';
+                              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.color = 'var(--slate-400, #94a3b8)';
+                              e.currentTarget.style.background = 'none';
+                            }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      );
+                    })
                   ) : (
                     <div className="notif-empty-state">
                       No new notifications right now.
@@ -208,7 +266,7 @@ export default function Navbar() {
           {mobileMenuOpen ? '✕' : '☰'}
         </button>
       </div>
-
+      
       {/* Glassmorphic Mobile Drawer Menu */}
       {mobileMenuOpen && (
         <div className="mobile-menu-drawer glass-panel">

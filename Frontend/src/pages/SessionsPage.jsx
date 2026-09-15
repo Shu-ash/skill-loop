@@ -66,8 +66,8 @@ export default function SessionsPage() {
     const learner = backendSession.learner || {};
 
     const userId = user?._id || user?.id || user?.userId;
-    const teacherId = teacher?._id || teacher?.id;
-    const learnerId = learner?._id || learner?.id;
+    const teacherId = typeof teacher === 'object' ? (teacher?._id || teacher?.id) : teacher;
+    const learnerId = typeof learner === 'object' ? (learner?._id || learner?.id) : learner;
 
     const isTeacher = Boolean(userId && teacherId && String(userId) === String(teacherId));
     const isLearner = Boolean(userId && learnerId && String(userId) === String(learnerId));
