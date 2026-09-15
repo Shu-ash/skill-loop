@@ -1,9 +1,9 @@
-// src/components/RecommendedMatchesSection.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
 import MatchCard from './MatchCard';
+import SkillLoopLoader from './SkillLoopLoader';
 
-export default function RecommendedMatchesSection({ matches = [], onRequestSwap }) {
+export default function RecommendedMatchesSection({ matches = [], onRequestSwap, loading = false }) {
   return (
     <div className="recommended-matches-section">
       {/* Section Header Row */}
@@ -16,7 +16,16 @@ export default function RecommendedMatchesSection({ matches = [], onRequestSwap 
 
       {/* Matches Cards Grid */}
       <div className="matches-cards-grid">
-        {matches.length > 0 ? (
+        {loading ? (
+          <div className="grid-col-full">
+            <SkillLoopLoader
+              title="Finding Skill Matches"
+              subtitle="Matching your profile with community members in MongoDB..."
+              badgeText="MongoDB Live Sync"
+              variant="card"
+            />
+          </div>
+        ) : matches.length > 0 ? (
           matches.map((match) => (
             <MatchCard 
               key={match.id} 
@@ -25,10 +34,10 @@ export default function RecommendedMatchesSection({ matches = [], onRequestSwap 
             />
           ))
         ) : (
-          <div className="glass-panel" style={{ gridColumn: '1 / -1', padding: '2rem 1.5rem', textAlign: 'center', borderRadius: '20px' }}>
-            <span style={{ fontSize: '2rem', display: 'block', marginBottom: '0.4rem' }}>🤝</span>
-            <p style={{ margin: 0, color: 'var(--slate-500)', fontSize: '0.9rem' }}>
-              No match recommendations right now. Explore the <Link to="/browse" style={{ color: 'var(--violet-primary, #6c5ce7)', fontWeight: 600 }}>Browse Skills</Link> directory to find mentors!
+          <div className="glass-panel matches-empty-card">
+            <span className="matches-empty-icon">🤝</span>
+            <p className="matches-empty-text">
+              No match recommendations right now. Explore the <Link to="/browse" className="matches-empty-link">Browse Skills</Link> directory to find mentors!
             </p>
           </div>
         )}

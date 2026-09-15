@@ -18,17 +18,16 @@ export default function ProfileDetailsEditor({
   const validStrength = Math.min(Math.max(Number(profileStrength) || 0, 0), 100);
 
   return (
-    <div className="glass-panel profile-details-card" style={{ padding: '1.6rem 1.8rem', borderRadius: '24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-        <h3 style={{ margin: 0, fontSize: '1.2rem', fontFamily: 'var(--font-display)' }}>
+    <div className="glass-panel profile-details-card">
+      <div className="profile-card-header">
+        <h3 className="profile-card-title">
           About &amp; Availability
         </h3>
         {handleEdit && (
           <button 
             type="button" 
-            className="action-btn" 
+            className="action-btn action-btn-sm" 
             onClick={handleEdit}
-            style={{ fontSize: '0.8rem', padding: '0.35rem 0.8rem' }}
           >
             ✏️ Edit
           </button>
@@ -36,50 +35,45 @@ export default function ProfileDetailsEditor({
       </div>
 
       {/* Bio Display Quote Card with dynamic theme styling */}
-      <div className="profile-bio-display-box" style={{
-        borderRadius: '16px',
-        padding: '1.1rem 1.25rem',
-        marginBottom: '1.4rem',
-        position: 'relative'
-      }}>
-        <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--violet-primary, #6c5ce7)', display: 'block', marginBottom: '0.4rem' }}>
+      <div className="profile-bio-display-box">
+        <span className="profile-section-badge violet">
           About Me
         </span>
-        <p style={{ margin: 0, fontSize: '0.92rem', lineHeight: '1.6', fontStyle: displayBio ? 'normal' : 'italic' }}>
+        <p className={`profile-bio-text ${!displayBio ? 'italic' : ''}`}>
           {displayBio || 'Tell the community about yourself, your learning goals, and what you love trading! Click "Edit" to customize.'}
         </p>
       </div>
 
       {/* Weekly Availability Showcase */}
-      <div className="availability-section" style={{ marginBottom: '1.4rem' }}>
-        <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--slate-500, #64748b)', display: 'block', marginBottom: '0.65rem' }}>
+      <div className="availability-section">
+        <span className="profile-section-badge slate">
           Weekly Availability &amp; Mode
         </span>
         
-        <div className="availability-grid" style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-          <div className="availability-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', borderRadius: '14px' }}>
-            <span style={{ fontSize: '0.88rem', fontWeight: 600 }}>
+        <div className="availability-grid">
+          <div className="availability-item">
+            <span className="availability-label">
               🌙 Weekday evenings
             </span>
-            <span className={`pill ${displayAvailability.weekdayEvenings ? 'pill-earned' : 'pill-spent'}`} style={{ fontSize: '0.78rem', padding: '0.25rem 0.65rem' }}>
+            <span className={`pill availability-pill ${displayAvailability.weekdayEvenings ? 'pill-earned' : 'pill-spent'}`}>
               {displayAvailability.weekdayEvenings ? '✓ Available' : 'Busy'}
             </span>
           </div>
 
-          <div className="availability-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', borderRadius: '14px' }}>
-            <span style={{ fontSize: '0.88rem', fontWeight: 600 }}>
+          <div className="availability-item">
+            <span className="availability-label">
               ☀️ Weekend mornings
             </span>
-            <span className={`pill ${displayAvailability.weekendMornings ? 'pill-earned' : 'pill-spent'}`} style={{ fontSize: '0.78rem', padding: '0.25rem 0.65rem' }}>
+            <span className={`pill availability-pill ${displayAvailability.weekendMornings ? 'pill-earned' : 'pill-spent'}`}>
               {displayAvailability.weekendMornings ? '✓ Available' : 'Busy'}
             </span>
           </div>
 
-          <div className="availability-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', borderRadius: '14px' }}>
-            <span style={{ fontSize: '0.88rem', fontWeight: 600 }}>
+          <div className="availability-item">
+            <span className="availability-label">
               🎥 Preferred Session Mode
             </span>
-            <span className="pill pill-user" style={{ fontSize: '0.78rem', padding: '0.25rem 0.65rem' }}>
+            <span className="pill pill-user availability-pill">
               {displayAvailability.mode || 'Online Video Only'}
             </span>
           </div>
@@ -87,24 +81,18 @@ export default function ProfileDetailsEditor({
       </div>
 
       {/* Profile Strength Progress Bar */}
-      <div className="profile-strength-card" style={{ borderRadius: '16px', padding: '1rem 1.2rem' }}>
-        <div className="strength-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-          <span style={{ fontSize: '0.84rem', fontWeight: 700 }}>Profile Strength</span>
-          <span style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--violet-primary, #6c5ce7)' }}>{validStrength}%</span>
+      <div className="profile-strength-card">
+        <div className="strength-header">
+          <span className="strength-title">Profile Strength</span>
+          <span className="strength-score">{validStrength}%</span>
         </div>
-        <div className="strength-bar-track" style={{ height: '8px', borderRadius: '9999px', overflow: 'hidden', background: 'rgba(226, 232, 240, 0.8)' }}>
+        <div className="strength-bar-track">
           <div 
             className="strength-bar-fill" 
-            style={{ 
-              width: `${validStrength}%`, 
-              height: '100%', 
-              background: 'linear-gradient(90deg, #6c5ce7 0%, #10b981 100%)',
-              borderRadius: '9999px',
-              transition: 'width 0.4s ease'
-            }}
+            style={{ width: `${validStrength}%` }}
           />
         </div>
-        <p className="strength-tip" style={{ fontSize: '0.75rem', margin: '0.5rem 0 0 0', color: 'var(--slate-500)' }}>
+        <p className="strength-tip">
           {validStrength === 100 ? '🎉 Amazing! Your profile is 100% complete and ready for swaps.' : '💡 Add your bio and teaching skills to reach 100% profile strength!'}
         </p>
       </div>

@@ -8,6 +8,7 @@ import MobileNav from '../components/MobileNav';
 import RequestsTabNav from '../components/RequestsTabNav';
 import RequestCard from '../components/RequestCard';
 import ScheduleSessionModal from '../components/ScheduleSessionModal';
+import SkillLoopLoader from '../components/SkillLoopLoader';
 import { fetchWithAuth, getAuthStatus } from '../utils/auth';
 
 const API_URL = 'http://localhost:5000/api';
@@ -327,7 +328,7 @@ export default function RequestsPage() {
             )}
 
             {successMsg && (
-              <div className="glass-panel" style={{ background: 'rgba(46, 204, 113, 0.12)', color: '#27ae60', border: '1px solid rgba(46, 204, 113, 0.3)', padding: '0.85rem 1.2rem', borderRadius: '14px', marginBottom: '1.2rem', fontWeight: 600 }}>
+              <div className="glass-panel requests-success-banner">
                 {successMsg}
               </div>
             )}
@@ -345,9 +346,12 @@ export default function RequestsPage() {
 
             <div className="requests-container">
               {loading ? (
-                <div className="glass-panel empty-requests-card">
-                  Loading requests from MongoDB...
-                </div>
+                <SkillLoopLoader
+                  title="Loading Swap Requests"
+                  subtitle="Fetching incoming, outgoing & active exchange requests from MongoDB..."
+                  badgeText="MongoDB Live Sync"
+                  variant="card"
+                />
               ) : currentList.length > 0 ? (
                 <div className="requests-list">
                   {currentList.map((req) => (

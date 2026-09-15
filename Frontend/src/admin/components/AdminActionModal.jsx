@@ -43,14 +43,13 @@ export default function AdminActionModal({
   const modalContent = (
     <div className="full-viewport-blur-overlay modal-overlay" onClick={onClose}>
       <div 
-        className="glass-panel logout-confirm-box clay-card-3d admin-action-center-modal"
+        className={`glass-panel logout-confirm-box clay-card-3d admin-action-center-modal admin-action-modal-box ${details ? 'has-details' : ''}`}
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: details ? '520px' : '440px', width: '92%' }}
       >
         <div className="modal-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <span style={{ fontSize: '1.4rem' }}>{icon}</span>
-            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>{title}</h3>
+          <div className="admin-action-modal-header">
+            <span className="admin-action-modal-icon">{icon}</span>
+            <h3 className="admin-action-modal-title">{title}</h3>
           </div>
           <button 
             type="button" 
@@ -63,7 +62,7 @@ export default function AdminActionModal({
         </div>
 
         <div className="modal-body modal-body-padded">
-          <p className="logout-modal-text" style={{ fontSize: '0.94rem', lineHeight: '1.5', color: 'var(--slate-700, #334155)', marginBottom: details ? '1rem' : '1.4rem' }}>
+          <p className={`logout-modal-text admin-action-modal-message ${details ? 'has-details' : ''}`}>
             {message}
           </p>
 
@@ -79,7 +78,7 @@ export default function AdminActionModal({
             </div>
           )}
 
-          <div className="modal-action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+          <div className="modal-action-buttons admin-action-modal-actions">
             <button 
               type="button" 
               className="action-btn" 
@@ -92,10 +91,9 @@ export default function AdminActionModal({
             {!isDetailsOnly && onConfirm && (
               <button 
                 type="button" 
-                className={getConfirmBtnClass()} 
+                className={`${getConfirmBtnClass()} admin-action-modal-btn`} 
                 onClick={onConfirm}
                 disabled={loading}
-                style={{ padding: '0.65rem 1.35rem' }}
               >
                 {loading ? 'Processing...' : confirmText}
               </button>

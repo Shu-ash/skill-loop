@@ -89,45 +89,32 @@ export default function OtpInputModal({
 
   const modalJSX = (
     <div 
-      className="modal-overlay" 
+      className="modal-overlay modal-overlay-portal" 
       onClick={onClose}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.65)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
-        zIndex: 999999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1.25rem'
-      }}
     >
       <div 
-        className="glass-panel clay-card-3d" 
+        className="glass-panel clay-card-3d user-modal-sm text-center" 
         onClick={(e) => e.stopPropagation()} 
-        style={{ maxWidth: '440px', width: '100%', padding: '2.2rem 2rem', borderRadius: '24px', textAlign: 'center' }}
       >
-        <div style={{ fontSize: '2.8rem', marginBottom: '0.6rem' }}>📧</div>
+        <div className="otp-modal-icon">📧</div>
 
-        <h3 style={{ margin: '0 0 0.5rem 0', fontFamily: 'var(--font-display)', fontSize: '1.4rem' }}>
+        <h3 className="user-modal-title">
           Enter Verification Code
         </h3>
 
-        <p style={{ fontSize: '0.88rem', color: 'var(--slate-500)', lineHeight: '1.5', margin: '0 0 1.5rem 0' }}>
+        <p className="user-modal-subtitle">
           We've sent a 6-digit secure OTP code to:<br />
-          <strong style={{ color: 'var(--violet-primary, #6c5ce7)' }}>{email}</strong>
+          <strong className="text-violet">{email}</strong>
         </p>
 
         {error && (
-          <div style={{ background: 'rgba(239, 68, 68, 0.12)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '12px', padding: '0.65rem 0.85rem', fontSize: '0.84rem', fontWeight: 600, marginBottom: '1.2rem' }}>
+          <div className="user-modal-error">
             ⚠️ {error}
           </div>
         )}
 
         <form onSubmit={handleFormSubmit}>
-          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', marginBottom: '1.6rem' }} onPaste={handlePaste}>
+          <div className="otp-digits-container" onPaste={handlePaste}>
             {otpDigits.map((digit, idx) => (
               <input
                 key={idx}
@@ -138,40 +125,27 @@ export default function OtpInputModal({
                 value={digit}
                 onChange={(e) => handleChange(idx, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(idx, e)}
-                style={{
-                  width: '46px',
-                  height: '52px',
-                  textAlign: 'center',
-                  fontSize: '1.4rem',
-                  fontWeight: 800,
-                  borderRadius: '12px',
-                  border: digit ? '2px solid var(--violet-primary, #6c5ce7)' : '1.5px solid rgba(203, 213, 225, 0.8)',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  color: 'inherit',
-                  outline: 'none',
-                  transition: 'all 0.15s ease'
-                }}
+                className={`otp-digit-input ${digit ? 'filled' : ''}`}
               />
             ))}
           </div>
 
           <button
             type="submit"
-            className="btn btn-primary btn-full"
+            className="btn btn-primary btn-full otp-submit-btn"
             disabled={!isComplete || loading}
-            style={{ padding: '0.85rem 1rem', fontSize: '0.95rem', fontWeight: 700, borderRadius: '14px', marginBottom: '1rem' }}
           >
             {loading ? 'Verifying OTP...' : 'Verify & Continue →'}
           </button>
         </form>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.84rem', color: 'var(--slate-500)' }}>
+        <div className="otp-footer-row">
           <span>Didn't receive code?</span>
           {canResend ? (
             <button
               type="button"
               onClick={handleResendClick}
-              style={{ background: 'none', border: 'none', color: 'var(--violet-primary, #6c5ce7)', fontWeight: 700, cursor: 'pointer', padding: 0 }}
+              className="otp-resend-btn"
             >
               🔄 Resend OTP
             </button>

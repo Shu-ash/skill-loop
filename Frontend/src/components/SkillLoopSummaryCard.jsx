@@ -30,8 +30,8 @@ export default function SkillLoopSummaryCard({ teachSkills = [], learnSkills = [
                 </span>
               ))
             ) : (
-              <span className="text-subtle" style={{ fontSize: '0.86rem', fontStyle: 'italic' }}>
-                No teach skills added yet. <Link to="/profile" style={{ color: 'var(--violet-primary, #6c5ce7)', fontWeight: 600 }}>+ Add skills</Link>
+              <span className="text-subtle loop-empty-hint">
+                No teach skills added yet. <Link to="/profile" className="loop-empty-link-teach">+ Add skills</Link>
               </span>
             )}
           </div>
@@ -56,8 +56,8 @@ export default function SkillLoopSummaryCard({ teachSkills = [], learnSkills = [
                 </span>
               ))
             ) : (
-              <span className="text-subtle" style={{ fontSize: '0.86rem', fontStyle: 'italic' }}>
-                No target skills selected. <Link to="/profile" style={{ color: 'var(--mint-primary, #10b981)', fontWeight: 600 }}>+ Add skills</Link>
+              <span className="text-subtle loop-empty-hint">
+                No target skills selected. <Link to="/profile" className="loop-empty-link-learn">+ Add skills</Link>
               </span>
             )}
           </div>

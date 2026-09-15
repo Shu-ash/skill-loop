@@ -5,6 +5,7 @@ import Sidebar from '../components/Sidebar';
 import MobileNav from '../components/MobileNav';
 import LeaderboardPodium from '../components/LeaderboardPodium';
 import LeaderboardTable from '../components/LeaderboardTable';
+import SkillLoopLoader from '../components/SkillLoopLoader';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -59,8 +60,7 @@ export default function LeaderboardPage() {
               {/* Time Filter Toggle */}
               <div className="sliding-tab-nav leaderboard-tab-nav">
                 <div 
-                  className="sliding-glider"
-                  style={{ transform: filterMode === 'month' ? 'translateX(0%)' : 'translateX(100%)' }}
+                  className={`sliding-glider ${filterMode === 'month' ? 'glider-pos-left' : 'glider-pos-right'}`}
                 ></div>
                 <button
                   type="button"
@@ -80,10 +80,12 @@ export default function LeaderboardPage() {
             </div>
 
             {loading ? (
-              <div className="glass-panel empty-requests-card" style={{ padding: '3rem 1.5rem', textAlign: 'center' }}>
-                <span style={{ fontSize: '2rem', display: 'block', marginBottom: '0.5rem' }}>⏳</span>
-                <p style={{ margin: 0, fontWeight: 600, color: 'var(--slate-600)' }}>Loading live leaderboard from MongoDB...</p>
-              </div>
+              <SkillLoopLoader
+                title="Loading Live Leaderboard"
+                subtitle="Calculating community reputation & teaching sessions from MongoDB..."
+                badgeText="MongoDB Live Sync"
+                variant="card"
+              />
             ) : topTeachers.length > 0 ? (
               <>
                 {/* Component 1: Top 3 Podium */}
@@ -93,10 +95,10 @@ export default function LeaderboardPage() {
                 {rankedList.length > 0 && <LeaderboardTable members={rankedList} />}
               </>
             ) : (
-              <div className="glass-panel empty-requests-card" style={{ padding: '3.5rem 1.5rem', textAlign: 'center', borderRadius: '24px' }}>
-                <span style={{ fontSize: '3rem', display: 'block', marginBottom: '0.75rem' }}>🏆</span>
-                <h3 style={{ margin: '0 0 0.5rem 0', fontWeight: 700, color: 'var(--slate-800)' }}>No Teachers Ranked Yet</h3>
-                <p style={{ color: 'var(--slate-500)', fontSize: '0.92rem', maxWidth: '420px', margin: '0 auto', lineHeight: '1.6' }}>
+              <div className="glass-panel empty-requests-card empty-card-full">
+                <span className="empty-card-icon">🏆</span>
+                <h3 className="empty-card-title">No Teachers Ranked Yet</h3>
+                <p className="empty-card-desc">
                   The database is fresh. Register a new user, teach a skill swap session, and your profile will appear on the podium!
                 </p>
               </div>

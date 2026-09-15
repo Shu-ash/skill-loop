@@ -26,13 +26,19 @@ export default function RequestCard({
   return (
     <div className="glass-panel request-card">
       {/* Avatar */}
-      <div
-        className="request-user-avatar"
-        style={{
-          background: user?.avatarBg || 'var(--violet-primary)'
-        }}
-      >
-        {user?.avatar || 'SL'}
+      <div className="request-user-avatar">
+        {user?.profilePhotoUrl || (typeof user?.avatar === 'string' && (user.avatar.startsWith('data:image') || user.avatar.startsWith('http'))) ? (
+          <img
+            src={user.profilePhotoUrl || user.avatar}
+            alt={user?.name || 'User'}
+            className="avatar-round-img"
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+          />
+        ) : (
+          (typeof user?.avatar === 'string' && user.avatar.length <= 4 && !user.avatar.includes('/')
+            ? user.avatar
+            : (user?.name || 'SL').trim().split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase() || 'SL')
+        )}
       </div>
 
       {/* Request details */}

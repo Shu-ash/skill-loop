@@ -180,6 +180,7 @@ export default function AdminReportsPage() {
               title={`Pending Moderation Queue (${filteredReports.length})`} 
               onResolveReport={handleResolveReportClick}
               onViewDetails={handleViewDetails}
+              loading={loading}
             />
           </main>
         </div>

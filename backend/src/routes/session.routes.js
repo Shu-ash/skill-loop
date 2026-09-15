@@ -15,10 +15,7 @@ import { protect } from "../middleware/auth.middleware.js";
 const router = express.Router();
 
 
-// =========================
 // GET MY SESSIONS
-// =========================
-
 router.get(
     "/",
     protect,
@@ -31,66 +28,42 @@ router.get(
     getMySessions
 );
 
-
-// =========================
 // GET ONE SESSION
-// =========================
-
 router.get(
     "/:sessionId",
     protect,
     getSessionById
 );
 
-
-// =========================
 // SCHEDULE
-// =========================
-
 router.patch(
     "/:sessionId/schedule",
     protect,
     scheduleSession
 );
 
-
-// =========================
 // JOIN
-// =========================
-
 router.patch(
     "/:sessionId/join",
     protect,
     joinSession
 );
 
-
-// =========================
 // START
-// =========================
-
 router.patch(
     "/:sessionId/start",
     protect,
     startSession
 );
 
-
-// =========================
 // COMPLETE
-// =========================
-
 router.patch(
     "/:sessionId/complete",
     protect,
     completeSession
 );
 
-
-// =========================
 // CANCEL
-// =========================
-
 router.patch(
     "/:sessionId/cancel",
     protect,

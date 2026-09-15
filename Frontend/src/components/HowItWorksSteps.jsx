@@ -34,7 +34,7 @@ export default function HowItWorksSteps() {
       <div className="how-steps-grid">
         {steps.map((item) => (
           <div key={item.step} className="glass-panel how-step-card">
-            <div className="step-badge-icon" style={{ background: item.color }}>
+            <div className={`step-badge-icon step-badge-${item.step}`}>
               {item.step}
             </div>
             <h3>{item.title}</h3>

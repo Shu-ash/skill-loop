@@ -1,5 +1,6 @@
 // src/admin/components/AdminCategoriesTable.jsx
 import React from 'react';
+import SkillLoopLoader from '../../components/SkillLoopLoader';
 
 export default function AdminCategoriesTable({ 
   categories = [], 
@@ -15,22 +16,25 @@ export default function AdminCategoriesTable({
 
   return (
     <div className="admin-table-card">
-      <div className="table-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h3 className="table-header-title" style={{ margin: 0 }}>{title}</h3>
-        <span className="admin-count-pill" style={{ fontSize: '0.8rem', padding: '0.25rem 0.65rem', borderRadius: '12px', background: 'rgba(108, 92, 231, 0.1)', color: 'var(--violet-primary, #6c5ce7)', fontWeight: 600 }}>
+      <div className="table-header-row">
+        <h3 className="table-header-title">{title}</h3>
+        <span className="admin-count-pill">
           {loading ? 'Loading...' : `${list.length} ${list.length === 1 ? 'category' : 'categories'}`}
         </span>
       </div>
 
       {loading ? (
-        <div style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--slate-500, #64748b)' }}>
-          Loading skill categories from MongoDB...
-        </div>
+        <SkillLoopLoader
+          title="Loading Skill Categories"
+          subtitle="Connecting to MongoDB category collection & nested skills..."
+          badgeText="MongoDB Live Sync"
+          variant="transparent"
+        />
       ) : list.length === 0 ? (
-        <div style={{ padding: '3.5rem 1.5rem', textAlign: 'center', color: 'var(--slate-500, #64748b)' }}>
-          <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '0.5rem' }}>🏷️</span>
-          <h4 style={{ margin: '0 0 0.4rem 0', fontWeight: 700, color: 'var(--slate-800)' }}>No Categories in Database</h4>
-          <p style={{ margin: 0, fontSize: '0.9rem' }}>
+        <div className="admin-table-empty">
+          <span className="admin-table-empty-icon">🏷️</span>
+          <h4 className="admin-table-empty-title">No Categories in Database</h4>
+          <p className="admin-table-empty-desc">
             Click <strong>"+ Add New Category"</strong> above to create your first skill category with custom skills and emojis!
           </p>
         </div>
@@ -38,12 +42,12 @@ export default function AdminCategoriesTable({
         <table className="admin-data-table">
           <thead>
             <tr>
-              <th style={{ whiteSpace: 'nowrap' }}>Category ID</th>
+              <th className="nowrap-cell">Category ID</th>
               <th>Category Name</th>
               <th>Skills Count &amp; Tags</th>
               <th>Members</th>
               <th>Status</th>
-              <th style={{ whiteSpace: 'nowrap' }}>Actions</th>
+              <th className="nowrap-cell">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -53,21 +57,20 @@ export default function AdminCategoriesTable({
 
               return (
                 <tr key={cat.id || cat._id}>
-                  <td style={{ whiteSpace: 'nowrap' }}>
+                  <td className="nowrap-cell">
                     <span className="user-id-badge" title={`Full ID: ${cat.id || cat._id}`}>
                       {formattedId}
                     </span>
                   </td>
-                  <td style={{ whiteSpace: 'nowrap' }}>
-                    <span style={{ fontSize: '1.25rem', marginRight: '0.5rem' }}>{cat.icon || '⚡'}</span>
+                  <td className="nowrap-cell">
+                    <span className="category-icon-preview">{cat.icon || '⚡'}</span>
                     <strong>{cat.name}</strong>
                   </td>
                   <td>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <div className="category-info-col">
+                      <div className="category-row-top">
                         <span 
-                          className="pill pill-violet" 
-                          style={{ fontSize: '0.76rem', padding: '0.2rem 0.55rem', fontWeight: 700, cursor: 'pointer' }}
+                          className="pill pill-violet category-skill-pill" 
                           onClick={() => onManageSkills && onManageSkills(cat)}
                           title="Click to manage skills in this category"
                         >
@@ -85,7 +88,7 @@ export default function AdminCategoriesTable({
                       </div>
 
                       {skillsList.length > 0 ? (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', maxWidth: '340px' }}>
+                        <div className="category-skills-tags-wrap">
                           {skillsList.slice(0, 3).map((skill, idx) => (
                             <span 
                               key={idx} 
@@ -105,17 +108,17 @@ export default function AdminCategoriesTable({
                           )}
                         </div>
                       ) : (
-                        <span className="text-subtle" style={{ fontSize: '0.74rem', fontStyle: 'italic' }}>
+                        <span className="text-subtle category-no-skills-msg">
                           No skills added yet
                         </span>
                       )}
                     </div>
                   </td>
-                  <td style={{ whiteSpace: 'nowrap' }}>{cat.count || cat.memberCount || 0} Members</td>
+                  <td className="nowrap-cell">{cat.count || cat.memberCount || 0} Members</td>
                   <td>
                     <span className="pill pill-active">{cat.status || 'Active'}</span>
                   </td>
-                  <td style={{ whiteSpace: 'nowrap' }}>
+                  <td className="nowrap-cell">
                     <div className="table-actions-row">
                       {onManageSkills && (
                         <button

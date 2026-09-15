@@ -37,85 +37,85 @@ export default function ContactPage() {
 
       <Navbar />
 
-      <main className="public-content-container" style={{ maxWidth: '1080px', margin: '2.5rem auto 4rem', padding: '0 1.5rem' }}>
+      <main className="public-content-container">
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-          <span className="pill-badge pill-purple" style={{ marginBottom: '0.8rem', display: 'inline-block' }}>
+        <div className="contact-header">
+          <span className="pill-badge pill-purple">
             💬 Get in Touch
           </span>
-          <h1 style={{ fontSize: '2.4rem', fontFamily: 'var(--font-display)', fontWeight: 800, color: 'var(--slate-900, #0f172a)', margin: '0.4rem 0 0.8rem' }}>
+          <h1 className="contact-title">
             We'd Love to Hear From You
           </h1>
-          <p style={{ fontSize: '1.05rem', color: 'var(--slate-600, #475569)', maxWidth: '600px', margin: '0 auto', lineHeight: '1.6' }}>
+          <p className="contact-subtitle">
             Have questions about credits, swap sessions, partnership opportunities, or safety reports? Reach out directly.
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem' }}>
+        <div className="contact-grid-2col">
           {/* Contact Details Card */}
-          <div className="glass-panel clay-card-3d" style={{ padding: '2.5rem', borderRadius: '28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div className="glass-panel clay-card-3d contact-info-card">
             <div>
-              <h3 style={{ fontSize: '1.4rem', fontFamily: 'var(--font-display)', fontWeight: 700, marginBottom: '1.2rem', color: 'var(--slate-900)' }}>
+              <h3 className="contact-section-title">
                 Support &amp; Community Channels
               </h3>
-              <p style={{ fontSize: '0.92rem', color: 'var(--slate-600)', lineHeight: '1.7', marginBottom: '2rem' }}>
+              <p className="contact-section-desc">
                 Our team responds to all member inquiries within 24 hours. For active session disputes, use the in-app dispute button or contact us here.
               </p>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <div style={{ width: '42px', height: '42px', borderRadius: '14px', background: 'rgba(108, 92, 231, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
+              <div className="contact-channels-list">
+                <div className="contact-channel-row">
+                  <div className="contact-channel-icon violet">
                     ✉️
                   </div>
                   <div>
-                    <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--slate-500)', display: 'block' }}>Email Support</span>
-                    <strong style={{ fontSize: '0.95rem', color: 'var(--slate-800)' }}>support@skillloop.com</strong>
+                    <span className="contact-channel-label">Email Support</span>
+                    <strong className="contact-channel-value">support@skillloop.com</strong>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <div style={{ width: '42px', height: '42px', borderRadius: '14px', background: 'rgba(16, 185, 129, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
+                <div className="contact-channel-row">
+                  <div className="contact-channel-icon mint">
                     🛡️
                   </div>
                   <div>
-                    <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--slate-500)', display: 'block' }}>Safety &amp; Moderation</span>
-                    <strong style={{ fontSize: '0.95rem', color: 'var(--slate-800)' }}>safety@skillloop.com</strong>
+                    <span className="contact-channel-label">Safety &amp; Moderation</span>
+                    <strong className="contact-channel-value">safety@skillloop.com</strong>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <div style={{ width: '42px', height: '42px', borderRadius: '14px', background: 'rgba(254, 202, 87, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
+                <div className="contact-channel-row">
+                  <div className="contact-channel-icon gold">
                     📍
                   </div>
                   <div>
-                    <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--slate-500)', display: 'block' }}>Global Headquarters</span>
-                    <strong style={{ fontSize: '0.95rem', color: 'var(--slate-800)' }}>Online Community Hub • Worldwide</strong>
+                    <span className="contact-channel-label">Global Headquarters</span>
+                    <strong className="contact-channel-value">Online Community Hub • Worldwide</strong>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div style={{ marginTop: '2rem', padding: '1.2rem', background: 'rgba(108, 92, 231, 0.08)', borderRadius: '18px', border: '1px solid rgba(108, 92, 231, 0.15)' }}>
-              <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--violet-primary)' }}>💡 Quick Tip:</span>
-              <p style={{ fontSize: '0.82rem', color: 'var(--slate-600)', margin: '0.25rem 0 0 0', lineHeight: '1.5' }}>
+            <div className="contact-tip-box">
+              <span className="contact-tip-heading">💡 Quick Tip:</span>
+              <p className="contact-tip-text">
                 You can report suspicious profiles or spam directly from any member's profile using the flag button.
               </p>
             </div>
           </div>
 
           {/* Interactive Message Form */}
-          <div className="glass-panel clay-card-3d" style={{ padding: '2.5rem', borderRadius: '28px' }}>
-            <h3 style={{ fontSize: '1.4rem', fontFamily: 'var(--font-display)', fontWeight: 700, marginBottom: '1.2rem', color: 'var(--slate-900)' }}>
+          <div className="glass-panel clay-card-3d contact-form-card">
+            <h3 className="contact-section-title">
               Send Us a Message
             </h3>
 
             {submitted ? (
-              <div style={{ padding: '2rem 1.5rem', textAlign: 'center', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '20px' }}>
-                <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '0.75rem' }}>✅</span>
-                <h4 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#10b981', margin: '0 0 0.5rem' }}>
+              <div className="contact-success-box">
+                <span className="contact-success-icon">✅</span>
+                <h4 className="contact-success-title">
                   Message Sent Successfully!
                 </h4>
-                <p style={{ fontSize: '0.9rem', color: 'var(--slate-600)', lineHeight: '1.6', margin: '0 0 1.5rem' }}>
+                <p className="contact-success-desc">
                   Thank you for reaching out. Our support team has received your ticket and will respond via email shortly.
                 </p>
                 <button type="button" className="action-btn" onClick={() => setSubmitted(false)}>
@@ -123,9 +123,9 @@ export default function ContactPage() {
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+              <form onSubmit={handleSubmit} className="contact-form-stack">
                 <div className="form-group">
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--slate-700)', marginBottom: '0.35rem' }}>
+                  <label className="contact-input-label">
                     Your Name *
                   </label>
                   <input
@@ -133,15 +133,14 @@ export default function ContactPage() {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    className="form-input"
+                    className="form-input contact-full-width-control"
                     placeholder="e.g. Harsh Vishwakarma"
                     required
-                    style={{ width: '100%', boxSizing: 'border-box' }}
                   />
                 </div>
 
                 <div className="form-group">
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--slate-700)', marginBottom: '0.35rem' }}>
+                  <label className="contact-input-label">
                     Email Address *
                   </label>
                   <input
@@ -149,23 +148,21 @@ export default function ContactPage() {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className="form-input"
+                    className="form-input contact-full-width-control"
                     placeholder="e.g. harsh@gmail.com"
                     required
-                    style={{ width: '100%', boxSizing: 'border-box' }}
                   />
                 </div>
 
                 <div className="form-group">
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--slate-700)', marginBottom: '0.35rem' }}>
+                  <label className="contact-input-label">
                     Subject / Topic
                   </label>
                   <select
                     name="subject"
                     value={formData.subject}
                     onChange={handleChange}
-                    className="form-input"
-                    style={{ width: '100%', boxSizing: 'border-box' }}
+                    className="form-input contact-full-width-control"
                   >
                     <option value="General Inquiry">General Inquiry</option>
                     <option value="Credits & Ledger Issue">Credits &amp; Ledger Issue</option>
@@ -176,7 +173,7 @@ export default function ContactPage() {
                 </div>
 
                 <div className="form-group">
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--slate-700)', marginBottom: '0.35rem' }}>
+                  <label className="contact-input-label">
                     Message *
                   </label>
                   <textarea
@@ -184,18 +181,16 @@ export default function ContactPage() {
                     rows="4"
                     value={formData.message}
                     onChange={handleChange}
-                    className="form-textarea-styled"
+                    className="form-textarea-styled contact-full-width-control"
                     placeholder="Describe how we can help you..."
                     required
-                    style={{ width: '100%', boxSizing: 'border-box' }}
                   />
                 </div>
 
                 <button
                   type="submit"
-                  className="btn btn-primary"
+                  className="btn btn-primary contact-submit-btn"
                   disabled={loading}
-                  style={{ width: '100%', padding: '0.85rem', fontSize: '0.95rem', justifyContent: 'center', marginTop: '0.5rem' }}
                 >
                   {loading ? 'Sending Message...' : 'Send Message ✉️'}
                 </button>

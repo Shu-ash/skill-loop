@@ -379,7 +379,7 @@ export default function AdminCategoriesPage() {
           <AdminSidebar activeTab={activeTab} onSelectTab={setActiveTab} />
 
           <main className="admin-main-content">
-            <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+            <div className="page-header admin-categories-header">
               <div>
                 <h2>Skill Categories &amp; Skills Directory</h2>
                 <p>Manage platform categories, nested skill tags, and member classifications in real-time.</p>
@@ -427,19 +427,18 @@ export default function AdminCategoriesPage() {
       {skillsModal.open && skillsModal.category && (
         <div className="modal-overlay" onClick={() => setSkillsModal(prev => ({ ...prev, open: false }))}>
           <div 
-            className="glass-panel logout-confirm-box clay-card-3d" 
-            onClick={(e) => e.stopPropagation()} 
-            style={{ maxWidth: '580px', width: '94%', maxHeight: '90vh', overflowY: 'auto', padding: '2.2rem 2rem', borderRadius: '24px' }}
+            className="glass-panel logout-confirm-box clay-card-3d category-manager-modal-box" 
+            onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header with Icon & Category Name */}
-            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <span style={{ fontSize: '2rem' }}>{skillsModal.category.icon || '⚡'}</span>
+            <div className="modal-header category-manager-header">
+              <div className="category-manager-title-group">
+                <span className="category-manager-title-icon">{skillsModal.category.icon || '⚡'}</span>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '1.3rem', fontFamily: 'var(--font-display)' }}>
+                  <h3 className="category-manager-title">
                     {skillsModal.category.name} — Skills ({skillsModal.category.skills?.length || 0})
                   </h3>
-                  <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--slate-500)' }}>
+                  <p className="category-manager-subtitle">
                     Add or remove skills taught and learned under this category
                   </p>
                 </div>
@@ -448,50 +447,47 @@ export default function AdminCategoriesPage() {
             </div>
 
             {skillsModal.success && (
-              <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '12px', padding: '0.65rem 0.85rem', fontSize: '0.84rem', fontWeight: 600, marginBottom: '1rem' }}>
+              <div className="category-manager-alert-success">
                 ✓ {skillsModal.success}
               </div>
             )}
 
             {/* Quick Add Skill to This Category Form */}
-            <form onSubmit={handleAddSkillInManager} style={{ marginBottom: '1.2rem' }}>
-              <label style={{ display: 'block', fontWeight: 700, fontSize: '0.88rem', color: 'var(--slate-700)', marginBottom: '0.4rem' }}>
+            <form onSubmit={handleAddSkillInManager} className="category-manager-form">
+              <label className="category-manager-label">
                 ➕ Add New Skill(s) to "{skillsModal.category.name}"
               </label>
-              <div style={{ display: 'flex', gap: '0.6rem' }}>
+              <div className="category-manager-row">
                 <input
-                  className="form-input"
+                  className="form-input category-manager-input"
                   type="text"
                   value={skillsModal.newSkillInput}
                   onChange={(e) => setSkillsModal(prev => ({ ...prev, newSkillInput: e.target.value }))}
                   placeholder="e.g. Next.js, Flutter, Docker (or comma-separated)"
-                  style={{ flex: 1, padding: '0.75rem 1rem', borderRadius: '12px' }}
                   disabled={skillsModal.loading}
                   autoFocus
                 />
                 <button
                   type="submit"
-                  className="btn btn-primary"
+                  className="btn btn-primary category-manager-btn"
                   disabled={skillsModal.loading || !skillsModal.newSkillInput.trim()}
-                  style={{ padding: '0.75rem 1.35rem', borderRadius: '12px', whiteSpace: 'nowrap', fontWeight: 700 }}
                 >
                   {skillsModal.loading ? 'Adding...' : '+ Add Skill'}
                 </button>
               </div>
-              <span style={{ fontSize: '0.74rem', color: 'var(--slate-400)', display: 'block', marginTop: '0.35rem' }}>
+              <span className="category-manager-tip">
                 💡 Tip: You can add multiple skills at once by separating them with commas (e.g. <code>React Native, SwiftUI, Kotlin</code>).
               </span>
             </form>
 
             {/* Search filter for skills in this category */}
-            <div style={{ marginBottom: '0.85rem' }}>
+            <div className="category-manager-search-box">
               <input
-                className="form-input"
+                className="form-input category-manager-search-input"
                 type="text"
                 value={skillsModal.search}
                 onChange={(e) => setSkillsModal(prev => ({ ...prev, search: e.target.value }))}
                 placeholder={`Search among ${(skillsModal.category.skills || []).length} skills...`}
-                style={{ width: '100%', padding: '0.6rem 0.9rem', fontSize: '0.84rem', borderRadius: '10px' }}
               />
             </div>
 
@@ -508,16 +504,7 @@ export default function AdminCategoriesPage() {
                     <button
                       type="button"
                       onClick={() => handleRemoveSkillInManager(skill)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#ef4444',
-                        cursor: 'pointer',
-                        padding: '0 0.15rem',
-                        fontWeight: 800,
-                        fontSize: '0.92rem',
-                        lineHeight: 1
-                      }}
+                      className="category-chip-remove-btn"
                       title={`Remove "${skill}" from category`}
                     >
                       ✕
@@ -525,22 +512,21 @@ export default function AdminCategoriesPage() {
                   </span>
                 ))
               ) : (
-                <div style={{ textAlign: 'center', width: '100%', padding: '1.5rem 0', color: 'var(--slate-400)', fontSize: '0.86rem' }}>
+                <div className="category-manager-empty-text">
                   {skillsModal.search ? 'No matching skills found.' : 'No skills in this category yet. Type a skill name above!'}
                 </div>
               )}
             </div>
 
             {/* Modal Footer */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.82rem', color: 'var(--slate-500)' }}>
+            <div className="category-manager-footer">
+              <span className="category-manager-footer-meta">
                 Total: <strong>{skillsModal.category.skills?.length || 0} skills</strong> saved in MongoDB
               </span>
               <button
                 type="button"
-                className="btn btn-secondary"
+                className="btn btn-secondary category-manager-done-btn"
                 onClick={() => setSkillsModal(prev => ({ ...prev, open: false }))}
-                style={{ padding: '0.65rem 1.4rem', borderRadius: '12px' }}
               >
                 Done
               </button>
@@ -552,22 +538,22 @@ export default function AdminCategoriesPage() {
       {/* FULL CATEGORY CREATE / EDIT MODAL */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="glass-panel logout-confirm-box clay-card-3d" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px', width: '94%', maxHeight: '90vh', overflowY: 'auto' }}>
+          <div className="glass-panel logout-confirm-box clay-card-3d category-edit-modal-box" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                <span style={{ fontSize: '1.5rem' }}>{catIcon}</span>
-                <h3 style={{ margin: 0 }}>{modalMode === 'edit' ? 'Edit Category & Skills' : 'Add New Category'}</h3>
+              <div className="admin-action-modal-header">
+                <span className="category-form-icon-preview">{catIcon}</span>
+                <h3 className="admin-action-modal-title">{modalMode === 'edit' ? 'Edit Category & Skills' : 'Add New Category'}</h3>
               </div>
               <button type="button" className="close-modal-btn" onClick={() => setShowModal(false)}>✕</button>
             </div>
 
             <form onSubmit={handleSaveCategory} className="edit-profile-form">
               {/* Category Emoji Picker */}
-              <div className="form-group" style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-                  <span style={{ fontWeight: 600, fontSize: '0.86rem', color: 'var(--slate-700)' }}>Category Icon *</span>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--violet-primary, #6c5ce7)', fontWeight: 700 }}>
-                    Selected: <span style={{ fontSize: '1.3rem', verticalAlign: 'middle' }}>{catIcon}</span>
+              <div className="form-group category-form-group">
+                <label className="category-form-label-row">
+                  <span className="category-form-label-text">Category Icon *</span>
+                  <span className="category-form-selected-badge">
+                    Selected: <span className="category-form-selected-emoji">{catIcon}</span>
                   </span>
                 </label>
                 
@@ -578,46 +564,44 @@ export default function AdminCategoriesPage() {
               </div>
 
               {/* Category Name */}
-              <div className="form-group" style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontWeight: 600, fontSize: '0.86rem', color: 'var(--slate-700)', marginBottom: '0.35rem' }}>
+              <div className="form-group category-form-group">
+                <label className="category-form-label-text">
                   Category Name *
                 </label>
                 <input 
-                  className="form-input" 
+                  className="form-input category-form-full-input" 
                   type="text" 
                   value={catName} 
                   onChange={(e) => setCatName(e.target.value)} 
                   placeholder="e.g. Web Development, Design & Creative, AI & ML"
                   required
-                  style={{ width: '100%', boxSizing: 'border-box' }}
                 />
               </div>
 
               {/* Category Description */}
-              <div className="form-group" style={{ marginBottom: '1.1rem' }}>
-                <label style={{ display: 'block', fontWeight: 600, fontSize: '0.86rem', color: 'var(--slate-700)', marginBottom: '0.35rem' }}>
+              <div className="form-group category-form-group">
+                <label className="category-form-label-text">
                   Description
                 </label>
                 <input 
-                  className="form-input" 
+                  className="form-input category-form-full-input" 
                   type="text" 
                   value={catDesc} 
                   onChange={(e) => setCatDesc(e.target.value)} 
                   placeholder="e.g. Learn frontend, backend, APIs, and modern frameworks"
-                  style={{ width: '100%', boxSizing: 'border-box' }}
                 />
               </div>
 
               {/* Skills under this Category */}
-              <div className="form-group" style={{ marginBottom: '1.4rem' }}>
-                <label style={{ display: 'block', fontWeight: 600, fontSize: '0.86rem', color: 'var(--slate-700)', marginBottom: '0.35rem' }}>
+              <div className="form-group category-form-group-lg">
+                <label className="category-form-label-text">
                   🎯 Skills inside this Category ({skillsList.length})
                 </label>
 
                 {/* Add Skill Input Row */}
-                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                <div className="category-manager-row category-manager-search-box">
                   <input
-                    className="form-input"
+                    className="form-input category-manager-input"
                     type="text"
                     value={skillInput}
                     onChange={(e) => setSkillInput(e.target.value)}
@@ -628,53 +612,30 @@ export default function AdminCategoriesPage() {
                       }
                     }}
                     placeholder="Type skill (e.g. React JS, Python, Figma) and press Enter"
-                    style={{ flex: 1 }}
                   />
                   <button
                     type="button"
-                    className="btn btn-secondary btn-pill-sm"
+                    className="btn btn-secondary btn-pill-sm category-manager-btn"
                     onClick={handleAddSkillTag}
-                    style={{ padding: '0.5rem 1rem', whiteSpace: 'nowrap' }}
                   >
                     + Add Skill
                   </button>
                 </div>
 
                 {/* Skill Tag Chips */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', minHeight: '40px', padding: '0.6rem', background: 'rgba(241, 245, 249, 0.7)', borderRadius: '12px', border: '1px solid rgba(226, 232, 240, 0.8)' }}>
+                <div className="category-chips-display-box">
                   {skillsList.length > 0 ? (
                     skillsList.map((skill, idx) => (
                       <span
                         key={idx}
-                        style={{
-                          background: 'white',
-                          color: 'var(--violet-primary, #6c5ce7)',
-                          border: '1px solid rgba(108, 92, 231, 0.25)',
-                          borderRadius: '10px',
-                          padding: '0.3rem 0.65rem',
-                          fontSize: '0.82rem',
-                          fontWeight: 600,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.4rem',
-                          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.04)'
-                        }}
+                        className="category-edit-chip"
                       >
                         <span>⚡</span>
                         <span>{skill}</span>
                         <button
                           type="button"
                           onClick={() => handleRemoveSkillTag(skill)}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            color: '#ef4444',
-                            cursor: 'pointer',
-                            padding: '0 0.2rem',
-                            fontWeight: 700,
-                            fontSize: '0.9rem',
-                            lineHeight: 1
-                          }}
+                          className="category-chip-remove-btn"
                           title={`Remove ${skill}`}
                         >
                           ✕
@@ -682,14 +643,14 @@ export default function AdminCategoriesPage() {
                       </span>
                     ))
                   ) : (
-                    <span style={{ fontSize: '0.82rem', color: 'var(--slate-400)', fontStyle: 'italic', alignSelf: 'center', margin: 'auto' }}>
+                    <span className="category-chips-empty">
                       No skills added yet. Type above and click "+ Add Skill".
                     </span>
                   )}
                 </div>
               </div>
 
-              <div className="modal-action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+              <div className="modal-action-buttons admin-action-modal-actions">
                 <button type="button" className="action-btn" onClick={() => setShowModal(false)}>
                   Cancel
                 </button>

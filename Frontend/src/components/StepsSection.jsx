@@ -18,7 +18,7 @@ export default function StepsSection() {
         <div className="steps-grid steps-grid-4">
           {steps.map(step => (
             <div key={step.num} className="glass-panel step-card clay-card-3d">
-              <div className="step-number-badge" style={{ background: step.bg }}>{step.num}</div>
+              <div className={`step-number-badge step-badge-${step.num}`}>{step.num}</div>
               <h3>{step.title}</h3>
               <p>{step.desc}</p>
             </div>

@@ -6,6 +6,7 @@ import Sidebar from '../components/Sidebar';
 import MobileNav from '../components/MobileNav';
 import SessionCard from '../components/SessionCard';
 import ReviewModal from '../components/ReviewModal';
+import SkillLoopLoader from '../components/SkillLoopLoader';
 import { fetchWithAuth, getAuthStatus } from '../utils/auth';
 
 const API_URL = 'http://localhost:5000/api';
@@ -412,9 +413,12 @@ export default function SessionsPage() {
             )}
 
             {loading ? (
-              <div className="glass-panel empty-requests-card">
-                Loading sessions...
-              </div>
+              <SkillLoopLoader
+                title="Loading Swap Sessions"
+                subtitle="Retrieving scheduled meetings, active calls & past history from MongoDB..."
+                badgeText="MongoDB Live Sync"
+                variant="card"
+              />
             ) : sessions.length > 0 ? (
               <div className="sessions-list">
                 {sessions.map((session) => (

@@ -5,6 +5,7 @@ import Sidebar from '../components/Sidebar';
 import MobileNav from '../components/MobileNav';
 import BrowseSearch from '../components/BrowseSearch';
 import MemberCard from '../components/MemberCard';
+import SkillLoopLoader from '../components/SkillLoopLoader';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -198,19 +199,23 @@ export default function BrowsePage() {
 
             <div className="browse-grid">
               {loading ? (
-                <div className="glass-panel empty-requests-card" style={{ gridColumn: '1 / -1', padding: '3rem 1rem', textAlign: 'center' }}>
-                  <span style={{ fontSize: '2rem', display: 'block', marginBottom: '0.5rem' }}>⏳</span>
-                  <p style={{ margin: 0, fontWeight: 600, color: 'var(--slate-600)' }}>Loading live community members from MongoDB...</p>
+                <div className="grid-col-full">
+                  <SkillLoopLoader
+                    title="Loading Community Members"
+                    subtitle="Connecting to MongoDB skill directory & live member profiles..."
+                    badgeText="MongoDB Live Sync"
+                    variant="card"
+                  />
                 </div>
               ) : filteredMembers.length > 0 ? (
                 filteredMembers.map((member) => (
                   <MemberCard key={member.id} member={member} />
                 ))
               ) : (
-                <div className="glass-panel empty-requests-card" style={{ gridColumn: '1 / -1', padding: '3.5rem 1.5rem', textAlign: 'center', borderRadius: '24px' }}>
-                  <span style={{ fontSize: '3rem', display: 'block', marginBottom: '0.75rem' }}>🔍</span>
-                  <h3 style={{ margin: '0 0 0.5rem 0', fontWeight: 700, color: 'var(--slate-800)' }}>No Other Members Found</h3>
-                  <p style={{ color: 'var(--slate-500)', fontSize: '0.92rem', maxWidth: '420px', margin: '0 auto', lineHeight: '1.6' }}>
+                <div className="glass-panel empty-requests-card empty-card-full">
+                  <span className="empty-card-icon">🔍</span>
+                  <h3 className="empty-card-title">No Other Members Found</h3>
+                  <p className="empty-card-desc">
                     {searchQuery ? `No members matched "${searchQuery}". Try searching for another skill.` : selectedCategory !== 'All categories' ? `No other members found offering skills in "${selectedCategory}".` : 'When other members or friends sign up, they will appear here!'}
                   </p>
                 </div>

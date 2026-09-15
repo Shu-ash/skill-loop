@@ -176,7 +176,7 @@ export default function Sidebar({ user: propUser }) {
                     </div>
                     <span className="menu-text">{item.label}</span>
                     {!isCollapsed && item.badge ? (
-                      <span className="subnav-badge-count" style={{ marginLeft: 'auto' }}>
+                      <span className="subnav-badge-count">
                         {item.badge}
                       </span>
                     ) : null}
@@ -189,15 +189,21 @@ export default function Sidebar({ user: propUser }) {
 
         {/* User Sidebar Bottom Profile Section */}
         <div className="user-sidebar-bottom">
-          <Link to="/profile" className="user-chip-link" style={{ marginBottom: '0.65rem' }}>
-            <div className="subnav-avatar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700, fontSize: '0.82rem', background: 'var(--violet-primary, #6c5ce7)', flexShrink: 0 }}>
-              {currentUser.avatar}
+          <Link to="/profile" className="user-chip-link sidebar-user-chip">
+            <div className="subnav-avatar sidebar-avatar-fallback">
+              {currentUser.profilePhotoUrl || (typeof currentUser.avatar === 'string' && (currentUser.avatar.startsWith('data:image') || currentUser.avatar.startsWith('http'))) ? (
+                <img src={currentUser.profilePhotoUrl || currentUser.avatar} alt={currentUser.name} className="avatar-round-img" />
+              ) : (
+                (typeof currentUser.avatar === 'string' && currentUser.avatar.length <= 4 && !currentUser.avatar.includes('/')
+                  ? currentUser.avatar
+                  : (currentUser.name || 'SL').trim().split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase() || 'SL')
+              )}
             </div>
-            <div className="subnav-user-text" style={{ minWidth: 0, overflow: 'hidden' }}>
-              <div style={{ fontWeight: 700, fontSize: '0.84rem', color: 'var(--slate-800)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div className="subnav-user-text sidebar-user-text">
+              <div className="sidebar-user-name">
                 {currentUser.name}
               </div>
-              <div style={{ fontSize: '0.74rem', color: 'var(--slate-500)' }}>
+              <div className="sidebar-user-credits">
                 🪙 {currentUser.credits} credits
               </div>
             </div>
@@ -205,9 +211,8 @@ export default function Sidebar({ user: propUser }) {
 
           <button 
             type="button" 
-            className="user-menu-item-btn" 
+            className="user-menu-item-btn logout-btn" 
             onClick={() => setShowLogoutModal(true)}
-            style={{ color: 'var(--coral-primary, #ff7675)' }}
             title="Log out of SkillLoop"
           >
             <div className="sidebar-icon-wrapper">
@@ -221,45 +226,25 @@ export default function Sidebar({ user: propUser }) {
       {/* Logout Confirmation Modal Portal */}
       {showLogoutModal && typeof document !== 'undefined' && createPortal(
         <div 
-          className="modal-overlay" 
+          className="modal-overlay modal-overlay-portal" 
           onClick={() => setShowLogoutModal(false)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.65)',
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
-            zIndex: 999999,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '1.25rem'
-          }}
         >
           <div 
-            className="glass-panel clay-card-3d" 
+            className="glass-panel clay-card-3d logout-modal-card" 
             onClick={(e) => e.stopPropagation()} 
-            style={{
-              maxWidth: '420px',
-              width: '100%',
-              borderRadius: '24px',
-              padding: '2.2rem 2rem',
-              textAlign: 'center'
-            }}
           >
-            <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '0.6rem' }}>🚪</span>
-            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.35rem', fontFamily: 'var(--font-display)' }}>
+            <span className="logout-modal-icon">🚪</span>
+            <h3 className="logout-modal-title">
               Confirm Logout
             </h3>
-            <p style={{ margin: '0 0 1.5rem 0', color: 'var(--slate-500)', fontSize: '0.92rem' }}>
+            <p className="logout-modal-desc">
               Are you sure you want to sign out of your SkillLoop account?
             </p>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.85rem' }}>
+            <div className="logout-modal-actions">
               <button 
                 type="button" 
                 className="btn btn-secondary" 
                 onClick={() => setShowLogoutModal(false)}
-                style={{ padding: '0.7rem 1.4rem', borderRadius: '14px' }}
               >
                 Cancel
               </button>
@@ -267,7 +252,6 @@ export default function Sidebar({ user: propUser }) {
                 type="button" 
                 className="btn btn-primary btn-danger" 
                 onClick={handleLogout}
-                style={{ padding: '0.7rem 1.6rem', borderRadius: '14px', background: 'var(--coral-primary, #ff7675)', borderColor: 'var(--coral-primary, #ff7675)', fontWeight: 700 }}
               >
                 Sign Out ↪
               </button>

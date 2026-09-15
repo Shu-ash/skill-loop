@@ -159,6 +159,8 @@ export default function DashboardPage() {
 
       } catch (err) {
         console.error('Failed to load dashboard data:', err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -194,7 +196,10 @@ export default function DashboardPage() {
               sessionsTaught={stats.sessionsTaught}
             />
 
-            <RecommendedMatchesSection recommendations={recommendations} />
+            <RecommendedMatchesSection 
+              recommendations={recommendations} 
+              loading={loading} 
+            />
           </main>
         </div>
 

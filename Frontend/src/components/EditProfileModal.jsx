@@ -151,63 +151,40 @@ export default function EditProfileModal({ isOpen, user, availability = {}, onCl
 
   const modalJSX = (
     <div
-      className="modal-overlay"
+      className="modal-overlay modal-overlay-portal"
       onClick={onClose}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.65)',
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
-        zIndex: 999999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1.25rem'
-      }}
     >
       <div
-        className="glass-panel edit-profile-modal-box clay-card-3d"
+        className="glass-panel clay-card-3d user-modal-lg user-modal-scrollable"
         onClick={(e) => e.stopPropagation()}
-        style={{
-          maxWidth: '560px',
-          width: '100%',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          borderRadius: '24px',
-          padding: '2rem 2.2rem'
-        }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-          <h3 style={{ margin: 0, fontSize: '1.35rem', fontFamily: 'var(--font-display)' }}>
+        <div className="user-modal-header">
+          <h3 className="user-modal-title">
             ✏️ Edit Profile &amp; Skills
           </h3>
-          <button type="button" className="close-modal-btn" onClick={onClose} title="Close">✕</button>
+          <button type="button" className="close-modal-btn user-modal-close-btn" onClick={onClose} title="Close">✕</button>
         </div>
 
         {/* Modal Navigation Tabs */}
-        <div style={{ display: 'flex', gap: '0.4rem', borderBottom: '1px solid rgba(226, 232, 240, 0.8)', paddingBottom: '0.75rem', marginTop: '0.75rem' }}>
+        <div className="modal-tab-bar">
           <button
             type="button"
-            className={`action-btn ${activeTab === 'basic' ? 'btn-primary' : ''}`}
+            className={`action-btn modal-tab-btn ${activeTab === 'basic' ? 'btn-primary' : ''}`}
             onClick={() => setActiveTab('basic')}
-            style={{ fontSize: '0.82rem', padding: '0.4rem 0.85rem' }}
           >
             👤 Basic Details
           </button>
           <button
             type="button"
-            className={`action-btn ${activeTab === 'skills' ? 'btn-primary' : ''}`}
+            className={`action-btn modal-tab-btn ${activeTab === 'skills' ? 'btn-primary' : ''}`}
             onClick={() => setActiveTab('skills')}
-            style={{ fontSize: '0.82rem', padding: '0.4rem 0.85rem' }}
           >
             🎓 Skills &amp; Categories ({formData.skillsCanTeach.length + formData.skillsWantToLearn.length})
           </button>
           <button
             type="button"
-            className={`action-btn ${activeTab === 'availability' ? 'btn-primary' : ''}`}
+            className={`action-btn modal-tab-btn ${activeTab === 'availability' ? 'btn-primary' : ''}`}
             onClick={() => setActiveTab('availability')}
-            style={{ fontSize: '0.82rem', padding: '0.4rem 0.85rem' }}
           >
             📅 Availability
           </button>
@@ -216,66 +193,62 @@ export default function EditProfileModal({ isOpen, user, availability = {}, onCl
         <form onSubmit={handleSubmit} className="edit-profile-form modal-body-padded">
           {/* TAB 1: BASIC DETAILS */}
           {activeTab === 'basic' && (
-            <div style={{ paddingTop: '1rem' }}>
-              <div className="form-group" style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontWeight: 600, fontSize: '0.86rem', color: 'var(--slate-700, #334155)', marginBottom: '0.35rem' }}>
+            <div className="tab-pane-content">
+              <div className="form-group user-modal-form-group">
+                <label className="form-label user-modal-label">
                   Display Name *
                 </label>
                 <input
-                  className="form-input"
+                  className="form-input user-modal-input"
                   type="text"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
                   placeholder="e.g. Harsh Vishwakarma"
                   required
-                  style={{ width: '100%', boxSizing: 'border-box' }}
                 />
               </div>
 
-              <div className="form-group" style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontWeight: 600, fontSize: '0.86rem', color: 'var(--slate-700, #334155)', marginBottom: '0.35rem' }}>
+              <div className="form-group user-modal-form-group">
+                <label className="form-label user-modal-label">
                   Username / Handle *
                 </label>
                 <input
-                  className="form-input"
+                  className="form-input user-modal-input"
                   type="text"
                   name="username"
                   value={formData.username}
                   onChange={handleChange}
                   placeholder="e.g. Harsh_developer"
                   required
-                  style={{ width: '100%', boxSizing: 'border-box' }}
                 />
               </div>
 
-              <div className="form-group" style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontWeight: 600, fontSize: '0.86rem', color: 'var(--slate-700, #334155)', marginBottom: '0.35rem' }}>
+              <div className="form-group user-modal-form-group">
+                <label className="form-label user-modal-label">
                   Short Headline
                 </label>
                 <input
-                  className="form-input"
+                  className="form-input user-modal-input"
                   type="text"
                   name="headline"
                   value={formData.headline}
                   onChange={handleChange}
                   placeholder="e.g. Full Stack React Developer & UI Enthusiast"
-                  style={{ width: '100%', boxSizing: 'border-box' }}
                 />
               </div>
 
-              <div className="form-group" style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontWeight: 600, fontSize: '0.86rem', color: 'var(--slate-700, #334155)', marginBottom: '0.35rem' }}>
+              <div className="form-group user-modal-form-group">
+                <label className="form-label user-modal-label">
                   About Bio
                 </label>
                 <textarea
-                  className="form-textarea-styled"
+                  className="form-textarea-styled user-modal-textarea"
                   name="bio"
                   rows="3"
                   value={formData.bio}
                   onChange={handleChange}
                   placeholder="Tell the community about yourself, your projects, and what you love learning..."
-                  style={{ width: '100%', boxSizing: 'border-box' }}
                 />
               </div>
             </div>
@@ -283,11 +256,11 @@ export default function EditProfileModal({ isOpen, user, availability = {}, onCl
 
           {/* TAB 2: SKILLS & CATEGORIES (FETCHED LIVE FROM MONGODB) */}
           {activeTab === 'skills' && (
-            <div style={{ paddingTop: '1rem' }}>
+            <div className="tab-pane-content">
               {/* SECTION: SKILLS I CAN TEACH */}
-              <div style={{ background: 'rgba(248, 250, 252, 0.75)', padding: '1rem 1.1rem', borderRadius: '16px', border: '1px solid rgba(226, 232, 240, 0.8)', marginBottom: '1.25rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem' }}>
-                  <label style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--violet-primary, #6c5ce7)' }}>
+              <div className="skill-editor-box">
+                <div className="skill-editor-box-header">
+                  <label className="skill-editor-label-teach">
                     🎓 Skills I Can Teach
                   </label>
                   
@@ -296,7 +269,7 @@ export default function EditProfileModal({ isOpen, user, availability = {}, onCl
                     name="skillLevel"
                     value={formData.skillLevel}
                     onChange={handleChange}
-                    style={{ fontSize: '0.78rem', padding: '0.2rem 0.5rem', borderRadius: '8px', border: '1px solid var(--slate-300)' }}
+                    className="skill-cat-select"
                   >
                     <option value="beginner">Beginner</option>
                     <option value="intermediate">Intermediate</option>
@@ -305,44 +278,33 @@ export default function EditProfileModal({ isOpen, user, availability = {}, onCl
                 </div>
 
                 {/* Active Teach Skills Chips */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.85rem' }}>
+                <div className="skill-chips-wrap">
                   {formData.skillsCanTeach.map(skill => (
                     <span 
                       key={skill}
-                      style={{
-                        background: 'var(--violet-subtle, #f0edff)',
-                        color: 'var(--violet-primary, #6c5ce7)',
-                        border: '1px solid rgba(108, 92, 231, 0.3)',
-                        borderRadius: '9999px',
-                        padding: '0.28rem 0.75rem',
-                        fontSize: '0.82rem',
-                        fontWeight: 600,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.45rem'
-                      }}
+                      className="skill-chip-teach"
                     >
                       ⚡ {skill}
                       <button 
                         type="button" 
                         onClick={() => handleRemoveTeachSkill(skill)}
-                        style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--violet-primary)', fontWeight: 700, padding: '0 2px' }}
+                        className="skill-chip-del-btn teach"
                       >
                         ✕
                       </button>
                     </span>
                   ))}
                   {formData.skillsCanTeach.length === 0 && (
-                    <span style={{ fontSize: '0.8rem', color: 'var(--slate-500)' }}>No teach skills added yet.</span>
+                    <span className="user-modal-subtitle">No teach skills added yet.</span>
                   )}
                 </div>
 
                 {/* Live Category Picker & Custom Input */}
-                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.65rem', flexWrap: 'wrap' }}>
+                <div className="skill-add-input-row">
                   <select 
                     value={selectedTeachCategory}
                     onChange={(e) => setSelectedTeachCategory(e.target.value)}
-                    style={{ padding: '0.45rem 0.65rem', borderRadius: '10px', border: '1px solid var(--slate-300)', fontSize: '0.82rem', fontWeight: 600 }}
+                    className="skill-cat-select"
                   >
                     {categoriesList.map(cat => (
                       <option key={cat.id || cat.name} value={cat.name}>
@@ -363,22 +325,21 @@ export default function EditProfileModal({ isOpen, user, availability = {}, onCl
                       } 
                     }}
                     placeholder="Type custom skill..."
-                    style={{ flex: 1, minWidth: '130px', padding: '0.45rem 0.75rem', borderRadius: '10px', border: '1px solid var(--slate-300)', fontSize: '0.82rem' }}
+                    className="skill-add-input"
                   />
 
                   <button 
                     type="button" 
-                    className="action-btn btn-primary"
+                    className="action-btn btn-primary skill-add-btn"
                     onClick={() => handleAddTeachSkill()}
-                    style={{ fontSize: '0.82rem', padding: '0.45rem 0.95rem' }}
                   >
                     + Add Skill
                   </button>
                 </div>
 
                 {/* Live Category Suggestions from MongoDB */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.74rem', color: 'var(--slate-500)', fontWeight: 600 }}>Live suggestions:</span>
+                <div className="skill-suggestions-row">
+                  <span className="skill-suggestions-label">Live suggestions:</span>
                   {teachSuggestions.map(item => {
                     const isAlreadyAdded = formData.skillsCanTeach.some(s => s.toLowerCase() === item.toLowerCase());
                     return (
@@ -386,23 +347,14 @@ export default function EditProfileModal({ isOpen, user, availability = {}, onCl
                         key={item}
                         type="button"
                         onClick={() => handleAddTeachSkill(item)}
-                        style={{
-                          background: isAlreadyAdded ? 'var(--violet-subtle, #f0edff)' : 'white',
-                          border: `1px ${isAlreadyAdded ? 'solid var(--violet-primary)' : 'dashed var(--slate-300)'}`,
-                          borderRadius: '12px',
-                          padding: '0.2rem 0.55rem',
-                          fontSize: '0.74rem',
-                          fontWeight: isAlreadyAdded ? 700 : 500,
-                          color: isAlreadyAdded ? 'var(--violet-primary)' : 'var(--slate-600)',
-                          cursor: 'pointer'
-                        }}
+                        className={`suggestion-pill-btn teach ${isAlreadyAdded ? 'active' : ''}`}
                       >
                         {isAlreadyAdded ? `✓ ${item}` : `+ ${item}`}
                       </button>
                     );
                   })}
                   {teachSuggestions.length === 0 && (
-                    <span style={{ fontSize: '0.75rem', color: 'var(--slate-400)', fontStyle: 'italic' }}>
+                    <span className="user-modal-hint">
                       Type a custom skill above.
                     </span>
                   )}
@@ -410,50 +362,39 @@ export default function EditProfileModal({ isOpen, user, availability = {}, onCl
               </div>
 
               {/* SECTION: SKILLS I WANT TO LEARN */}
-              <div style={{ background: 'rgba(248, 250, 252, 0.75)', padding: '1rem 1.1rem', borderRadius: '16px', border: '1px solid rgba(226, 232, 240, 0.8)' }}>
-                <label style={{ display: 'block', fontWeight: 700, fontSize: '0.88rem', color: 'var(--coral-primary, #ff7675)', marginBottom: '0.65rem' }}>
+              <div className="skill-editor-box">
+                <label className="skill-editor-label-learn">
                   🎯 Skills I Want to Learn
                 </label>
 
                 {/* Active Learn Skills Chips */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.85rem' }}>
+                <div className="skill-chips-wrap">
                   {formData.skillsWantToLearn.map(skill => (
                     <span 
                       key={skill}
-                      style={{
-                        background: 'rgba(255, 118, 117, 0.12)',
-                        color: '#d63031',
-                        border: '1px solid rgba(255, 118, 117, 0.3)',
-                        borderRadius: '9999px',
-                        padding: '0.28rem 0.75rem',
-                        fontSize: '0.82rem',
-                        fontWeight: 600,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.45rem'
-                      }}
+                      className="skill-chip-learn"
                     >
                       🎯 {skill}
                       <button 
                         type="button" 
                         onClick={() => handleRemoveLearnSkill(skill)}
-                        style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#d63031', fontWeight: 700, padding: '0 2px' }}
+                        className="skill-chip-del-btn learn"
                       >
                         ✕
                       </button>
                     </span>
                   ))}
                   {formData.skillsWantToLearn.length === 0 && (
-                    <span style={{ fontSize: '0.8rem', color: 'var(--slate-500)' }}>No learning goals added yet.</span>
+                    <span className="user-modal-subtitle">No learning goals added yet.</span>
                   )}
                 </div>
 
                 {/* Live Category Picker & Custom Input */}
-                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.65rem', flexWrap: 'wrap' }}>
+                <div className="skill-add-input-row">
                   <select 
                     value={selectedLearnCategory}
                     onChange={(e) => setSelectedLearnCategory(e.target.value)}
-                    style={{ padding: '0.45rem 0.65rem', borderRadius: '10px', border: '1px solid var(--slate-300)', fontSize: '0.82rem', fontWeight: 600 }}
+                    className="skill-cat-select"
                   >
                     {categoriesList.map(cat => (
                       <option key={cat.id || cat.name} value={cat.name}>
@@ -474,22 +415,21 @@ export default function EditProfileModal({ isOpen, user, availability = {}, onCl
                       } 
                     }}
                     placeholder="Type skill you want to learn..."
-                    style={{ flex: 1, minWidth: '130px', padding: '0.45rem 0.75rem', borderRadius: '10px', border: '1px solid var(--slate-300)', fontSize: '0.82rem' }}
+                    className="skill-add-input"
                   />
 
                   <button 
                     type="button" 
-                    className="action-btn btn-primary"
+                    className="action-btn btn-primary skill-add-btn"
                     onClick={() => handleAddLearnSkill()}
-                    style={{ fontSize: '0.82rem', padding: '0.45rem 0.95rem' }}
                   >
                     + Add Goal
                   </button>
                 </div>
 
                 {/* Live Category Suggestions from MongoDB */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.74rem', color: 'var(--slate-500)', fontWeight: 600 }}>Live suggestions:</span>
+                <div className="skill-suggestions-row">
+                  <span className="skill-suggestions-label">Live suggestions:</span>
                   {learnSuggestions.map(item => {
                     const isAlreadyAdded = formData.skillsWantToLearn.some(s => s.toLowerCase() === item.toLowerCase());
                     return (
@@ -497,23 +437,14 @@ export default function EditProfileModal({ isOpen, user, availability = {}, onCl
                         key={item}
                         type="button"
                         onClick={() => handleAddLearnSkill(item)}
-                        style={{
-                          background: isAlreadyAdded ? 'rgba(255, 118, 117, 0.15)' : 'white',
-                          border: `1px ${isAlreadyAdded ? 'solid #ff7675' : 'dashed var(--slate-300)'}`,
-                          borderRadius: '12px',
-                          padding: '0.2rem 0.55rem',
-                          fontSize: '0.74rem',
-                          fontWeight: isAlreadyAdded ? 700 : 500,
-                          color: isAlreadyAdded ? '#d63031' : 'var(--slate-600)',
-                          cursor: 'pointer'
-                        }}
+                        className={`suggestion-pill-btn learn ${isAlreadyAdded ? 'active' : ''}`}
                       >
                         {isAlreadyAdded ? `✓ ${item}` : `+ ${item}`}
                       </button>
                     );
                   })}
                   {learnSuggestions.length === 0 && (
-                    <span style={{ fontSize: '0.75rem', color: 'var(--slate-400)', fontStyle: 'italic' }}>
+                    <span className="user-modal-hint">
                       Type a custom skill above.
                     </span>
                   )}
@@ -524,46 +455,46 @@ export default function EditProfileModal({ isOpen, user, availability = {}, onCl
 
           {/* TAB 3: AVAILABILITY & SESSION MODE */}
           {activeTab === 'availability' && (
-            <div style={{ paddingTop: '1rem' }}>
-              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-                <label style={{ display: 'block', fontWeight: 600, fontSize: '0.86rem', color: 'var(--slate-700, #334155)', marginBottom: '0.65rem' }}>
+            <div className="tab-pane-content">
+              <div className="form-group user-modal-form-group spacing-lg">
+                <label className="form-label user-modal-label">
                   Preferred Meeting Days
                 </label>
                 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer', fontSize: '0.88rem' }}>
+                <div className="checkbox-vertical-group">
+                  <label className="user-modal-checkbox-row cursor-pointer">
                     <input
                       type="checkbox"
                       name="weekdayEvenings"
                       checked={formData.weekdayEvenings}
                       onChange={handleChange}
-                      style={{ width: '18px', height: '18px', accentColor: 'var(--violet-primary)' }}
+                      className="user-modal-checkbox"
                     />
                     🌙 Available on Weekday Evenings (after 6 PM)
                   </label>
 
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer', fontSize: '0.88rem' }}>
+                  <label className="user-modal-checkbox-row cursor-pointer">
                     <input
                       type="checkbox"
                       name="weekendMornings"
                       checked={formData.weekendMornings}
                       onChange={handleChange}
-                      style={{ width: '18px', height: '18px', accentColor: 'var(--violet-primary)' }}
+                      className="user-modal-checkbox"
                     />
                     ☀️ Available on Weekend Mornings (10 AM - 2 PM)
                   </label>
                 </div>
               </div>
 
-              <div className="form-group" style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontWeight: 600, fontSize: '0.86rem', color: 'var(--slate-700, #334155)', marginBottom: '0.35rem' }}>
+              <div className="form-group user-modal-form-group">
+                <label className="form-label user-modal-label">
                   Session Mode
                 </label>
                 <select
                   name="sessionMode"
                   value={formData.sessionMode}
                   onChange={handleChange}
-                  style={{ width: '100%', padding: '0.6rem 0.85rem', borderRadius: '10px', border: '1px solid var(--slate-300)', fontSize: '0.86rem' }}
+                  className="form-select-styled user-modal-input"
                 >
                   <option value="Online Video Only">🎥 Online Video Call Only</option>
                   <option value="In Person & Online">🤝 In Person &amp; Online</option>
@@ -574,11 +505,11 @@ export default function EditProfileModal({ isOpen, user, availability = {}, onCl
           )}
 
           {/* Action Buttons */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid rgba(226, 232, 240, 0.8)' }}>
-            <button type="button" className="action-btn" onClick={onClose} style={{ padding: '0.65rem 1.2rem', borderRadius: '12px' }}>
+          <div className="user-modal-actions user-modal-actions-border">
+            <button type="button" className="action-btn user-modal-btn-cancel" onClick={onClose}>
               Cancel
             </button>
-            <button type="submit" className="btn btn-primary" style={{ padding: '0.65rem 1.4rem', borderRadius: '12px', fontWeight: 700 }}>
+            <button type="submit" className="btn btn-primary user-modal-btn-submit">
               Save Changes 💾
             </button>
           </div>

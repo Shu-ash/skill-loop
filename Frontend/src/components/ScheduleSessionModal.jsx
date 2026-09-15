@@ -73,83 +73,61 @@ export default function ScheduleSessionModal({
 
   const modalJSX = (
     <div 
-      className="modal-overlay" 
+      className="modal-overlay modal-overlay-portal" 
       onClick={onClose}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.65)',
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
-        zIndex: 999999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1.25rem'
-      }}
     >
       <div 
-        className="glass-panel clay-card-3d" 
+        className="glass-panel clay-card-3d user-modal-md user-modal-scrollable" 
         onClick={(e) => e.stopPropagation()} 
-        style={{
-          maxWidth: '500px',
-          width: '100%',
-          borderRadius: '24px',
-          padding: '2.2rem 2rem',
-          maxHeight: '90vh',
-          overflowY: 'auto'
-        }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <span style={{ fontSize: '1.8rem' }}>📅</span>
+        <div className="user-modal-header">
+          <div className="user-modal-header-lead">
+            <span className="user-modal-header-icon">📅</span>
             <div>
-              <h3 style={{ margin: 0, fontSize: '1.3rem', fontFamily: 'var(--font-display)' }}>
+              <h3 className="user-modal-title">
                 Schedule Session
               </h3>
-              <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--slate-500)' }}>
+              <p className="user-modal-subtitle">
                 Teaching <strong>{skillWant}</strong> to <strong>{partnerName}</strong>
               </p>
             </div>
           </div>
-          <button type="button" className="close-modal-btn" onClick={onClose}>✕</button>
+          <button type="button" className="close-modal-btn user-modal-close-btn" onClick={onClose}>✕</button>
         </div>
 
         {error && (
-          <div style={{ background: 'rgba(239, 68, 68, 0.12)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '12px', padding: '0.65rem 0.85rem', fontSize: '0.84rem', fontWeight: 600, marginBottom: '1.1rem' }}>
+          <div className="user-modal-error">
             ⚠️ {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit}>
           {/* Date & Time */}
-          <div className="form-group" style={{ marginBottom: '1.1rem' }}>
-            <label className="form-label" style={{ fontWeight: 600, fontSize: '0.88rem' }}>
+          <div className="form-group user-modal-form-group">
+            <label className="form-label user-modal-label">
               🗓️ Select Class Date &amp; Time *
             </label>
             <input
-              className="form-input"
+              className="form-input user-modal-input"
               type="datetime-local"
               min={getMinDateTime()}
               value={scheduledAt}
               onChange={(e) => setScheduledAt(e.target.value)}
               required
               disabled={loading}
-              style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '12px' }}
             />
           </div>
 
           {/* Duration */}
-          <div className="form-group" style={{ marginBottom: '1.1rem' }}>
-            <label className="form-label" style={{ fontWeight: 600, fontSize: '0.88rem' }}>
+          <div className="form-group user-modal-form-group">
+            <label className="form-label user-modal-label">
               ⏱️ Session Duration *
             </label>
             <select
-              className="form-input"
+              className="form-input user-modal-input"
               value={duration}
               onChange={(e) => setDuration(Number(e.target.value))}
               disabled={loading}
-              style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '12px' }}
             >
               <option value={15}>15 Minutes</option>
               <option value={30}>30 Minutes</option>
@@ -161,16 +139,15 @@ export default function ScheduleSessionModal({
           </div>
 
           {/* Mode */}
-          <div className="form-group" style={{ marginBottom: '1.1rem' }}>
-            <label className="form-label" style={{ fontWeight: 600, fontSize: '0.88rem' }}>
+          <div className="form-group user-modal-form-group">
+            <label className="form-label user-modal-label">
               📍 Session Mode
             </label>
             <select
-              className="form-input"
+              className="form-input user-modal-input"
               value={mode}
               onChange={(e) => setMode(e.target.value)}
               disabled={loading}
-              style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '12px' }}
             >
               <option value="online">🎥 Online Video Call (Google Meet)</option>
               <option value="in_person">🤝 In-Person Meeting</option>
@@ -179,58 +156,54 @@ export default function ScheduleSessionModal({
 
           {/* Video Meet Link */}
           {mode === 'online' && (
-            <div className="form-group" style={{ marginBottom: '1.1rem' }}>
-              <label className="form-label" style={{ fontWeight: 600, fontSize: '0.88rem' }}>
+            <div className="form-group user-modal-form-group">
+              <label className="form-label user-modal-label">
                 🎥 Google Meet / Zoom Link *
               </label>
               <input
-                className="form-input"
+                className="form-input user-modal-input"
                 type="url"
                 value={meetLink}
                 onChange={(e) => setMeetLink(e.target.value)}
                 placeholder="https://meet.google.com/abc-defg-hij"
                 required
                 disabled={loading}
-                style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '12px' }}
               />
-              <span style={{ fontSize: '0.75rem', color: 'var(--slate-500)', display: 'block', marginTop: '0.35rem' }}>
+              <span className="user-modal-hint">
                 🔒 <em>Note: The meeting link will stay locked for both participants and will automatically unlock when class time arrives.</em>
               </span>
             </div>
           )}
 
           {/* Notes for Student */}
-          <div className="form-group" style={{ marginBottom: '1.4rem' }}>
-            <label className="form-label" style={{ fontWeight: 600, fontSize: '0.88rem' }}>
+          <div className="form-group user-modal-form-group spacing-lg">
+            <label className="form-label user-modal-label">
               💬 Note for {partnerName} (Optional)
             </label>
             <textarea
-              className="form-input"
+              className="form-input user-modal-textarea"
               rows={2}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder={`Hi ${partnerName}! Looking forward to our session.`}
               disabled={loading}
-              style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '12px', resize: 'vertical' }}
             />
           </div>
 
           {/* Action Buttons */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.8rem' }}>
+          <div className="user-modal-actions">
             <button
               type="button"
-              className="btn btn-secondary"
+              className="btn btn-secondary user-modal-btn-cancel"
               onClick={onClose}
               disabled={loading}
-              style={{ padding: '0.75rem 1.25rem', borderRadius: '14px' }}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="btn btn-primary"
+              className="btn btn-primary user-modal-btn-submit"
               disabled={loading}
-              style={{ padding: '0.75rem 1.5rem', borderRadius: '14px', fontWeight: 700 }}
             >
               {loading ? 'Scheduling...' : 'Confirm & Schedule Class 🚀'}
             </button>

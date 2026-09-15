@@ -78,7 +78,7 @@ export default function SignupForm({ onSwitchToLogin }) {
   return (
     <form onSubmit={handleSubmit} className="auth-fade-form">
       {error && (
-        <div className="onboarding-error-banner profile-save-banner margin-bottom-xs" style={{ background: 'rgba(239, 68, 68, 0.12)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '12px', padding: '0.75rem 1rem', fontSize: '0.86rem', fontWeight: 600 }}>
+        <div className="onboarding-error-banner profile-save-banner margin-bottom-xs user-modal-error">
           ⚠️ {error}
         </div>
       )}
@@ -167,8 +167,8 @@ export default function SignupForm({ onSwitchToLogin }) {
 
       <button type="submit" className="btn btn-primary btn-full btn-auth-submit" disabled={loading}>
         {loading ? (
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span className="auth-spinner" style={{ display: 'inline-block', width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#ffffff', borderRadius: '50%', animation: 'spinAuth 0.8s linear infinite' }}></span>
+          <span className="btn-auth-submit-loading">
+            <span className="auth-spinner auth-spinner-circle"></span>
             Creating account...
           </span>
         ) : (

@@ -192,9 +192,7 @@ export const scheduleSession = async (
             duration
         } = req.body;
 
-        // =========================
-        // VALIDATE DATE
-        // =========================
+        // Validate Date
 
         if (!scheduledAt) {
             return res.status(400).json({
@@ -231,9 +229,7 @@ export const scheduleSession = async (
             });
         }
 
-        // =========================
-        // VALIDATE MODE
-        // =========================
+        // Validate Mode
 
         const selectedMode =
             mode || "online";
@@ -255,9 +251,7 @@ export const scheduleSession = async (
             });
         }
 
-        // =========================
-        // VALIDATE MEET LINK
-        // =========================
+        // Validate Meet Link
 
         if (
             selectedMode === "online" &&
@@ -271,9 +265,7 @@ export const scheduleSession = async (
             });
         }
 
-        // =========================
-        // VALIDATE DURATION
-        // =========================
+        // Validate Duration
 
         const selectedDuration =
             Number(duration ?? 45);
@@ -302,9 +294,7 @@ export const scheduleSession = async (
             });
         }
 
-        // =========================
-        // FIND SESSION
-        // =========================
+        // Find Session
 
         const session =
             await Session.findOne({
@@ -331,9 +321,7 @@ export const scheduleSession = async (
             });
         }
 
-        // =========================
-        // STATUS CHECK
-        // =========================
+        // Status Check
 
         if (
             session.status ===
@@ -368,9 +356,7 @@ export const scheduleSession = async (
             });
         }
 
-        // =========================
-        // SAVE
-        // =========================
+        // Save
 
         session.scheduledAt =
             parsedDate;

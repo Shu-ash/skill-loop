@@ -93,11 +93,7 @@ export const sendOtpEmail = async ({ to, otp, purpose, name = 'Community Member'
     </html>
   `;
 
-  console.log(`\n======================================================`);
-  console.log(`📧 [EMAIL SERVICE] OTP SENT TO: ${to}`);
-  console.log(`🔑 PURPOSE: ${purpose.toUpperCase()}`);
-  console.log(`⭐ 6-DIGIT OTP CODE: [ ${otp} ]`);
-  console.log(`======================================================\n`);
+  console.log(`📧 [EMAIL SERVICE] OTP SENT TO: ${to} | PURPOSE: ${purpose.toUpperCase()} | OTP: [ ${otp} ]`);
 
   try {
     const transporter = createTransporter();

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import MobileNav from '../components/MobileNav';
+import SkillLoopLoader from '../components/SkillLoopLoader';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -76,11 +77,7 @@ export default function ReviewsPage() {
       stars.push(
         <span
           key={i}
-          style={{
-            color: i <= rounded ? '#f59e0b' : '#cbd5e1',
-            fontSize: '1.25rem',
-            marginRight: '2px'
-          }}
+          className={i <= rounded ? 'star-active' : 'star-muted'}
         >
           ★
         </span>
@@ -149,13 +146,13 @@ export default function ReviewsPage() {
             </div>
 
             {error && (
-              <div className="glass-panel onboarding-error-banner" style={{ marginBottom: '1.5rem' }}>
+              <div className="glass-panel onboarding-error-banner">
                 {error}
               </div>
             )}
 
             {/* Overview Summary Card */}
-            <div className="glass-panel reviews-summary-card clay-card-3d" style={{ marginBottom: '1.5rem', padding: '1.75rem' }}>
+            <div className="glass-panel reviews-summary-card clay-card-3d">
               <div className="reviews-summary-grid">
                 {/* Left: Rating Score */}
                 <div className="reviews-score-col">
@@ -185,17 +182,13 @@ export default function ReviewsPage() {
                         key={stars}
                         className="reviews-bar-row"
                         onClick={() => setSelectedFilter(selectedFilter === String(stars) ? 'all' : String(stars))}
-                        style={{ cursor: 'pointer' }}
                         title={`Filter by ${stars} stars (${count})`}
                       >
                         <span className="reviews-bar-label">{stars} ★</span>
                         <div className="reviews-bar-track">
                           <div
-                            className="reviews-bar-fill"
-                            style={{
-                              width: `${percent}%`,
-                              backgroundColor: stars >= 4 ? '#10b981' : stars === 3 ? '#f59e0b' : '#ef4444'
-                            }}
+                            className={`reviews-bar-fill ${stars >= 4 ? 'bar-green' : stars === 3 ? 'bar-amber' : 'bar-red'}`}
+                            style={{ width: `${percent}%` }}
                           />
                         </div>
                         <span className="reviews-bar-count">
@@ -209,7 +202,7 @@ export default function ReviewsPage() {
             </div>
 
             {/* Filter Pills */}
-            <div className="reviews-filter-pills-row" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+            <div className="reviews-filter-pills-row">
               <button
                 type="button"
                 className={`btn btn-pill-sm ${selectedFilter === 'all' ? 'btn-primary' : 'btn-secondary'}`}
@@ -231,20 +224,23 @@ export default function ReviewsPage() {
 
             {/* Loading State */}
             {loading ? (
-              <div className="glass-panel empty-requests-card" style={{ padding: '3rem', textAlign: 'center' }}>
-                <p>Loading your reviews...</p>
-              </div>
+              <SkillLoopLoader
+                title="Loading Member Reviews"
+                subtitle="Fetching verified peer feedback & rating distribution from MongoDB..."
+                badgeText="MongoDB Live Sync"
+                variant="card"
+              />
             ) : totalReviews === 0 ? (
               /* Completely Empty State */
-              <div className="glass-panel empty-requests-card" style={{ textAlign: 'center', padding: '3.5rem 1.5rem' }}>
-                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⭐</div>
-                <h3 style={{ fontSize: '1.35rem', marginBottom: '0.5rem', color: 'var(--slate-800)' }}>
+              <div className="glass-panel empty-requests-card empty-reviews-box">
+                <div className="empty-reviews-icon">⭐</div>
+                <h3 className="empty-reviews-title">
                   No Reviews Received Yet
                 </h3>
-                <p style={{ color: 'var(--slate-500)', maxWidth: '460px', margin: '0 auto 1.75rem', lineHeight: '1.6' }}>
+                <p className="empty-reviews-desc">
                   You haven't received any reviews yet. Complete skill swap sessions as a mentor or peer to earn verified feedback and build your SkillLoop reputation!
                 </p>
-                <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <div className="empty-action-btns-row">
                   <button type="button" className="btn btn-primary" onClick={() => navigate('/sessions')}>
                     📅 View My Sessions
                   </button>
@@ -255,8 +251,8 @@ export default function ReviewsPage() {
               </div>
             ) : filteredReviews.length === 0 ? (
               /* Filtered to 0 State */
-              <div className="glass-panel empty-requests-card" style={{ textAlign: 'center', padding: '3rem 1.5rem' }}>
-                <p style={{ color: 'var(--slate-500)', marginBottom: '1rem' }}>
+              <div className="glass-panel empty-requests-card empty-reviews-box-sm">
+                <p className="empty-reviews-desc">
                   No {selectedFilter}-star reviews found.
                 </p>
                 <button type="button" className="btn btn-secondary btn-pill-sm" onClick={() => setSelectedFilter('all')}>
@@ -265,7 +261,7 @@ export default function ReviewsPage() {
               </div>
             ) : (
               /* List of Reviews */
-              <div className="reviews-card-list" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="reviews-card-list">
                 {filteredReviews.map((rev) => {
                   const reviewer = rev.reviewer;
                   const reviewerName = getReviewerName(reviewer);
@@ -277,105 +273,55 @@ export default function ReviewsPage() {
                     <div
                       key={rev._id}
                       className="glass-panel review-card-item clay-card-3d"
-                      style={{
-                        padding: '1.25rem 1.5rem',
-                        borderRadius: '16px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '0.75rem'
-                      }}
                     >
                       {/* Review Top Row: Reviewer + Stars + Date */}
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          flexWrap: 'wrap',
-                          gap: '0.75rem'
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                          <div
-                            className="user-avatar"
-                            style={{
-                              width: '44px',
-                              height: '44px',
-                              borderRadius: '50%',
-                              background: 'var(--violet-primary)',
-                              color: '#fff',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontWeight: '700',
-                              fontSize: '1rem',
-                              flexShrink: 0,
-                              overflow: 'hidden'
-                            }}
-                          >
+                      <div className="review-top-row">
+                        <div className="review-author-group">
+                          <div className="user-avatar review-author-avatar">
                             {reviewer?.profilePhotoUrl ? (
                               <img
                                 src={reviewer.profilePhotoUrl}
                                 alt={reviewerName}
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                className="review-avatar-img"
                               />
                             ) : (
                               reviewerInitials
                             )}
                           </div>
                           <div>
-                            <h4 style={{ margin: 0, fontSize: '1rem', color: 'var(--slate-800)' }}>
+                            <h4 className="review-author-name">
                               {reviewerName}
                             </h4>
                             {reviewer?.headline && (
-                              <p style={{ margin: '0.1rem 0 0 0', fontSize: '0.8rem', color: 'var(--slate-500)' }}>
+                              <p className="review-author-headline">
                                 {reviewer.headline}
                               </p>
                             )}
                           </div>
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                            <span style={{ color: '#f59e0b', fontSize: '1rem', fontWeight: '700' }}>
-                              ★ {Number(rev.rating).toFixed(1)}
-                            </span>
+                        <div className="review-rating-group">
+                          <div className="review-rating-value">
+                            ★ {Number(rev.rating).toFixed(1)}
                           </div>
-                          <span style={{ fontSize: '0.82rem', color: 'var(--slate-400)' }}>
+                          <span className="review-date-text">
                             {formatReviewDate(rev.createdAt)}
                           </span>
                         </div>
                       </div>
 
                       {/* Context Badges: Skill Topic & Role */}
-                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                        <span
-                          className="pill-badge pill-violet"
-                          style={{ fontSize: '0.78rem', padding: '0.2rem 0.6rem' }}
-                        >
+                      <div className="review-badges-row">
+                        <span className="pill-badge pill-violet pill-compact">
                           📚 {skillTitle}
                         </span>
-                        <span
-                          className="pill-badge pill-mint"
-                          style={{ fontSize: '0.78rem', padding: '0.2rem 0.6rem' }}
-                        >
+                        <span className="pill-badge pill-mint pill-compact">
                           {rev.role === 'teacher' ? '🎓 Learner review' : '🤝 Peer swap review'}
                         </span>
                       </div>
 
                       {/* Comment text */}
-                      <div
-                        style={{
-                          background: 'rgba(255, 255, 255, 0.5)',
-                          padding: '0.85rem 1rem',
-                          borderRadius: '12px',
-                          border: '1px solid rgba(226, 232, 240, 0.6)',
-                          color: rev.comment ? 'var(--slate-700)' : 'var(--slate-400)',
-                          fontSize: '0.92rem',
-                          lineHeight: '1.5',
-                          fontStyle: rev.comment ? 'normal' : 'italic'
-                        }}
-                      >
+                      <div className={`review-comment-box ${!rev.comment ? 'italic' : ''}`}>
                         {rev.comment ? `"${rev.comment}"` : 'Member left a star rating without written feedback.'}
                       </div>
                     </div>

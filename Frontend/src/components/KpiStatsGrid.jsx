@@ -19,9 +19,8 @@ export default function KpiStatsGrid({ credits = 0, activeSwaps = 0, rating = '5
       {kpiItems.map((item) => (
         <div 
           key={item.id} 
-          className="glass-card kpi-card"
+          className="glass-card kpi-card kpi-card-clickable"
           onClick={() => navigate(item.path)}
-          style={{ cursor: 'pointer' }}
           title={`Click to view ${item.label}`}
         >
           <span className="kpi-icon">{item.icon}</span>

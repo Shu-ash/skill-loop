@@ -7,6 +7,35 @@ import { getAuthStatus } from '../utils/auth';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
+const renderMemberAvatar = (member) => {
+  if (!member) return 'SL';
+  const imgUrl = member.profilePhotoUrl || (typeof member.avatar === 'string' && (member.avatar.startsWith('data:image') || member.avatar.startsWith('http')) ? member.avatar : null);
+
+  if (imgUrl) {
+    return (
+      <img
+        src={imgUrl}
+        alt={member.name}
+        className="avatar-round-img"
+        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+      />
+    );
+  }
+
+  const initials = typeof member.avatar === 'string' && member.avatar.length <= 4 && !member.avatar.includes('/')
+    ? member.avatar
+    : (member.name || 'SL')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((p) => p[0])
+        .join('')
+        .toUpperCase() || 'SL';
+
+  return initials;
+};
+
 export default function MemberCard({ member }) {
   const navigate = useNavigate();
   const {
@@ -104,11 +133,8 @@ export default function MemberCard({ member }) {
       <div className="glass-panel member-card">
         <div>
           <div className="member-avatar-row">
-            <div
-              className="user-avatar"
-              style={{ background: avatarBg || 'var(--violet-primary)' }}
-            >
-              {avatar}
+            <div className="user-avatar member-avatar-circle">
+              {renderMemberAvatar(member)}
             </div>
 
             <span className="rating-text">
@@ -164,7 +190,7 @@ export default function MemberCard({ member }) {
       {/* Guest Auth Modal rendered directly to body via Portal */}
       {showAuthModal && createPortal(
         <div className="modal-overlay full-viewport-blur-overlay" onClick={() => setShowAuthModal(false)}>
-          <div className="glass-panel logout-confirm-box clay-card-3d" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px' }}>
+          <div className="glass-panel logout-confirm-box clay-card-3d modal-box-sm" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>🔒 Login Required</h3>
               <button type="button" className="close-modal-btn" onClick={() => setShowAuthModal(false)}>✕</button>
@@ -188,33 +214,33 @@ export default function MemberCard({ member }) {
       {/* Center Screen Swap Request Modal with Full Member Details rendered directly to body via Portal */}
       {showRequestModal && createPortal(
         <div className="modal-overlay full-viewport-blur-overlay" onClick={() => setShowRequestModal(false)}>
-          <div className="glass-panel swap-request-center-modal clay-card-3d" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px' }}>
+          <div className="glass-panel swap-request-center-modal clay-card-3d modal-box-md" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div className="swap-modal-user-header">
-                <div className="user-avatar" style={{ background: avatarBg || 'var(--violet-primary)', width: '52px', height: '52px', fontSize: '1.2rem', fontWeight: '700' }}>
-                  {avatar}
+                <div className="user-avatar swap-modal-avatar">
+                  {renderMemberAvatar(member)}
                 </div>
                 <div>
-                  <div className="swap-modal-name-row" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <h3 style={{ margin: 0 }}>{name}</h3>
-                    <span className="rating-text" style={{ fontSize: '0.82rem', color: '#f59e0b', fontWeight: '600' }}>
+                  <div className="swap-modal-name-row">
+                    <h3 className="swap-modal-name-title">{name}</h3>
+                    <span className="rating-text swap-modal-rating">
                       {rating || '⭐ 5.0'}
                     </span>
                   </div>
-                  <p className="text-subtle" style={{ margin: '0.15rem 0 0 0', fontSize: '0.85rem' }}>{title}</p>
+                  <p className="text-subtle swap-modal-headline">{title}</p>
                 </div>
               </div>
               <button type="button" className="close-modal-btn" onClick={() => setShowRequestModal(false)}>✕</button>
             </div>
 
             {/* Member Teaching Skills Preview */}
-            <div className="swap-modal-member-details glass-panel margin-bottom-xs" style={{ background: 'rgba(255, 255, 255, 0.6)', padding: '0.85rem 1rem', borderRadius: '16px', border: '1px solid rgba(226, 232, 240, 0.8)' }}>
-              <div style={{ fontSize: '0.78rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--slate-500)', marginBottom: '0.35rem' }}>
+            <div className="swap-modal-member-details glass-panel margin-bottom-xs swap-skills-preview-box">
+              <div className="swap-skills-preview-title">
                 Skills {name} Can Teach:
               </div>
               <div className="tag-picker">
                 {skills.map((skill, idx) => (
-                  <span key={idx} className="pill-badge pill-violet" style={{ fontSize: '0.78rem', padding: '0.2rem 0.6rem' }}>
+                  <span key={idx} className="pill-badge pill-violet swap-skill-pill">
                     {skill}
                   </span>
                 ))}
@@ -223,7 +249,7 @@ export default function MemberCard({ member }) {
 
             {/* Skill Selection */}
             <div className="form-group margin-bottom-xs">
-              <label className="form-label" style={{ fontWeight: '600', fontSize: '0.85rem' }}>Skill you want to learn *</label>
+              <label className="form-label modal-form-label">Skill you want to learn *</label>
               <select
                 className="form-select-styled"
                 value={selectedSkill}
@@ -238,7 +264,7 @@ export default function MemberCard({ member }) {
 
             {/* Message Box */}
             <div className="form-group margin-bottom-xs">
-              <label className="form-label" style={{ fontWeight: '600', fontSize: '0.85rem' }}>Message for {name}</label>
+              <label className="form-label modal-form-label">Message for {name}</label>
               <textarea
                 className="form-textarea-styled"
                 rows={3}
@@ -250,18 +276,18 @@ export default function MemberCard({ member }) {
             </div>
 
             {error && (
-              <div className="onboarding-error-banner margin-bottom-xs" style={{ background: '#fee2e2', color: '#dc2626' }}>
+              <div className="onboarding-error-banner margin-bottom-xs alert-banner-danger">
                 ⚠️ {error}
               </div>
             )}
 
             {success && (
-              <div className="request-success-banner margin-bottom-xs" style={{ background: '#ecfdf5', color: '#10b981', padding: '0.75rem', borderRadius: '12px', textAlign: 'center', fontWeight: '600' }}>
+              <div className="request-success-banner margin-bottom-xs alert-banner-success">
                 ✓ {success}
               </div>
             )}
 
-            <div className="modal-action-buttons" style={{ marginTop: '1.2rem' }}>
+            <div className="modal-action-buttons modal-actions-spaced">
               <button type="button" className="btn btn-secondary" onClick={() => setShowRequestModal(false)} disabled={loading}>
                 Cancel
               </button>

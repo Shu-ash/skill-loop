@@ -1,0 +1,40 @@
+/* RouteProgressBar.css - Smooth Glowing Page Change Transition */
+
+.route-progress-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 999999;
+  pointer-events: none;
+  transition: opacity 0.25s ease-out;
+}
+
+.route-progress-wrapper.is-visible {
+  opacity: 1;
+}
+
+.route-progress-wrapper.is-hidden {
+  opacity: 0;
+}
+
+.route-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #2563EB 0%, #06B6D4 45%, #10B981 100%);
+  box-shadow: 0 0 10px rgba(37, 99, 235, 0.8), 0 0 20px rgba(16, 185, 129, 0.6);
+  transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.route-progress-glow {
+  position: absolute;
+  top: -2px;
+  right: 0;
+  width: 80px;
+  height: 7px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.9) 0%, rgba(37, 99, 235, 0) 70%);
+  filter: blur(2px);
+  transform: translateX(50%);
+  pointer-events: none;
+}

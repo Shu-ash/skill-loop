@@ -52,26 +52,25 @@ export default function ProfileHeaderCard({
         ref={coverInputRef} 
         onChange={handleCoverChange} 
         accept="image/*" 
-        style={{ display: 'none' }} 
+        className="hidden-file-input" 
       />
       <input 
         type="file" 
         ref={avatarInputRef} 
         onChange={handleAvatarChange} 
         accept="image/*" 
-        style={{ display: 'none' }} 
+        className="hidden-file-input" 
       />
 
       {/* Cover Gradient Banner with Custom Image Support */}
-      <div 
-        className="profile-cover-banner"
-        style={hasCustomCover ? {
-          backgroundImage: `url(${user.coverPhotoUrl})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
-        } : {}}
-      >
+      <div className="profile-cover-banner">
+        {hasCustomCover && (
+          <img 
+            src={user.coverPhotoUrl} 
+            alt="Cover" 
+            className="profile-cover-img" 
+          />
+        )}
         <div className="cover-actions-row">
           <button 
             type="button" 
@@ -117,15 +116,18 @@ export default function ProfileHeaderCard({
         <div className="profile-avatar-wrapper">
           <div 
             className="profile-avatar-large"
-            style={hasCustomAvatar ? {
-              backgroundImage: `url(${user.profilePhotoUrl || user.avatarUrl})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center'
-            } : {}}
             onClick={() => avatarInputRef.current?.click()}
             title="Click to change profile picture"
           >
-            {!hasCustomAvatar && initials}
+            {hasCustomAvatar ? (
+              <img 
+                src={user.profilePhotoUrl || user.avatarUrl} 
+                alt={user.name} 
+                className="profile-avatar-img" 
+              />
+            ) : (
+              initials
+            )}
             <div className="avatar-hover-overlay">
               <span>📷</span>
             </div>
@@ -137,7 +139,6 @@ export default function ProfileHeaderCard({
             <h2>{user.name}</h2>
             <span 
               className="profile-rating-badge" 
-              style={{ cursor: 'pointer' }}
               onClick={() => navigate('/reviews')}
               title="Click to view all your received reviews"
             >

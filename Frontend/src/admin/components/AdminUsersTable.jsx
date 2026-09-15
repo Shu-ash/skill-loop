@@ -1,5 +1,6 @@
 // src/admin/components/AdminUsersTable.jsx
 import React from 'react';
+import SkillLoopLoader from '../../components/SkillLoopLoader';
 
 export default function AdminUsersTable({ 
   users = [], 
@@ -16,34 +17,37 @@ export default function AdminUsersTable({
 
   return (
     <div className="admin-table-card">
-      <div className="table-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h3 className="table-header-title" style={{ margin: 0 }}>{title}</h3>
-        <span className="admin-count-pill" style={{ fontSize: '0.8rem', padding: '0.25rem 0.65rem', borderRadius: '12px', background: 'rgba(108, 92, 231, 0.1)', color: 'var(--violet-primary, #6c5ce7)', fontWeight: 600 }}>
+      <div className="table-header-row">
+        <h3 className="table-header-title">{title}</h3>
+        <span className="admin-count-pill">
           {loading ? 'Loading...' : `${userList.length} ${userList.length === 1 ? 'member' : 'members'}`}
         </span>
       </div>
 
       {loading ? (
-        <div style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--slate-500, #64748b)' }}>
-          Loading live members from MongoDB database...
-        </div>
+        <SkillLoopLoader
+          title="Loading Registered Members"
+          subtitle="Fetching member accounts, skill profiles & permissions from MongoDB..."
+          badgeText="MongoDB Live Sync"
+          variant="transparent"
+        />
       ) : userList.length === 0 ? (
-        <div style={{ padding: '3.5rem 1.5rem', textAlign: 'center', color: 'var(--slate-500, #64748b)' }}>
-          <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '0.5rem' }}>👥</span>
-          <h4 style={{ margin: '0 0 0.4rem 0', fontWeight: 700, color: 'var(--slate-800)' }}>No Members Found</h4>
-          <p style={{ margin: 0, fontSize: '0.9rem' }}>Registered community members will appear here in real-time.</p>
+        <div className="admin-table-empty">
+          <span className="admin-table-empty-icon">👥</span>
+          <h4 className="admin-table-empty-title">No Members Found</h4>
+          <p className="admin-table-empty-desc">Registered community members will appear here in real-time.</p>
         </div>
       ) : (
         <table className="admin-data-table">
           <thead>
             <tr>
-              <th style={{ whiteSpace: 'nowrap' }}>User ID</th>
+              <th className="nowrap-cell">User ID</th>
               <th>Name &amp; Handle</th>
               {showEmail && <th>Email</th>}
               {showRole && <th>Role</th>}
               <th>Credits</th>
               <th>Status</th>
-              {showActions && <th style={{ whiteSpace: 'nowrap' }}>Actions</th>}
+              {showActions && <th className="nowrap-cell">Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -53,14 +57,14 @@ export default function AdminUsersTable({
 
               return (
                 <tr key={u.id || u._id}>
-                  <td style={{ whiteSpace: 'nowrap' }}>
+                  <td className="nowrap-cell">
                     <span className="user-id-badge" title={`Full MongoDB ObjectId: ${u.id || u._id}`}>
                       {formattedId}
                     </span>
                   </td>
-                  <td style={{ whiteSpace: 'nowrap' }}>
+                  <td className="nowrap-cell">
                     <strong>{u.name}</strong>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--slate-500)' }}>{u.handle || `@${(u.email || '').split('@')[0]}`}</div>
+                    <div className="admin-user-handle">{u.handle || `@${(u.email || '').split('@')[0]}`}</div>
                   </td>
                   {showEmail && (
                     <td>
@@ -68,7 +72,7 @@ export default function AdminUsersTable({
                     </td>
                   )}
                   {showRole && (
-                    <td style={{ whiteSpace: 'nowrap' }}>
+                    <td className="nowrap-cell">
                       <span className={`pill ${isSuperAdmin ? 'pill-admin' : u.role === 'Admin' || u.role === 'admin' ? 'pill-admin' : 'pill-user'}`}>
                         {isSuperAdmin ? 'Super Admin' : (u.role || 'User')}
                       </span>
@@ -83,7 +87,7 @@ export default function AdminUsersTable({
                     </span>
                   </td>
                   {showActions && (
-                    <td style={{ whiteSpace: 'nowrap' }}>
+                    <td className="nowrap-cell">
                       <div className="table-actions-row">
                         {onViewDetails && (
                           <button

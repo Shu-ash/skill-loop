@@ -256,7 +256,7 @@ export default function ProfilePage() {
             </div>
 
             {savedSuccess && (
-              <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '12px', padding: '0.75rem 1rem', fontSize: '0.88rem', fontWeight: 600, marginBottom: '1.25rem' }}>
+              <div className="profile-success-banner">
                 ✓ {savedSuccess}
               </div>
             )}
@@ -271,7 +271,7 @@ export default function ProfilePage() {
             />
 
             {/* Side-by-Side 2-Column Editors Layout */}
-            <div className="profile-editors-grid" style={{ marginTop: '1.5rem' }}>
+            <div className="profile-editors-grid profile-editors-spacing">
               {/* Left Column: Read-Only Info & Availability & Profile Strength */}
               <div className="profile-editors-left">
                 <ProfileDetailsEditor

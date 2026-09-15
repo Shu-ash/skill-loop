@@ -1,38 +1,42 @@
 // src/admin/components/AdminReportsTable.jsx
 import React from 'react';
+import SkillLoopLoader from '../../components/SkillLoopLoader';
 
 export default function AdminReportsTable({ reports = [], title = "Moderation Queue Reports", onResolveReport, onViewDetails, loading = false }) {
   const list = Array.isArray(reports) ? reports : [];
 
   return (
     <div className="admin-table-card">
-      <div className="table-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h3 className="table-header-title" style={{ margin: 0 }}>{title}</h3>
-        <span className="admin-count-pill" style={{ fontSize: '0.8rem', padding: '0.25rem 0.65rem', borderRadius: '12px', background: 'rgba(108, 92, 231, 0.1)', color: 'var(--violet-primary, #6c5ce7)', fontWeight: 600 }}>
+      <div className="table-header-row">
+        <h3 className="table-header-title">{title}</h3>
+        <span className="admin-count-pill">
           {loading ? 'Loading...' : `${list.length} ${list.length === 1 ? 'report' : 'reports'}`}
         </span>
       </div>
 
       {loading ? (
-        <div style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--slate-500, #64748b)' }}>
-          Loading moderation queue from MongoDB...
-        </div>
+        <SkillLoopLoader
+          title="Loading Moderation Queue"
+          subtitle="Connecting to moderation logs & violation flags in MongoDB..."
+          badgeText="MongoDB Live Sync"
+          variant="transparent"
+        />
       ) : list.length === 0 ? (
-        <div style={{ padding: '3rem 1.5rem', textAlign: 'center', color: 'var(--slate-500, #64748b)' }}>
-          <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '0.5rem' }}>🛡️</span>
-          <h4 style={{ margin: '0 0 0.4rem 0', fontWeight: 700, color: 'var(--slate-800)' }}>No Moderation Reports</h4>
-          <p style={{ margin: 0, fontSize: '0.9rem' }}>The community is healthy. Any reported violations will appear here.</p>
+        <div className="admin-table-empty">
+          <span className="admin-table-empty-icon">🛡️</span>
+          <h4 className="admin-table-empty-title">No Moderation Reports</h4>
+          <p className="admin-table-empty-desc">The community is healthy. Any reported violations will appear here.</p>
         </div>
       ) : (
         <table className="admin-data-table">
           <thead>
             <tr>
-              <th style={{ whiteSpace: 'nowrap' }}>Report ID</th>
+              <th className="nowrap-cell">Report ID</th>
               <th>Reported By</th>
               <th>Reported User</th>
               <th>Reason</th>
               <th>Status</th>
-              <th style={{ whiteSpace: 'nowrap' }}>Actions</th>
+              <th className="nowrap-cell">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -40,20 +44,20 @@ export default function AdminReportsTable({ reports = [], title = "Moderation Qu
               const formattedId = r.displayId || `#REP-${(r.id || r._id || '').toString().slice(-6).toUpperCase()}`;
               return (
                 <tr key={r.id || r._id}>
-                  <td style={{ whiteSpace: 'nowrap' }}>
+                  <td className="nowrap-cell">
                     <span className="user-id-badge" title={`Full Report ID: ${r.id || r._id}`}>
                       {formattedId}
                     </span>
                   </td>
-                  <td style={{ whiteSpace: 'nowrap' }}>{r.reporterName || 'User'}</td>
-                  <td style={{ whiteSpace: 'nowrap' }}><strong>{r.reportedName || 'Member'}</strong></td>
+                  <td className="nowrap-cell">{r.reporterName || 'User'}</td>
+                  <td className="nowrap-cell"><strong>{r.reportedName || 'Member'}</strong></td>
                   <td>{r.reason}</td>
                   <td>
                     <span className={`pill ${r.status === 'Resolved' || r.status === 'resolved' ? 'pill-earned' : 'pill-spent'}`}>
                       {r.status || 'Pending'}
                     </span>
                   </td>
-                  <td style={{ whiteSpace: 'nowrap' }}>
+                  <td className="nowrap-cell">
                     <div className="table-actions-row">
                       {onViewDetails && (
                         <button
@@ -85,7 +89,7 @@ export default function AdminReportsTable({ reports = [], title = "Moderation Qu
                           </button>
                         </>
                       ) : (
-                        <span className="text-subtle" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Resolved</span>
+                        <span className="text-subtle report-resolved-label">Resolved</span>
                       )}
                     </div>
                   </td>

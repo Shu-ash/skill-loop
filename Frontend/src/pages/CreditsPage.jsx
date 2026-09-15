@@ -103,7 +103,7 @@ export default function CreditsPage() {
             {/* Grid Layout for Ledger & Explainer */}
             <div className="credits-body-grid">
               {/* Component 2: Transaction Ledger Table */}
-              <TransactionLedgerTable transactions={transactions} />
+              <TransactionLedgerTable transactions={transactions} loading={loading} />
 
               {/* Component 3: How Credits Work Card */}
               <CreditsHowItWorksCard />

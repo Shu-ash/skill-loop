@@ -211,44 +211,44 @@ export default function SessionCard({
   };
 
   return (
-    <div className="glass-panel session-card" style={{ padding: '1.8rem', borderRadius: '24px', marginBottom: '1.25rem' }}>
-      <div className="session-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.2rem' }}>
+    <div className="glass-panel session-card session-card-padded">
+      <div className="session-card-header">
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
+          <div className="session-badges-wrap">
             <span className={`pill-badge ${isCompleted ? 'pill-mint' : status === 'cancelled' ? 'pill-coral' : isUnlocked ? 'pill-mint' : 'pill-violet'}`}>
               ● {getStatusLabel()}
             </span>
-            <span className="pill-badge pill-white" style={{ fontSize: '0.78rem' }}>
+            <span className="pill-badge pill-white session-badge-sm">
               {isTeacher ? '🎓 You are the Teacher' : '🎒 You are the Student'}
             </span>
 
-            <span className="pill-badge pill-white" style={{ fontSize: '0.78rem' }}>
+            <span className="pill-badge pill-white session-badge-sm">
               ⏱️ {durationMins} Mins
             </span>
 
             {/* Student Join Status Indicator */}
             {isTeacher && !isCompleted && status !== 'cancelled' && (
               learnerJoined ? (
-                <span className="pill-badge pill-mint" style={{ fontSize: '0.78rem', fontWeight: 600 }}>
+                <span className="pill-badge pill-mint session-badge-sm-bold">
                   🟢 {partnerName} has joined
                 </span>
               ) : (
-                <span className="pill-badge pill-gold" style={{ fontSize: '0.78rem', fontWeight: 600 }}>
+                <span className="pill-badge pill-gold session-badge-sm-bold">
                   ⏳ Student not joined yet
                 </span>
               )
             )}
           </div>
 
-          <h3 style={{ margin: '0 0 0.35rem 0', fontSize: '1.3rem', fontFamily: 'var(--font-display)' }}>
+          <h3 className="session-card-title">
             {title}
           </h3>
-          <p className="session-partner-sub" style={{ margin: 0, color: 'var(--slate-500)', fontSize: '0.9rem' }}>
+          <p className="session-partner-sub">
             {isTeacher ? `Student: ${partnerName}` : `Teacher: ${partnerName}`} • <strong>{date}</strong> at <strong>{time}</strong> ({durationMins} mins)
           </p>
         </div>
 
-        <div className="partner-avatar-circle" style={{ width: '48px', height: '48px', borderRadius: '50%', background: isTeacher ? 'var(--coral-primary)' : 'var(--violet-primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '1.1rem' }}>
+        <div className={`partner-avatar-circle ${isTeacher ? 'partner-avatar-teacher' : 'partner-avatar-student'}`}>
           {partnerAvatar}
         </div>
       </div>
@@ -269,11 +269,10 @@ export default function SessionCard({
               onChange={(e) => setScheduledAtInput(e.target.value)}
               disabled={actionLoading}
             />
-            <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem', flexWrap: 'wrap' }}>
+            <div className="session-preset-buttons-row">
               <button
                 type="button"
-                className="btn btn-secondary btn-pill-sm"
-                style={{ fontSize: '0.75rem', padding: '3px 8px' }}
+                className="btn btn-secondary btn-pill-sm session-preset-btn"
                 onClick={() => setPresetDateTime(0)}
                 disabled={actionLoading}
                 title="Schedule for right now"
@@ -282,8 +281,7 @@ export default function SessionCard({
               </button>
               <button
                 type="button"
-                className="btn btn-secondary btn-pill-sm"
-                style={{ fontSize: '0.75rem', padding: '3px 8px' }}
+                className="btn btn-secondary btn-pill-sm session-preset-btn"
                 onClick={() => setPresetDateTime(10)}
                 disabled={actionLoading}
                 title="Schedule for 10 minutes from now"
@@ -292,8 +290,7 @@ export default function SessionCard({
               </button>
               <button
                 type="button"
-                className="btn btn-secondary btn-pill-sm"
-                style={{ fontSize: '0.75rem', padding: '3px 8px' }}
+                className="btn btn-secondary btn-pill-sm session-preset-btn"
                 onClick={() => setPresetDateTime(24 * 60)}
                 disabled={actionLoading}
                 title="Schedule for tomorrow at current time"
@@ -371,37 +368,27 @@ export default function SessionCard({
 
       {/* Session Lock/Unlock/Expired Status */}
       {status === 'scheduled' && scheduledAt && validSessionStartTime && (
-        <div className="glass-panel scheduled-banner" style={{
-          background: isBeforeSession
-            ? 'rgba(251, 191, 36, 0.1)'
+        <div className={`glass-panel scheduled-banner session-status-banner ${
+          isBeforeSession
+            ? 'is-locked'
             : isDuringSession
-              ? 'rgba(16, 185, 129, 0.1)'
+              ? 'is-live'
               : isJoined
-                ? 'rgba(16, 185, 129, 0.1)'
-                : 'rgba(239, 68, 68, 0.1)',
-          border: `1px solid ${isBeforeSession
-            ? 'rgba(251, 191, 36, 0.3)'
-            : isDuringSession
-              ? 'rgba(16, 185, 129, 0.3)'
-              : isJoined
-                ? 'rgba(16, 185, 129, 0.3)'
-                : 'rgba(239, 68, 68, 0.3)'}`,
-          padding: '0.75rem 1rem',
-          borderRadius: '12px',
-          marginTop: '0.5rem'
-        }}>
+                ? 'is-ended'
+                : 'is-expired'
+        }`}>
           {isBeforeSession && (
             <>
-              <strong style={{ color: '#d97706' }}>🔒 Session Locked</strong>
-              <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: '#92400e' }}>
+              <strong className="session-status-title-locked">🔒 Session Locked</strong>
+              <p className="session-status-desc-locked">
                 Starts in {getCountdown()} ({date} at {time})
               </p>
             </>
           )}
           {isDuringSession && (
             <>
-              <strong style={{ color: '#059669' }}>🔓 Session is LIVE</strong>
-              <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: '#065f46' }}>
+              <strong className="session-status-title-live">🔓 Session is LIVE</strong>
+              <p className="session-status-desc-live">
                 {isJoined
                   ? `In session — ${getSessionRemainingCountdown()} remaining`
                   : `Active now — ${getSessionRemainingCountdown()} remaining. Click Join button below to enter.`}
@@ -410,10 +397,10 @@ export default function SessionCard({
           )}
           {isAfterSession && status !== 'completed' && (
             <>
-              <strong style={{ color: isJoined ? '#059669' : '#dc2626' }}>
+              <strong className={isJoined ? 'session-status-title-ended' : 'session-status-title-expired'}>
                 {isJoined ? '⏳ Session Ended' : '⏰ Session Expired — Not Completed'}
               </strong>
-              <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: isJoined ? '#065f46' : '#991b1b' }}>
+              <p className={isJoined ? 'session-status-desc-ended' : 'session-status-desc-expired'}>
                 {isJoined
                   ? 'Booked duration has ended. Auto-completing session...'
                   : 'The scheduled time window has passed without attendance.'}
@@ -474,38 +461,19 @@ export default function SessionCard({
       </div>
 
       {/* Action Buttons */}
-      <div className="session-card-actions" style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem', flexWrap: 'wrap' }}>
+      <div className="session-card-actions">
         {(status === 'scheduled' || status === 'in_progress') && (
           <>
             {isAfterSession ? (
               isJoined ? (
-                <div
-                  className="glass-panel"
-                  style={{
-                    flex: 1,
-                    padding: '0.75rem',
-                    textAlign: 'center',
-                    borderRadius: '12px',
-                    background: 'rgba(16, 185, 129, 0.08)',
-                    color: '#059669',
-                    fontWeight: 700
-                  }}
-                >
+                <div className="glass-panel session-auto-complete-banner">
                   ⏳ Auto-completing session...
                 </div>
               ) : (
                 <button
                   type="button"
-                  className="btn btn-secondary btn-full"
+                  className="btn btn-secondary btn-full session-btn-expired"
                   disabled={true}
-                  style={{
-                    flex: 1,
-                    minWidth: '180px',
-                    opacity: 0.65,
-                    cursor: 'not-allowed',
-                    borderColor: 'rgba(239, 68, 68, 0.3)',
-                    color: '#dc2626'
-                  }}
                 >
                   ❌ Not Completed
                 </button>
@@ -513,29 +481,17 @@ export default function SessionCard({
             ) : isBeforeSession ? (
               <button
                 type="button"
-                className="btn btn-secondary btn-full"
+                className="btn btn-secondary btn-full session-btn-locked"
                 disabled={true}
-                style={{
-                  flex: 1,
-                  minWidth: '180px',
-                  opacity: 0.65,
-                  cursor: 'not-allowed'
-                }}
               >
                 🔒 Unlocks during session
               </button>
             ) : (
               <button
                 type="button"
-                className="btn btn-primary btn-full"
+                className={`btn btn-primary btn-full session-btn-complete ${isJoined ? 'active' : 'disabled'}`}
                 onClick={() => isJoined && onMarkComplete && onMarkComplete(id)}
                 disabled={actionLoading || !isJoined}
-                style={{
-                  flex: 1,
-                  minWidth: '180px',
-                  opacity: isJoined ? 1 : 0.6,
-                  cursor: isJoined ? 'pointer' : 'not-allowed'
-                }}
                 title={isJoined ? 'Click to complete session' : 'Join call first to enable completion'}
               >
                 {actionLoading
@@ -560,19 +516,8 @@ export default function SessionCard({
         )}
 
         {status === 'completed' && (
-          <div style={{ display: 'flex', width: '100%', gap: '0.75rem', alignItems: 'center' }}>
-            <div
-              className="glass-panel"
-              style={{
-                flex: 1,
-                padding: '0.75rem',
-                textAlign: 'center',
-                borderRadius: '12px',
-                background: 'rgba(16, 185, 129, 0.08)',
-                color: '#059669',
-                fontWeight: 700
-              }}
-            >
+          <div className="session-completed-row">
+            <div className="glass-panel session-completed-banner">
               ✓ Session completed
             </div>
             {onOpenReview && (
@@ -588,18 +533,7 @@ export default function SessionCard({
         )}
 
         {status === 'cancelled' && (
-          <div
-            className="glass-panel"
-            style={{
-              width: '100%',
-              padding: '0.75rem',
-              textAlign: 'center',
-              borderRadius: '12px',
-              background: 'rgba(239, 68, 68, 0.08)',
-              color: '#dc2626',
-              fontWeight: 600
-            }}
-          >
+          <div className="glass-panel session-cancelled-banner">
             Session cancelled
           </div>
         )}

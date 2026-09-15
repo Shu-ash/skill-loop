@@ -23,6 +23,7 @@ import AdminSessionsPage from './admin/pages/AdminSessionsPage';
 import AdminCreditsPage from './admin/pages/AdminCreditsPage';
 import AdminReportsPage from './admin/pages/AdminReportsPage';
 import ScrollToTop from './components/ScrollToTop';
+import RouteProgressBar from './components/RouteProgressBar';
 import RequireAuth from './components/RequireAuth';
 import './index.css';
 
@@ -30,6 +31,7 @@ function App() {
   return (
     <div id="app">
       <ScrollToTop />
+      <RouteProgressBar />
       <Routes>
         {/* Unrestricted Public Routes */}
         <Route path="/" element={<LandingPage />} />

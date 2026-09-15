@@ -116,28 +116,27 @@ export default function ImageCropperModal({
   const modalContent = (
     <div className="full-viewport-blur-overlay modal-overlay" onClick={onClose}>
       <div 
-        className="glass-panel logout-confirm-box clay-card-3d image-cropper-modal"
+        className="glass-panel clay-card-3d cropper-modal-card"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '480px', width: '92%' }}
       >
         <div className="modal-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <span style={{ fontSize: '1.3rem' }}>{isAvatar ? '👤' : '🖼️'}</span>
-            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>
+          <div className="cropper-title-row">
+            <span className="cropper-title-icon">{isAvatar ? '👤' : '🖼️'}</span>
+            <h3 className="cropper-title-text">
               {isAvatar ? 'Crop Profile Photo' : 'Crop Cover Banner'}
             </h3>
           </div>
-          <button type="button" className="close-modal-btn" onClick={onClose} title="Close">✕</button>
+          <button type="button" className="close-modal-btn user-modal-close-btn" onClick={onClose} title="Close">✕</button>
         </div>
 
         <div className="modal-body modal-body-padded">
-          <p style={{ fontSize: '0.85rem', color: 'var(--slate-500, #64748b)', margin: '0 0 1rem 0' }}>
+          <p className="cropper-instructions">
             Drag to reposition. Use the slider below to zoom in or rotate.
           </p>
 
           {/* Interactive Crop Frame Box */}
           <div 
-            className="crop-canvas-container"
+            className={`crop-canvas-container ${isDragging ? 'is-dragging' : ''}`}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
@@ -145,48 +144,27 @@ export default function ImageCropperModal({
             onTouchStart={handleMouseDown}
             onTouchMove={handleMouseMove}
             onTouchEnd={handleMouseUp}
-            style={{
-              width: '100%',
-              height: '280px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: '#0f172a',
-              borderRadius: '18px',
-              overflow: 'hidden',
-              cursor: isDragging ? 'grabbing' : 'grab',
-              userSelect: 'none',
-              position: 'relative'
-            }}
           >
             {/* The live Canvas */}
             <canvas 
               ref={canvasRef} 
-              style={{
-                borderRadius: isAvatar ? '50%' : '10px',
-                boxShadow: '0 0 0 9999px rgba(15, 23, 42, 0.72)',
-                border: '2px solid var(--violet-primary, #6c5ce7)',
-                pointerEvents: 'none'
-              }}
+              className={`cropper-canvas ${isAvatar ? 'avatar' : 'banner'}`}
             />
 
             {/* Grid overlay lines */}
             <div 
+              className={`cropper-grid-overlay ${isAvatar ? 'avatar' : 'banner'}`}
               style={{
-                position: 'absolute',
                 width: `${cropBoxWidth}px`,
-                height: `${cropBoxHeight}px`,
-                borderRadius: isAvatar ? '50%' : '10px',
-                pointerEvents: 'none',
-                boxShadow: 'inset 0 0 0 1px rgba(255, 255, 255, 0.4)'
+                height: `${cropBoxHeight}px`
               }}
             />
           </div>
 
           {/* Controls: Zoom Slider & Rotate */}
-          <div className="cropper-controls-row" style={{ marginTop: '1.2rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--slate-600, #475569)', minWidth: '45px' }}>
+          <div className="cropper-controls-row">
+            <div className="cropper-slider-row">
+              <span className="cropper-slider-label">
                 Zoom:
               </span>
               <input 
@@ -196,28 +174,26 @@ export default function ImageCropperModal({
                 step="0.05"
                 value={zoom} 
                 onChange={(e) => setZoom(parseFloat(e.target.value))}
-                style={{ flex: 1, accentColor: 'var(--violet-primary, #6c5ce7)', cursor: 'pointer' }}
+                className="cropper-slider-input"
               />
-              <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--slate-700, #334155)', minWidth: '40px', textAlign: 'right' }}>
+              <span className="cropper-slider-val">
                 {Math.round(zoom * 100)}%
               </span>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="cropper-actions-bar">
               <button 
                 type="button" 
-                className="action-btn"
+                className="action-btn cropper-btn-compact"
                 onClick={() => setRotation((prev) => (prev + 90) % 360)}
-                style={{ fontSize: '0.82rem', padding: '0.4rem 0.85rem' }}
               >
                 🔄 Rotate 90°
               </button>
 
               <button 
                 type="button" 
-                className="action-btn"
+                className="action-btn cropper-btn-compact"
                 onClick={() => { setZoom(1); setPosition({ x: 0, y: 0 }); setRotation(0); }}
-                style={{ fontSize: '0.82rem', padding: '0.4rem 0.85rem' }}
               >
                 ↺ Reset
               </button>
@@ -225,15 +201,14 @@ export default function ImageCropperModal({
           </div>
 
           {/* Action Buttons */}
-          <div className="modal-action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.4rem' }}>
+          <div className="modal-action-buttons cropper-modal-actions">
             <button type="button" className="action-btn" onClick={onClose}>
               Cancel
             </button>
             <button 
               type="button" 
-              className="btn btn-primary" 
+              className="btn btn-primary cropper-btn-apply" 
               onClick={handleApplyCrop}
-              style={{ padding: '0.65rem 1.4rem' }}
             >
               Apply &amp; Save
             </button>

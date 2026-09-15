@@ -179,6 +179,7 @@ export default function AdminSessionsPage() {
               title={`Session Audit Logs (${filteredSessions.length})`} 
               onResolveDispute={handleResolveDisputeClick}
               onViewDetails={handleViewDetails}
+              loading={loading}
             />
           </main>
         </div>

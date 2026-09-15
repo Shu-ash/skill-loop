@@ -1,6 +1,4 @@
-/* ==========================================================================
-   SkillLoop Admin Panel — Glassmorphism + Claymorphism 3D Stylesheet
-   ========================================================================== */
+/* SkillLoop Admin Panel — Glassmorphism + Claymorphism 3D Stylesheet */
 
 .admin-page-container {
   min-height: 100vh;
@@ -755,9 +753,7 @@
   display: flex;
 }
 
-/* ==========================================================================
-   Mobile Drawer & Navigation
-   ========================================================================== */
+/* Mobile Drawer & Navigation */
 .mobile-menu-drawer {
   position: absolute;
   top: 66px;
@@ -845,9 +841,7 @@
   justify-content: center;
 }
 
-/* ==========================================================================
-   Admin Responsive Mobile Styles (< 850px)
-   ========================================================================== */
+/* Admin Responsive Mobile Styles (< 850px) */
 @media (max-width: 850px) {
   .admin-navbar {
     width: calc(100% - 1.25rem);
@@ -1216,9 +1210,7 @@ html[data-theme="dark"] .admin-role {
   color: #94a3b8 !important;
 }
 
-/* ==========================================================================
-   Admin Search & Filter Bar
-   ========================================================================== */
+/* Admin Search & Filter Bar */
 .admin-filter-bar {
   display: flex;
   flex-wrap: wrap;
@@ -1370,9 +1362,7 @@ html[data-theme="dark"] .admin-reset-filters-btn {
   color: #cbd5e1 !important;
 }
 
-/* ==========================================================================
-   Admin Specific Component Classes
-   ========================================================================== */
+/* Admin Specific Component Classes */
 
 .category-nested-skill-tag {
   background: rgba(241, 245, 249, 0.9);
@@ -1492,9 +1482,7 @@ html[data-theme="dark"] .admin-reset-filters-btn {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
 }
 
-/* ==========================================================================
-   Comprehensive Dark Mode Text & Contrast Overrides for Admin Panel
-   ========================================================================== */
+/* Comprehensive Dark Mode Text & Contrast Overrides for Admin Panel */
 
 /* Page Header & Descriptions */
 html[data-theme="dark"] .page-header h2,
@@ -1657,4 +1645,348 @@ html[data-theme="dark"] .skills-modal-tag-chip {
   color: #93c5fd !important;
   border-color: rgba(96, 165, 250, 0.3) !important;
 }
+
+/* Admin Action Modal */
+.admin-action-modal-box {
+  max-width: 440px;
+  width: 92%;
+}
+.admin-action-modal-box.has-details {
+  max-width: 520px;
+}
+.admin-action-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+.admin-action-modal-icon {
+  font-size: 1.4rem;
+}
+.admin-action-modal-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+.admin-action-modal-message {
+  font-size: 0.94rem;
+  line-height: 1.5;
+  color: var(--slate-700, #334155);
+  margin-bottom: 1.4rem;
+}
+.admin-action-modal-message.has-details {
+  margin-bottom: 1rem;
+}
+.admin-action-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+.admin-action-modal-btn {
+  padding: 0.65rem 1.35rem;
+}
+
+/* Category Admin Page & Modals */
+.admin-categories-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.category-manager-modal-box {
+  max-width: 580px;
+  width: 94%;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 2.2rem 2rem;
+  border-radius: 24px;
+}
+.category-manager-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.2rem;
+}
+.category-manager-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.category-manager-title-icon {
+  font-size: 2rem;
+}
+.category-manager-title {
+  margin: 0;
+  font-size: 1.3rem;
+  font-family: var(--font-display);
+}
+.category-manager-subtitle {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--slate-500);
+}
+.category-manager-alert-success {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 12px;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+.category-manager-form {
+  margin-bottom: 1.2rem;
+}
+.category-manager-label {
+  display: block;
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--slate-700);
+  margin-bottom: 0.4rem;
+}
+.category-manager-row {
+  display: flex;
+  gap: 0.6rem;
+}
+.category-manager-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+}
+.category-manager-btn {
+  padding: 0.75rem 1.35rem;
+  border-radius: 12px;
+  white-space: nowrap;
+  font-weight: 700;
+}
+.category-manager-tip {
+  font-size: 0.74rem;
+  color: var(--slate-400);
+  display: block;
+  margin-top: 0.35rem;
+}
+.category-manager-search-box {
+  margin-bottom: 0.85rem;
+}
+.category-manager-search-input {
+  width: 100%;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.84rem;
+  border-radius: 10px;
+}
+.category-chip-remove-btn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  padding: 0 0.15rem;
+  font-weight: 800;
+  font-size: 0.92rem;
+  line-height: 1;
+}
+.category-manager-empty-text {
+  text-align: center;
+  width: 100%;
+  padding: 1.5rem 0;
+  color: var(--slate-400);
+  font-size: 0.86rem;
+}
+.category-manager-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.category-manager-footer-meta {
+  font-size: 0.82rem;
+  color: var(--slate-500);
+}
+.category-manager-done-btn {
+  padding: 0.65rem 1.4rem;
+  border-radius: 12px;
+}
+.category-edit-modal-box {
+  max-width: 520px;
+  width: 94%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.category-form-icon-preview {
+  font-size: 1.5rem;
+}
+.category-form-group {
+  margin-bottom: 1rem;
+}
+.category-form-group-lg {
+  margin-bottom: 1.4rem;
+}
+.category-form-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+.category-form-label-text {
+  font-weight: 600;
+  font-size: 0.86rem;
+  color: var(--slate-700);
+}
+.category-form-selected-badge {
+  font-size: 0.8rem;
+  color: var(--violet-primary, #6c5ce7);
+  font-weight: 700;
+}
+.category-form-selected-emoji {
+  font-size: 1.3rem;
+  vertical-align: middle;
+}
+.category-form-full-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+.category-chips-display-box {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  min-height: 40px;
+  padding: 0.6rem;
+  background: rgba(241, 245, 249, 0.7);
+  border-radius: 12px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+.category-edit-chip {
+  background: white;
+  color: var(--violet-primary, #6c5ce7);
+  border: 1px solid rgba(108, 92, 231, 0.25);
+  border-radius: 10px;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+.category-chips-empty {
+  font-size: 0.82rem;
+  color: var(--slate-400);
+  font-style: italic;
+  align-self: center;
+  margin: auto;
+}
+
+html[data-theme="dark"] .category-manager-label,
+html[data-theme="dark"] .category-form-label-text {
+  color: #cbd5e1 !important;
+}
+html[data-theme="dark"] .category-chips-display-box {
+  background: rgba(15, 23, 42, 0.7) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+html[data-theme="dark"] .category-edit-chip {
+  background: rgba(30, 41, 59, 0.85) !important;
+  color: #93c5fd !important;
+  border-color: rgba(96, 165, 250, 0.3) !important;
+}
+html[data-theme="dark"] .admin-action-modal-message {
+  color: #cbd5e1 !important;
+}
+
+/* Admin Reusable Table Styles */
+.table-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.table-header-title {
+  margin: 0;
+}
+.admin-count-pill {
+  font-size: 0.8rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 12px;
+  background: rgba(108, 92, 231, 0.1);
+  color: var(--violet-primary, #6c5ce7);
+  font-weight: 600;
+}
+.admin-table-empty {
+  padding: 3.5rem 1.5rem;
+  text-align: center;
+  color: var(--slate-500, #64748b);
+}
+.admin-table-empty-icon {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.admin-table-empty-title {
+  margin: 0 0 0.4rem 0;
+  font-weight: 700;
+  color: var(--slate-800);
+}
+.admin-table-empty-desc {
+  margin: 0;
+  font-size: 0.9rem;
+}
+.nowrap-cell {
+  white-space: nowrap;
+}
+.category-name-cell {
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+}
+.category-icon-preview {
+  font-size: 1.25rem;
+  margin-right: 0.5rem;
+}
+.category-info-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.category-row-top {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.category-skills-tags-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  max-width: 340px;
+}
+.category-no-skills-msg {
+  font-size: 0.74rem;
+  font-style: italic;
+}
+.category-skill-pill {
+  font-size: 0.76rem;
+  padding: 0.2rem 0.55rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.report-resolved-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.session-duration-badge {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.admin-user-handle {
+  font-size: 0.78rem;
+  color: var(--slate-500);
+}
+
+html[data-theme="dark"] .admin-table-empty-title {
+  color: #f8fafc !important;
+}
+html[data-theme="dark"] .admin-table-empty-desc {
+  color: #94a3b8 !important;
+}
+
+
 

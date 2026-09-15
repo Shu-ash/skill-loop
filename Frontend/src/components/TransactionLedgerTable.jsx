@@ -1,8 +1,8 @@
-// src/components/TransactionLedgerTable.jsx
 import React, { useState, useMemo } from 'react';
+import SkillLoopLoader from './SkillLoopLoader';
 
 // TransactionLedgerTable: Auditable transaction ledger showing earned and spent credit history with live filter
-export default function TransactionLedgerTable({ transactions = [] }) {
+export default function TransactionLedgerTable({ transactions = [], loading = false }) {
   const [filter, setFilter] = useState('all'); // 'all' | 'earned' | 'spent'
 
   const earnedCount = useMemo(() => {
@@ -25,32 +25,20 @@ export default function TransactionLedgerTable({ transactions = [] }) {
 
   return (
     <div className="glass-panel transaction-ledger-card">
-      <div className="ledger-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem', gap: '0.5rem', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-          <h3 style={{ margin: 0 }}>Transaction ledger</h3>
-          <span className="pill-badge pill-white" style={{ fontSize: '0.75rem', padding: '0.2rem 0.55rem' }}>
+      <div className="ledger-header">
+        <div className="ledger-title-group">
+          <h3 className="ledger-title-text">Transaction ledger</h3>
+          <span className="pill-badge pill-white ledger-count-pill">
             {filteredTransactions.length} {filteredTransactions.length === 1 ? 'entry' : 'entries'}
           </span>
         </div>
 
         {/* Interactive Filter Dropdown & Segmented Pills */}
-        <div className="ledger-filter-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+        <div className="ledger-filter-wrapper">
           <select 
             className="ledger-filter-select"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            style={{
-              padding: '0.42rem 0.85rem',
-              borderRadius: '12px',
-              border: '1.5px solid rgba(226, 232, 240, 0.9)',
-              background: 'rgba(255, 255, 255, 0.85)',
-              fontFamily: 'inherit',
-              fontSize: '0.82rem',
-              fontWeight: 600,
-              color: 'var(--slate-700, #334155)',
-              cursor: 'pointer',
-              outline: 'none'
-            }}
           >
             <option value="all">Filter: All ({transactions.length})</option>
             <option value="earned">Earned (+) ({earnedCount})</option>
@@ -60,7 +48,14 @@ export default function TransactionLedgerTable({ transactions = [] }) {
       </div>
 
       <div className="ledger-list">
-        {filteredTransactions.length > 0 ? (
+        {loading ? (
+          <SkillLoopLoader
+            title="Loading Credit Audit Ledger"
+            subtitle="Fetching transaction history & token balance from MongoDB..."
+            badgeText="MongoDB Live Sync"
+            variant="transparent"
+          />
+        ) : filteredTransactions.length > 0 ? (
           filteredTransactions.map((tx) => {
             const isEarned = tx.type === 'earned' || Number(tx.amount) > 0;
             return (
@@ -81,7 +76,7 @@ export default function TransactionLedgerTable({ transactions = [] }) {
             );
           })
         ) : (
-          <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--slate-500, #64748b)' }}>
+          <div className="ledger-empty-notice">
             No {filter === 'earned' ? 'earned' : filter === 'spent' ? 'spent' : ''} credit transactions found.
           </div>
         )}

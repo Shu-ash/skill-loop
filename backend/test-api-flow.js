@@ -210,9 +210,7 @@ const runIntegrationTests = async () => {
     if (!cancelData.success) throw new Error("Cancel request failed: " + cancelData.message);
     console.log(`✅ Request cancelled successfully! Status: ${cancelData.data.swapRequest.status}`);
 
-    console.log("\n============================================================");
     console.log("🎉 ALL API & DATABASE INTEGRATION TESTS PASSED 100% SUCCESFULLY!");
-    console.log("============================================================\n");
 
     server.close();
     process.exit(0);

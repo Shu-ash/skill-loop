@@ -142,11 +142,11 @@ export default function Navbar() {
 
             {/* Floating Notifications Dropdown */}
             {showNotifs && (
-              <div className="notifications-panel glass-panel show" id="notifications-dropdown" style={{ maxHeight: '420px', overflowY: 'auto' }}>
+              <div className="notifications-panel glass-panel show scrollable" id="notifications-dropdown">
                 <div className="notif-header">
                   <h4>🔔 Notifications</h4>
                   {notifications.some(n => !n.read) && (
-                    <span className="mark-read-btn" onClick={markAllRead} style={{ cursor: 'pointer' }}>Mark all read</span>
+                    <span className="mark-read-btn" onClick={markAllRead}>Mark all read</span>
                   )}
                 </div>
                 <div className="notif-list">
@@ -155,39 +155,26 @@ export default function Navbar() {
                       <Link 
                         key={n.id} 
                         to={n.link || '/dashboard'} 
-                        className={`notif-item ${!n.read ? 'unread' : ''}`}
+                        className={`notif-item notif-item-link ${!n.read ? 'unread' : ''}`}
                         onClick={() => setShowNotifs(false)}
-                        style={{ textDecoration: 'none', color: 'inherit', position: 'relative' }}
                       >
                         <div className="notif-icon-circle">{getNotifIcon(n.type)}</div>
-                        <div className="notif-body" style={{ flex: 1 }}>
-                          <p className="notif-text" style={{ fontWeight: n.read ? 500 : 700 }}>{n.text || n.title}</p>
+                        <div className="notif-body notif-body-flex">
+                          <p className={`notif-text ${n.read ? 'notif-text-read' : 'notif-text-unread'}`}>{n.text || n.title}</p>
                           <span className="notif-time">{n.time || 'Recent'}</span>
                         </div>
                         <button
                           type="button"
                           onClick={(e) => deleteNotification(n.id, e)}
                           title="Remove notification"
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            fontSize: '0.85rem',
-                            color: 'var(--slate-400, #94a3b8)',
-                            padding: '4px 6px',
-                            borderRadius: '6px',
-                            transition: 'all 0.15s ease',
-                            flexShrink: 0
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.background = 'rgba(239,68,68,0.1)'; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--slate-400, #94a3b8)'; e.currentTarget.style.background = 'none'; }}
+                          className="notif-del-btn"
                         >
                           ✕
                         </button>
                       </Link>
                     ))
                   ) : (
-                    <div style={{ padding: '1.75rem 1rem', textAlign: 'center', color: 'var(--slate-500)', fontSize: '0.86rem' }}>
+                    <div className="notif-empty-state">
                       No new notifications right now.
                     </div>
                   )}

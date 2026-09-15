@@ -86,6 +86,7 @@ export default function AdminDashboardPage() {
               users={users} 
               title="Recent Registered Members" 
               showActions={false} 
+              loading={loading}
             />
           </main>
         </div>

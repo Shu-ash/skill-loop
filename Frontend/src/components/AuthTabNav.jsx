@@ -6,10 +6,7 @@ export default function AuthTabNav({ authMode, setAuthMode }) {
   return (
     <div className="sliding-tab-nav">
       <div
-        className="sliding-glider"
-        style={{
-          transform: authMode === 'login' ? 'translateX(0%)' : 'translateX(100%)'
-        }}
+        className={`sliding-glider ${authMode === 'signup' ? 'slide-right' : 'slide-left'}`}
       ></div>
       <button
         type="button"

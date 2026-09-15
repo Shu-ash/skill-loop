@@ -138,6 +138,7 @@ export default function AdminCreditsPage() {
               transactions={filteredTransactions} 
               title={`Platform Credit Ledger (${filteredTransactions.length})`} 
               onViewDetails={handleViewDetails}
+              loading={loading}
             />
           </main>
         </div>
