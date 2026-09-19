@@ -1,0 +1,87 @@
+﻿/* ErrorBoundary.css - Graceful Crash Fallback Styling */
+
+.error-boundary-container {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.error-boundary-card {
+  max-width: 520px;
+  width: 100%;
+  padding: 2.5rem;
+  border-radius: 24px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 20px 40px rgba(108, 92, 231, 0.15);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.error-boundary-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.error-boundary-title {
+  margin: 0 0 0.5rem 0;
+  color: var(--slate-900, #0f172a);
+  font-family: var(--font-display, inherit);
+  font-weight: 700;
+}
+
+.error-boundary-message {
+  color: var(--slate-600, #475569);
+  font-size: 0.92rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.error-boundary-details {
+  background: #fef2f2;
+  color: #b91c1c;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  font-size: 0.82rem;
+  margin-bottom: 1.5rem;
+  word-break: break-word;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  text-align: left;
+}
+
+.error-boundary-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.error-boundary-link {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Dark Mode Overrides */
+html[data-theme=dark] .error-boundary-card {
+  background: rgba(15, 23, 42, 0.92);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+}
+
+html[data-theme=dark] .error-boundary-title {
+  color: var(--slate-100, #f8fafc);
+}
+
+html[data-theme=dark] .error-boundary-message {
+  color: var(--slate-400, #94a3b8);
+}
+
+html[data-theme=dark] .error-boundary-details {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
