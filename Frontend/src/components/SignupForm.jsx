@@ -14,19 +14,47 @@ export default function SignupForm({ onSwitchToLogin }) {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [passwordTouched, setPasswordTouched] = useState(false);
+
+  // Compute live password strength & requirements
+  const passwordLength = password.length;
+  const isLengthValid = passwordLength >= 6;
+  const hasLettersAndNumbers = /[a-zA-Z]/.test(password) && /\d/.test(password);
+  const hasSpecialOrUpper = /[!@#$%^&*(),.?":{}|<>]/.test(password) || /[A-Z]/.test(password);
+
+  let strengthScore = 0;
+  if (passwordLength > 0) strengthScore = 1;
+  if (isLengthValid) strengthScore = 2;
+  if (isLengthValid && hasLettersAndNumbers) strengthScore = 3;
+  if (isLengthValid && hasLettersAndNumbers && hasSpecialOrUpper && passwordLength >= 8) strengthScore = 4;
+
+  const getStrengthLabel = () => {
+    if (strengthScore <= 1) return { label: 'Too short', class: 'active-weak' };
+    if (strengthScore === 2) return { label: 'Fair (6+ chars)', class: 'active-fair' };
+    if (strengthScore === 3) return { label: 'Good', class: 'active-good' };
+    return { label: 'Strong', class: 'active-strong' };
+  };
+
+  const strengthInfo = getStrengthLabel();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    if (!agreeTerms) {
-      setError('Please agree to Terms of Service & Privacy Policy.');
-      return;
-    }
-
     const cleanEmail = email.trim();
     if (!cleanEmail || !password || !firstName.trim()) {
       setError('Please fill in all required fields.');
+      return;
+    }
+
+    if (password.length < 6) {
+      setPasswordTouched(true);
+      setError('Password must be at least 6 characters long.');
+      return;
+    }
+
+    if (!agreeTerms) {
+      setError('Please agree to Terms of Service & Privacy Policy.');
       return;
     }
 
@@ -56,6 +84,18 @@ export default function SignupForm({ onSwitchToLogin }) {
 
       if (!response.ok || !data.success) {
         throw new Error(data.message || 'Failed to create account. Please check your information.');
+      }
+
+      if (data.requiresVerification || !data.data?.accessToken) {
+        // Redirect to Email OTP Verification Page
+        navigate(`/verify-email?email=${encodeURIComponent(cleanEmail)}`, {
+          replace: true,
+          state: {
+            email: cleanEmail,
+            message: data.message || `Verification code sent to ${cleanEmail}`
+          }
+        });
+        return;
       }
 
       if (data.data?.accessToken) {
@@ -130,11 +170,16 @@ export default function SignupForm({ onSwitchToLogin }) {
         <label className="form-label">Password *</label>
         <div className="password-input-wrap">
           <input
-            className="form-input"
+            className={`form-input ${passwordTouched && !isLengthValid && password.length > 0 ? 'input-invalid' : isLengthValid ? 'input-valid' : ''}`}
             type={showPassword ? 'text' : 'password'}
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Create a strong password (6+ chars)"
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setPasswordTouched(true);
+              if (error) setError('');
+            }}
+            onBlur={() => setPasswordTouched(true)}
+            placeholder="Create a password (min. 6 characters)"
             required
             disabled={loading}
             autoComplete="new-password"
@@ -149,6 +194,27 @@ export default function SignupForm({ onSwitchToLogin }) {
             {showPassword ? 'Hide' : 'Show'}
           </button>
         </div>
+
+        {/* Live Password Requirement & Strength Box */}
+        {(passwordTouched || password.length > 0) && (
+          <div className="password-requirements-box">
+            <div className="password-strength-bars">
+              <div className={`password-strength-bar ${strengthScore >= 1 ? strengthInfo.class : ''}`}></div>
+              <div className={`password-strength-bar ${strengthScore >= 2 ? strengthInfo.class : ''}`}></div>
+              <div className={`password-strength-bar ${strengthScore >= 3 ? strengthInfo.class : ''}`}></div>
+              <div className={`password-strength-bar ${strengthScore >= 4 ? strengthInfo.class : ''}`}></div>
+            </div>
+
+            <div className={`password-req-item ${isLengthValid ? 'valid' : 'invalid'}`}>
+              <span>
+                {isLengthValid ? '✓' : '•'} Minimum 6 characters required
+              </span>
+              <span className={`password-req-badge ${isLengthValid ? 'valid' : 'invalid'}`}>
+                {isLengthValid ? `${passwordLength} chars (OK)` : `${passwordLength}/6 chars`}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Terms & Privacy */}

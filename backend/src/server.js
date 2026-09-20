@@ -7,6 +7,7 @@ import morgan from "morgan";
 
 import { env } from "./config/env.js";
 import { connectDB } from "./config/db.js";
+import { verifyTransporter } from "./config/email.js";
 
 import { globalLimiter } from "./middleware/rateLimit.middleware.js";
 import { notFound, errorHandler } from "./middleware/error.middleware.js";
@@ -96,6 +97,7 @@ app.use(errorHandler);
 // START SERVER
 const startServer = async () => {
   await connectDB();
+  await verifyTransporter();
   const server = http.createServer(app);
 
   server.listen(env.PORT, () => {

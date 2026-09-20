@@ -5,6 +5,7 @@ import {
   completeOnboarding,
   updateMyProfile,
   changePassword,
+  sendPasswordOtp,
   getLeaderboard,
   getDashboardStats,
   getCommunityStats
@@ -35,7 +36,10 @@ router.put("/onboarding", protect, completeOnboarding);
 router.patch("/me", protect, updateMyProfile);
 router.patch("/profile", protect, updateMyProfile);
 
-// Change logged-in user password
+// Send 6-digit OTP for changing password ('Try another way')
+router.post("/send-password-otp", protect, sendPasswordOtp);
+
+// Change logged-in user password (via current password or via OTP)
 router.patch("/change-password", protect, changePassword);
 
 export default router;

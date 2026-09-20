@@ -3198,6 +3198,8 @@ html[data-theme="dark"] .avatar-camera-badge {
   font-weight: 600;
   font-size: 0.9rem;
   margin-top: 0.15rem;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .profile-headline {
@@ -3205,6 +3207,8 @@ html[data-theme="dark"] .avatar-camera-badge {
   font-size: 0.9rem;
   margin-top: 0.35rem;
   line-height: 1.5;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .profile-editors-grid {
@@ -3247,12 +3251,12 @@ html[data-theme="dark"] .avatar-camera-badge {
 
 .profile-section-badge.violet {
   color: var(--violet-primary, #6c5ce7);
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.65rem;
 }
 
 .profile-section-badge.slate {
   color: var(--slate-500, #64748b);
-  margin-bottom: 0.65rem;
+  margin-bottom: 0.75rem;
 }
 
 .profile-section-badge.coral {
@@ -3260,18 +3264,34 @@ html[data-theme="dark"] .avatar-camera-badge {
   margin-bottom: 0.65rem;
 }
 
+.profile-bio-display-box {
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  padding: 1.25rem 1.4rem;
+  border-radius: 16px;
+  margin-bottom: 1.85rem;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03);
+  transition: all 0.2s ease;
+}
+
 .profile-bio-text {
   margin: 0;
-  font-size: 0.92rem;
-  line-height: 1.6;
+  font-size: 0.94rem;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  color: var(--slate-700);
 }
 
 .profile-bio-text.italic {
   font-style: italic;
+  color: var(--slate-400);
 }
 
 .availability-section {
-  margin-bottom: 1.4rem;
+  margin-top: 0.5rem;
+  margin-bottom: 1.85rem;
 }
 
 .availability-label {
@@ -7638,4 +7658,103 @@ html[data-theme="dark"] .empty-reviews-title {
 }
 html[data-theme="dark"] .empty-reviews-desc {
   color: #94a3b8;
+}
+
+/* ============================================================
+   PASSWORD LIVE REQUIREMENT & STRENGTH INDICATOR
+   ============================================================ */
+.password-requirements-box {
+  margin-top: 0.5rem;
+  padding: 0.65rem 0.85rem;
+  background: rgba(241, 245, 249, 0.7);
+  border-radius: 10px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  font-size: 0.78rem;
+  animation: fadeInDown 0.25s ease;
+  transition: all 0.2s ease;
+}
+
+html[data-theme="dark"] .password-requirements-box,
+body.dark-mode .password-requirements-box {
+  background: rgba(30, 41, 59, 0.7);
+  border-color: rgba(51, 65, 85, 0.8);
+}
+
+.password-strength-bars {
+  display: flex;
+  gap: 4px;
+  height: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.password-strength-bar {
+  flex: 1;
+  height: 100%;
+  border-radius: 999px;
+  background: #cbd5e1;
+  transition: background 0.3s ease;
+}
+
+html[data-theme="dark"] .password-strength-bar,
+body.dark-mode .password-strength-bar {
+  background: #334155;
+}
+
+.password-strength-bar.active-weak {
+  background: #ef4444;
+}
+
+.password-strength-bar.active-fair {
+  background: #f59e0b;
+}
+
+.password-strength-bar.active-good {
+  background: #10b981;
+}
+
+.password-strength-bar.active-strong {
+  background: #6366f1;
+}
+
+.password-req-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.password-req-item.invalid {
+  color: #ef4444;
+}
+
+.password-req-item.valid {
+  color: #10b981;
+}
+
+.password-req-badge {
+  font-size: 0.72rem;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.password-req-badge.invalid {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+.password-req-badge.valid {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+}
+
+.form-input.input-invalid {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+}
+
+.form-input.input-valid {
+  border-color: #10b981 !important;
 }

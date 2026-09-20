@@ -2,6 +2,9 @@ import User from "../models/user.js";
 import Session from "../models/session.js";
 import SwapRequest from "../models/swapRequest.js";
 import Review from "../models/review.js";
+import Otp from "../models/otp.js";
+import { generateOtp, sendOtpEmail } from "../utils/emailService.js";
+import { hashPassword, comparePassword } from "../utils/password.js";
 
 /**
  * GET /api/users/me
@@ -409,12 +412,55 @@ export const getCommunityStats = async (req, res, next) => {
 };
 
 /**
+ * POST /api/users/send-password-otp
+ * Dispatches 6-digit OTP to logged-in user for 'Try another way' password reset
+ */
+export const sendPasswordOtp = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    await Otp.deleteMany({ email: user.email, purpose: "forgot_password" });
+
+    const otpCode = generateOtp();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    await Otp.create({
+      email: user.email,
+      otp: otpCode,
+      purpose: "forgot_password",
+      expiresAt
+    });
+
+    await sendOtpEmail({
+      to: user.email,
+      otp: otpCode,
+      purpose: "forgot_password",
+      name: user.name || user.firstName || "Member"
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `A 6-digit verification code has been sent to ${user.email}`,
+      data: {
+        email: user.email,
+        devOtp: process.env.NODE_ENV !== "production" ? otpCode : undefined
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * PATCH /api/users/change-password
- * Change logged-in user password securely
+ * Change logged-in user password securely via Current Password OR via 6-digit Email OTP
  */
 export const changePassword = async (req, res, next) => {
   try {
-    const { currentPassword, newPassword, confirmPassword } = req.body;
+    const { currentPassword, otp, newPassword, confirmPassword } = req.body;
 
     if (!newPassword || newPassword.length < 6) {
       return res.status(400).json({
@@ -438,23 +484,46 @@ export const changePassword = async (req, res, next) => {
       });
     }
 
-    if (currentPassword && user.password) {
-      const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (otp) {
+      // 2nd Way: Verify via 6-digit Email OTP
+      const validOtpRecord = await Otp.findOne({
+        email: user.email,
+        otp: String(otp).trim(),
+        purpose: "forgot_password"
+      });
+
+      if (!validOtpRecord) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid or expired 6-digit verification code. Please check your email or click Resend."
+        });
+      }
+
+      await Otp.deleteMany({ email: user.email, purpose: "forgot_password" });
+    } else {
+      // 1st Way: Verify via Current Password
+      if (!currentPassword) {
+        return res.status(400).json({
+          success: false,
+          message: "Please enter your current password or click 'Try another way' to verify via Email OTP."
+        });
+      }
+
+      const isMatch = await comparePassword(currentPassword, user.password);
       if (!isMatch) {
         return res.status(400).json({
           success: false,
-          message: "Incorrect current password"
+          message: "Incorrect current password. If you forgot your password, click 'Try another way'."
         });
       }
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    user.password = hashedPassword;
+    user.password = await hashPassword(newPassword);
     await user.save();
 
     return res.status(200).json({
       success: true,
-      message: "Password updated successfully!"
+      message: "Password updated successfully! 🔒"
     });
   } catch (error) {
     next(error);

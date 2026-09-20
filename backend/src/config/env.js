@@ -43,7 +43,13 @@ const envSchema = z.object({
             .default("false")
             .transform(
                 (value) => value === "true"
-            )
+            ),
+
+    EMAIL_USER:
+        z.string().optional(),
+
+    EMAIL_PASS:
+        z.string().optional()
 });
 
 const result =

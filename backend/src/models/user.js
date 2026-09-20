@@ -138,6 +138,29 @@ const userSchema = new mongoose.Schema(
     refreshTokenHash: {
       type: String,
       select: false
+    },
+
+    emailVerified: {
+      type: Boolean,
+      default: false
+    },
+
+    emailOtpHash: {
+      type: String,
+      select: false
+    },
+
+    emailOtpExpires: {
+      type: Date
+    },
+
+    emailOtpAttempts: {
+      type: Number,
+      default: 0
+    },
+
+    emailOtpLastSentAt: {
+      type: Date
     }
   },
   {
