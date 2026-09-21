@@ -1,11 +1,10 @@
-// Backend/src/routes/report.routes.js
 import express from "express";
-import { authenticate } from "../middleware/auth.middleware.js";
+import { protect } from "../middleware/auth.middleware.js";
 import { createReport, getMyReports } from "../controllers/report.controller.js";
 
 const router = express.Router();
 
-router.use(authenticate);
+router.use(protect);
 
 router.post("/", createReport);
 router.get("/my-reports", getMyReports);

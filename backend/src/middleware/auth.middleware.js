@@ -53,6 +53,8 @@ export const protect = async (req, res, next) => {
     }
 };
 
+export const authenticate = protect;
+
 /**
  * Optional auth middleware — sets req.user if a valid token
  * is present, but does NOT reject unauthenticated requests.
