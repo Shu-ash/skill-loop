@@ -29,9 +29,9 @@ export default function Footer() {
 
           {/* Quick Platform Links */}
           <div>
-            <h4 className="footer-col-title">
+            <h3 className="footer-col-title">
               Platform
-            </h4>
+            </h3>
             <ul className="footer-links-list">
               <li>
                 <Link to="/browse" className="footer-nav-link">
@@ -53,9 +53,9 @@ export default function Footer() {
 
           {/* Company & Support */}
           <div>
-            <h4 className="footer-col-title">
+            <h3 className="footer-col-title">
               Company &amp; Help
-            </h4>
+            </h3>
             <ul className="footer-links-list">
               <li>
                 <Link to="/about" className="footer-nav-link">
@@ -77,9 +77,9 @@ export default function Footer() {
 
           {/* Legal & Policies */}
           <div>
-            <h4 className="footer-col-title">
+            <h3 className="footer-col-title">
               Legal &amp; Trust
-            </h4>
+            </h3>
             <ul className="footer-links-list">
               <li>
                 <Link to="/terms" className="footer-nav-link">
@@ -93,7 +93,7 @@ export default function Footer() {
               </li>
               <li>
                 <span className="footer-trust-badge">
-                  🛡️ 100% Fair Credit Protection
+                  🔐 100% Fair Credit Protection
                 </span>
               </li>
             </ul>
@@ -105,11 +105,6 @@ export default function Footer() {
           <p className="footer-copyright">
             &copy; {currentYear} SkillLoop Platform. All rights reserved. Built for peer skill exchange.
           </p>
-          <div className="footer-bottom-links">
-            <Link to="/terms" className="footer-bottom-link">Terms</Link>
-            <Link to="/privacy" className="footer-bottom-link">Privacy</Link>
-            <Link to="/contact" className="footer-bottom-link">Contact</Link>
-          </div>
         </div>
       </div>
     </footer>

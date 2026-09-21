@@ -63,15 +63,15 @@ export default function HeroSection() {
         {/* Hero stats */}
         <div className="hero-stats">
           <div className="stat-item">
-            <h3>{stats.members}</h3>
+            <span className="stat-number">{stats.members}</span>
             <p>active members</p>
           </div>
           <div className="stat-item">
-            <h3>{stats.sessions}</h3>
+            <span className="stat-number">{stats.sessions}</span>
             <p>sessions swapped</p>
           </div>
           <div className="stat-item">
-            <h3>{stats.rating}</h3>
+            <span className="stat-number">{stats.rating}</span>
             <p>average rating</p>
           </div>
         </div>

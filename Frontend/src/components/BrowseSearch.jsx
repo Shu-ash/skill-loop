@@ -73,7 +73,7 @@ export default function BrowseSearch({
 
   return (
     <div className="glass-panel card-padding browse-search-box">
-      {/* Top Search & Category Quick Jump Bar */}
+      {/* Top Search & Action Bar */}
       <div className="browse-search-bar">
         <div className="search-input-wrapper">
           <span className="search-leading-icon">🔍</span>
@@ -90,33 +90,18 @@ export default function BrowseSearch({
               className="search-clear-btn" 
               onClick={() => onSearchChange('')}
               title="Clear search"
+              aria-label="Clear search input"
             >
               ✕
             </button>
           )}
         </div>
 
-        {/* Quick Category Jump Dropdown for immediate selection when there are many categories */}
-        <div className="category-quick-select-wrap">
-          <select
-            className="category-quick-select"
-            value={selectedCategory}
-            onChange={(e) => onCategorySelect(e.target.value)}
-            title="Jump to any category"
-          >
-            {categories.map((cat) => (
-              <option key={cat} value={cat}>
-                {getCategoryIcon(cat)} {cat}
-              </option>
-            ))}
-          </select>
-        </div>
-
         <button 
           type="button" 
           className="btn btn-primary btn-pill-sm browse-search-action-btn"
           onClick={() => {
-            // Focus on results
+            // Keep focus or submit action
           }}
         >
           Explore

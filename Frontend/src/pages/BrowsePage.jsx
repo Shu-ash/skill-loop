@@ -231,8 +231,10 @@ export default function BrowsePage() {
           <main className="main-content">
             <div className="page-title-row">
               <div>
-                <h2>Browse the loop</h2>
-                <p>
+                <h1 className="page-title" style={{ fontSize: 'var(--text-3xl, 2rem)', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
+                  Browse the loop
+                </h1>
+                <p style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm, 0.875rem)' }}>
                   {filteredMembers.length} {filteredMembers.length === 1 ? 'member' : 'members'} ready to trade knowledge.
                 </p>
               </div>
@@ -268,11 +270,11 @@ export default function BrowsePage() {
                   <MemberCard key={member.id} member={member} />
                 ))
               ) : (
-                <div className="glass-panel empty-requests-card empty-card-full" style={{ padding: '40px 24px', textAlign: 'center' }}>
-                  <span className="empty-card-icon" style={{ fontSize: '2.5rem', display: 'block', marginBottom: '12px' }}>🔍</span>
-                  <h3 className="empty-card-title">No Other Members Found</h3>
-                  <p className="empty-card-desc" style={{ maxWidth: '440px', margin: '8px auto 20px' }}>
-                    {searchQuery ? `No members matched "${searchQuery}". Try searching for another skill.` : selectedCategory !== 'All categories' ? `No other members found offering skills in "${selectedCategory}".` : 'When other members or friends sign up, they will appear here!'}
+                <div className="glass-panel empty-requests-card empty-card-full" style={{ padding: '52px 24px', textAlign: 'center' }}>
+                  <span className="empty-card-icon" style={{ fontSize: '4.5rem', display: 'block', marginBottom: '16px', lineHeight: 1 }}>🔍</span>
+                  <h2 className="empty-card-title" style={{ fontSize: 'var(--text-2xl, 1.5rem)', color: 'var(--text-primary)', marginBottom: '8px', fontWeight: 800 }}>No Other Members Found</h2>
+                  <p className="empty-card-desc" style={{ maxWidth: '460px', margin: '0 auto 24px', fontSize: 'var(--text-base, 1rem)', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                    {searchQuery ? `No members matched "${searchQuery}". Try searching for another skill or clearing your search query.` : selectedCategory !== 'All categories' ? `No other members found offering skills in "${selectedCategory}".` : 'When other members or friends sign up, they will appear here!'}
                   </p>
                   {(selectedCategory !== 'All categories' || searchQuery) && (
                     <button

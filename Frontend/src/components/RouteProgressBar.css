@@ -27,6 +27,12 @@
   position: relative;
 }
 
+.route-progress-bar.progress-0 { width: 0%; }
+.route-progress-bar.progress-30 { width: 30%; }
+.route-progress-bar.progress-72 { width: 72%; }
+.route-progress-bar.progress-94 { width: 94%; }
+.route-progress-bar.progress-100 { width: 100%; }
+
 .route-progress-glow {
   position: absolute;
   top: -2px;

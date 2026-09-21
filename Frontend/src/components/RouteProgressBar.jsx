@@ -37,7 +37,7 @@ export default function RouteProgressBar() {
 
   return (
     <div className={`route-progress-wrapper ${visible ? 'is-visible' : 'is-hidden'}`} aria-hidden="true">
-      <div className="route-progress-bar" style={{ width: `${progress}%` }}>
+      <div className={`route-progress-bar progress-${progress}`}>
         <div className="route-progress-glow" />
       </div>
     </div>

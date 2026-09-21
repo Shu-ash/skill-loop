@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { getAuthStatus } from '../utils/auth';
+import './Navbar.css';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -113,10 +114,10 @@ export default function Navbar() {
 
       {/* Desktop Navigation links */}
       <ul className="nav-links desktop-nav-links">
-        <li><Link className={`nav-item ${location.pathname === '/browse' ? 'active' : ''}`} to="/browse">Explore</Link></li>
+        <li><Link className={`nav-item ${!isAuthenticated && location.pathname === '/browse' ? 'active' : ''}`} to="/browse">Explore</Link></li>
         <li><Link className={`nav-item ${location.pathname === '/how-it-works' ? 'active' : ''}`} to="/how-it-works">How it works</Link></li>
-        <li><Link className={`nav-item ${location.pathname === '/credits' ? 'active' : ''}`} to="/credits">Credits</Link></li>
-        <li><Link className={`nav-item ${location.pathname === '/leaderboard' ? 'active' : ''}`} to="/leaderboard">Community</Link></li>
+        <li><Link className={`nav-item ${!isAuthenticated && location.pathname === '/credits' ? 'active' : ''}`} to="/credits">Credits</Link></li>
+        <li><Link className={`nav-item ${!isAuthenticated && location.pathname === '/leaderboard' ? 'active' : ''}`} to="/leaderboard">Community</Link></li>
       </ul>
 
       {/* Theme toggle button, Notification bell, Auth CTA */}
@@ -155,33 +156,15 @@ export default function Navbar() {
                 </div>
                 <div className="notif-list">
                   {notifications.length > 0 ? (
-                    notifications.map(n => (
-                      <Link 
-                        key={n.id} 
-                        to={n.link || '/dashboard'} 
-                        className={`notif-item notif-item-link ${!n.read ? 'unread' : ''}`}
-                        onClick={() => setShowNotifs(false)}
-                      >
-                        <div className="notif-icon-circle">{getNotifIcon(n.type)}</div>
-                        <div className="notif-body notif-body-flex">
-                          <p className={`notif-text ${n.read ? 'notif-text-read' : 'notif-text-unread'}`}>{n.text || n.title}</p>
-                          <span className="notif-time">{n.time || 'Recent'}</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={(e) => deleteNotification(n.id, e)}
-                          title="Remove notification"
-                          className="notif-del-btn"
+                    notifications.map(n => {
+                      const notifId = n.id || n._id;
+                      return (
+                        <div
+                          key={notifId}
+                          className={`notif-item ${!n.read ? 'unread' : ''}`}
                         >
                           <div
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.75rem',
-                              flex: 1,
-                              cursor: 'pointer',
-                              minWidth: 0
-                            }}
+                            className="notif-content-area"
                             onClick={() => {
                               setShowNotifs(false);
                               if (n.link) {
@@ -191,11 +174,11 @@ export default function Navbar() {
                             title="Click to view details"
                           >
                             <div className="notif-icon-circle">{getNotifIcon(n.type)}</div>
-                            <div className="notif-body" style={{ flex: 1, minWidth: 0 }}>
-                              <p className="notif-text" style={{ fontWeight: n.read ? 500 : 700, margin: 0, fontSize: '0.86rem', wordBreak: 'break-word' }}>
+                            <div className="notif-body">
+                              <p className={`notif-text ${n.read ? 'notif-text-read' : 'notif-text-unread'}`}>
                                 {n.text || n.title}
                               </p>
-                              <span className="notif-time" style={{ fontSize: '0.75rem', color: 'var(--slate-400)' }}>
+                              <span className="notif-time">
                                 {n.time || 'Recent'}
                               </span>
                             </div>
@@ -205,26 +188,7 @@ export default function Navbar() {
                             type="button"
                             onClick={(e) => deleteNotification(notifId, e)}
                             title="Delete this notification only"
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              cursor: 'pointer',
-                              fontSize: '0.85rem',
-                              color: 'var(--slate-400, #94a3b8)',
-                              padding: '5px 7px',
-                              borderRadius: '6px',
-                              transition: 'all 0.15s ease',
-                              flexShrink: 0,
-                              lineHeight: 1
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.color = '#ef4444';
-                              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.color = 'var(--slate-400, #94a3b8)';
-                              e.currentTarget.style.background = 'none';
-                            }}
+                            className="notif-delete-btn"
                           >
                             ✕
                           </button>

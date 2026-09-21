@@ -153,6 +153,8 @@ export default function Sidebar({ user: propUser }) {
               className="toggle-btn"
               onClick={handleToggleSidebar}
               title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+              aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              aria-expanded={!isCollapsed}
             >
               {isCollapsed ? '▶' : '◀'}
             </button>

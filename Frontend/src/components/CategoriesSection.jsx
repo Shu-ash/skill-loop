@@ -40,7 +40,7 @@ export default function CategoriesSection() {
   return (
     <section className="categories-section">
       <div className="categories-feed">
-        {categories.map((item, idx) => (
+        {categories.slice(0, 4).map((item, idx) => (
           <Link key={idx} className="glass-card category-card" to={`/browse?category=${encodeURIComponent(item.cat)}`}>
             <div>
               <span className={`pill-badge ${item.pill}`}>{item.badge}</span>
@@ -49,12 +49,10 @@ export default function CategoriesSection() {
             </div>
           </Link>
         ))}
-        <Link className="glass-card category-card" to="/browse" style={{ border: '1px dashed var(--violet-primary, #2563EB)', background: 'rgba(37, 99, 235, 0.04)' }}>
-          <div>
-            <span className="pill-badge pill-violet">Full Directory</span>
-            <h4 style={{ color: 'var(--violet-primary, #2563EB)' }}>Explore All Categories →</h4>
-            <p>Browse 100+ skills & teachers</p>
-          </div>
+      </div>
+      <div className="categories-cta-row" style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+        <Link className="btn btn-secondary btn-pill-sm" to="/browse">
+          Explore all categories in Directory →
         </Link>
       </div>
     </section>
