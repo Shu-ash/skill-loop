@@ -7,7 +7,8 @@ export default function SessionCard({
   onStartSession,
   onMarkComplete,
   onCancelSession,
-  onScheduleSession,
+  onOpenEditSchedule,
+  onOpenDispute,
   onOpenReview,
   actionLoading
 }) {
@@ -141,128 +142,13 @@ export default function SessionCard({
   const isLiveWindow = Boolean(canJoin || isDuringSession);
   const isUnlocked = Boolean(isLiveWindow || status === 'in_progress' || isCompleted);
 
-  const [scheduledAtInput, setScheduledAtInput] = useState(() => {
-    if (!scheduledAt) return '';
-    try {
-      const d = new Date(scheduledAt);
-      if (Number.isNaN(d.getTime())) return '';
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      const h = String(d.getHours()).padStart(2, '0');
-      const min = String(d.getMinutes()).padStart(2, '0');
-      return `${y}-${m}-${day}T${h}:${min}`;
-    } catch {
-      return '';
-    }
-  });
-  const [selectedDuration, setSelectedDuration] = useState(durationMins);
-  const [sessionMode, setSessionMode] = useState(mode === 'in_person' ? 'in_person' : 'online');
-  const [meetLinkInput, setMeetLinkInput] = useState(meetLink || '');
-
-  // Keep internal form inputs in sync with session prop updates
-  useEffect(() => {
-    if (meetLink) setMeetLinkInput(meetLink);
-  }, [meetLink]);
-
-  useEffect(() => {
-    if (duration) setSelectedDuration(Number(duration) || 45);
-  }, [duration]);
-
-  useEffect(() => {
-    if (mode) setSessionMode(mode === 'in_person' ? 'in_person' : 'online');
-  }, [mode]);
-
-  useEffect(() => {
-    if (scheduledAt) {
-      try {
-        const d = new Date(scheduledAt);
-        if (!Number.isNaN(d.getTime())) {
-          const y = d.getFullYear();
-          const m = String(d.getMonth() + 1).padStart(2, '0');
-          const day = String(d.getDate()).padStart(2, '0');
-          const h = String(d.getHours()).padStart(2, '0');
-          const min = String(d.getMinutes()).padStart(2, '0');
-          setScheduledAtInput(`${y}-${m}-${day}T${h}:${min}`);
-        }
-      } catch (e) {}
-    }
-  }, [scheduledAt]);
-
   const getStatusLabel = () => {
     if (status === 'cancelled') return 'CANCELLED';
     if (isCompleted) return 'COMPLETED';
     if (status === 'in_progress') return 'IN PROGRESS';
     if (isLiveWindow) return 'READY TO JOIN';
+    if (!scheduledAt) return 'PENDING SCHEDULE';
     return 'SCHEDULED';
-  };
-
-  const getMinDateTime = () => {
-    // 15-minute grace period to allow present time & slight clock differences
-    const now = new Date(Date.now() - 15 * 60 * 1000);
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-  };
-
-  const setPresetDateTime = (offsetMinutes) => {
-    const target = new Date(Date.now() + offsetMinutes * 60 * 1000);
-    const y = target.getFullYear();
-    const m = String(target.getMonth() + 1).padStart(2, '0');
-    const d = String(target.getDate()).padStart(2, '0');
-    const h = String(target.getHours()).padStart(2, '0');
-    const min = String(target.getMinutes()).padStart(2, '0');
-    setScheduledAtInput(`${y}-${m}-${d}T${h}:${min}`);
-  };
-
-  const handleSchedule = () => {
-    if (!onScheduleSession) return;
-
-    if (!scheduledAtInput) {
-      alert('Please select a date and time.');
-      return;
-    }
-
-    const selectedDate = new Date(scheduledAtInput);
-    if (Number.isNaN(selectedDate.getTime())) {
-      alert('Please select a valid date and time.');
-      return;
-    }
-
-    // Allow present time (with 15-min grace buffer for clock skew) or any future date/time
-    const graceWindow = new Date(Date.now() - 15 * 60 * 1000);
-    if (selectedDate < graceWindow) {
-      alert('Please select a present or future date and time.');
-      return;
-    }
-
-    const finalDuration = Number(selectedDuration);
-    const allowedDurations = [15, 30, 45, 60, 90, 120];
-    if (!allowedDurations.includes(finalDuration)) {
-      alert('Please select a valid duration.');
-      return;
-    }
-
-    if (sessionMode !== 'online' && sessionMode !== 'in_person') {
-      alert('Please select a valid session mode.');
-      return;
-    }
-
-    if (sessionMode === 'online' && !meetLinkInput.trim()) {
-      alert('Please enter the Google Meet link.');
-      return;
-    }
-
-    onScheduleSession(
-      id,
-      selectedDate.toISOString(),
-      sessionMode,
-      sessionMode === 'online' ? meetLinkInput.trim() : '',
-      finalDuration
-    );
   };
 
   return (
@@ -274,7 +160,7 @@ export default function SessionCard({
               ● {getStatusLabel()}
             </span>
             <span className="pill-badge pill-white session-badge-sm">
-              {isTeacher ? '🎓 You are the Teacher' : '🎒 You are the Student'}
+              {isTeacher ? '🎓 Host (Teacher)' : '🎒 Student'}
             </span>
 
             <span className="pill-badge pill-white session-badge-sm">
@@ -299,7 +185,12 @@ export default function SessionCard({
             {title}
           </h3>
           <p className="session-partner-sub">
-            {isTeacher ? `Student: ${partnerName}` : `Teacher: ${partnerName}`} • <strong>{date}</strong> at <strong>{time}</strong> ({durationMins} mins)
+            {isTeacher ? `Student: ${partnerName}` : `Host/Teacher: ${partnerName}`}
+            {scheduledAt ? (
+              <> • <strong>{date}</strong> at <strong>{time}</strong> ({durationMins} mins)</>
+            ) : (
+              <> • <em style={{ color: 'var(--gold-primary)' }}>Not scheduled yet</em></>
+            )}
           </p>
         </div>
 
@@ -308,117 +199,49 @@ export default function SessionCard({
         </div>
       </div>
 
-      {/* Schedule Form for Teacher if unscheduled */}
-      {isTeacher && (status === 'pending' || (status === 'scheduled' && !scheduledAt && !meetLink)) && (
-        <div className="glass-panel request-inline-form">
-          <h4>📅 Schedule Session</h4>
-          <p>Choose when you want to conduct this session.</p>
-
-          <div className="form-group">
-            <label htmlFor="scheduledAt">Date &amp; Time</label>
-            <input
-              id="scheduledAt"
-              type="datetime-local"
-              value={scheduledAtInput}
-              min={getMinDateTime()}
-              onChange={(e) => setScheduledAtInput(e.target.value)}
-              disabled={actionLoading}
-            />
-            <div className="session-preset-buttons-row">
-              <button
-                type="button"
-                className="btn btn-secondary btn-pill-sm session-preset-btn"
-                onClick={() => setPresetDateTime(0)}
-                disabled={actionLoading}
-                title="Schedule for right now"
-              >
-                ⚡ Today (Now)
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary btn-pill-sm session-preset-btn"
-                onClick={() => setPresetDateTime(10)}
-                disabled={actionLoading}
-                title="Schedule for 10 minutes from now"
-              >
-                ⚡ Today (+10 mins)
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary btn-pill-sm session-preset-btn"
-                onClick={() => setPresetDateTime(24 * 60)}
-                disabled={actionLoading}
-                title="Schedule for tomorrow at current time"
-              >
-                📅 Tomorrow (Same time)
-              </button>
-            </div>
+      {/* Unscheduled Banner */}
+      {!scheduledAt && status !== 'completed' && status !== 'cancelled' && (
+        <div className="glass-panel scheduled-banner" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+          <div>
+            <strong style={{ color: 'var(--gold-primary)' }}>⏳ Schedule Pending</strong>
+            <p style={{ margin: '4px 0 0', fontSize: '0.86rem' }}>
+              {isTeacher ? 'Please set the session date, duration & Google Meet link.' : 'Waiting for host to set the class date & time.'}
+            </p>
           </div>
-
-          <div className="form-group">
-            <label htmlFor="sessionDuration">Duration</label>
-            <select
-              id="sessionDuration"
-              value={selectedDuration}
-              onChange={(e) => setSelectedDuration(Number(e.target.value))}
+          {isTeacher && onOpenEditSchedule && (
+            <button
+              type="button"
+              className="btn btn-primary btn-pill-sm"
+              onClick={() => onOpenEditSchedule(session)}
               disabled={actionLoading}
             >
-              <option value={15}>15 minutes</option>
-              <option value={30}>30 minutes</option>
-              <option value={45}>45 minutes</option>
-              <option value={60}>60 minutes</option>
-              <option value={90}>90 minutes</option>
-              <option value={120}>120 minutes</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="sessionMode">Session Mode</label>
-            <select
-              id="sessionMode"
-              value={sessionMode}
-              onChange={(e) => setSessionMode(e.target.value)}
-              disabled={actionLoading}
-            >
-              <option value="online">Online</option>
-              <option value="in_person">In Person</option>
-            </select>
-          </div>
-
-          {sessionMode === 'online' && (
-            <div className="form-group">
-              <label htmlFor="meetLink">Google Meet Link</label>
-              <input
-                id="meetLink"
-                type="url"
-                value={meetLinkInput}
-                onChange={(e) => setMeetLinkInput(e.target.value)}
-                placeholder="https://meet.google.com/abc-defg-hij"
-                disabled={actionLoading}
-              />
-            </div>
+              📅 Schedule Session Now
+            </button>
           )}
-
-          <button
-            type="button"
-            className="btn btn-primary btn-full"
-            onClick={handleSchedule}
-            disabled={
-              actionLoading ||
-              !scheduledAtInput ||
-              (sessionMode === 'online' && !meetLinkInput.trim())
-            }
-          >
-            {actionLoading ? 'Scheduling...' : '📅 Schedule Session'}
-          </button>
         </div>
       )}
 
       {/* Scheduled Details Banner */}
       {status === 'scheduled' && scheduledAt && (
         <div className="glass-panel scheduled-banner">
-          <strong>📅 Session scheduled</strong>
-          <p>{date} • {time}</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+            <div>
+              <strong>📅 Class scheduled:</strong>
+              <p style={{ margin: '2px 0 0' }}>{date} • {time} ({durationMins} mins)</p>
+            </div>
+            {isTeacher && onOpenEditSchedule && !isAfterSession && (
+              <button
+                type="button"
+                className="btn btn-secondary btn-pill-sm"
+                onClick={() => onOpenEditSchedule(session)}
+                disabled={actionLoading}
+                style={{ fontSize: '0.8rem', padding: '4px 12px' }}
+                title="Edit class timing or meet link"
+              >
+                ✏️ Edit Schedule
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -472,13 +295,13 @@ export default function SessionCard({
           <div className="meet-info">
             <span className="meet-icon">🎥</span>
             <div>
-              <strong>Google Meet Link</strong>
+              <strong>Google Meet / Video Link</strong>
               <p>
                 {canJoin
                   ? meetLink
                   : isAfterSession
                     ? 'Session expired'
-                    : `🔒 Link unlocks during session (${time})`}
+                    : `🔒 Link unlocks automatically at class time (${time})`}
               </p>
             </div>
           </div>
@@ -512,7 +335,7 @@ export default function SessionCard({
 
         <div className="meta-item">
           <span>Credit Reward</span>
-          <strong className="session-credit-earn">+1 Credit to {partnerName}</strong>
+          <strong className="session-credit-earn">+1 Credit to {isTeacher ? 'You' : partnerName}</strong>
         </div>
       </div>
 
@@ -558,6 +381,18 @@ export default function SessionCard({
               </button>
             )}
 
+            {/* Host Reschedule / Edit Button */}
+            {isTeacher && onOpenEditSchedule && !isAfterSession && (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => onOpenEditSchedule(session)}
+                disabled={actionLoading}
+              >
+                ✏️ Edit Date, Time &amp; Link
+              </button>
+            )}
+
             {onCancelSession && status === 'scheduled' && !isAfterSession && (
               <button
                 type="button"
@@ -591,6 +426,28 @@ export default function SessionCard({
         {status === 'cancelled' && (
           <div className="glass-panel session-cancelled-banner">
             Session cancelled
+          </div>
+        )}
+
+        {onOpenDispute && status !== 'cancelled' && (
+          <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginTop: '4px' }}>
+            <button
+              type="button"
+              className="session-report-link-btn"
+              onClick={() => onOpenDispute(session)}
+              title="Report an issue or dispute for this session"
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--slate-400, #94a3b8)',
+                fontSize: '0.78rem',
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                padding: '2px 8px'
+              }}
+            >
+              🚨 Report Issue / Dispute
+            </button>
           </div>
         )}
       </div>

@@ -416,17 +416,19 @@ export const deleteCategory = async (req, res) => {
 export const getAdminReports = async (req, res) => {
   try {
     const reports = await Report.find()
-      .populate("reporter", "name email")
-      .populate("reportedUser", "name email")
+      .populate("reporter", "name firstName lastName email")
+      .populate("reportedUser", "name firstName lastName email")
+      .populate("reportedSession", "skill topic")
       .sort({ createdAt: -1 });
 
     const formattedReports = reports.map(r => ({
       id: r._id,
       displayId: `#REP-${r._id.toString().slice(-6).toUpperCase()}`,
-      reporterName: r.reporter?.name || 'User',
-      reportedName: r.reportedUser?.name || 'User',
+      reporterName: r.reporter?.name || `${r.reporter?.firstName || ''} ${r.reporter?.lastName || ''}`.trim() || 'User',
+      reportedName: r.reportedUser?.name || `${r.reportedUser?.firstName || ''} ${r.reportedUser?.lastName || ''}`.trim() || (r.reportedSession ? `Session: ${r.reportedSession.skill || 'Swap'}` : 'User'),
       reason: r.reason,
-      status: r.status === 'resolved' ? 'Resolved' : 'Pending',
+      details: r.details || '',
+      status: r.status === 'resolved' ? 'Resolved' : r.status === 'dismissed' ? 'Dismissed' : 'Pending',
       createdAt: r.createdAt
     }));
 
@@ -443,17 +445,17 @@ export const getAdminReports = async (req, res) => {
 export const resolveReport = async (req, res) => {
   try {
     const { reportId } = req.params;
-    const { action } = req.body;
+    const finalAction = (req.body.action || req.body.status || 'resolved').toLowerCase();
 
     const report = await Report.findByIdAndUpdate(
       reportId,
-      { status: action === 'dismissed' ? 'dismissed' : 'resolved' },
+      { status: finalAction === 'dismissed' ? 'dismissed' : 'resolved' },
       { new: true }
     );
 
     res.status(200).json({
       success: true,
-      message: `Report ${action || 'resolved'}`,
+      message: `Report ${finalAction}`,
       data: { report }
     });
   } catch (error) {

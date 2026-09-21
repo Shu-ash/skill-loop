@@ -5,7 +5,9 @@ import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import MobileNav from '../components/MobileNav';
 import SessionCard from '../components/SessionCard';
+import ScheduleSessionModal from '../components/ScheduleSessionModal';
 import ReviewModal from '../components/ReviewModal';
+import DisputeModal from '../components/DisputeModal';
 import SkillLoopLoader from '../components/SkillLoopLoader';
 import { fetchWithAuth, getAuthStatus } from '../utils/auth';
 
@@ -19,7 +21,23 @@ export default function SessionsPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
+
+  // Edit / Reschedule Modal State
+  const [editModal, setEditModal] = useState({
+    open: false,
+    session: null,
+    loading: false
+  });
+
+  // Dispute Modal State
+  const [disputeModal, setDisputeModal] = useState({
+    open: false,
+    session: null,
+    loading: false
+  });
+
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [reviewSession, setReviewSession] = useState(null);
   const [reviewLoading, setReviewLoading] = useState(false);
@@ -225,6 +243,86 @@ export default function SessionsPage() {
     }
   };
 
+  // Open Edit Schedule Modal
+  const handleOpenEditSchedule = (session) => {
+    setEditModal({
+      open: true,
+      session,
+      loading: false
+    });
+  };
+
+  const handleCloseEditModal = () => {
+    setEditModal({
+      open: false,
+      session: null,
+      loading: false
+    });
+  };
+
+  // Submit Updated Schedule from Modal
+  const handleSubmitEditSchedule = async ({ scheduledAt, duration, mode, meetLink, message }) => {
+    const sessionId = editModal.session?.id;
+    if (!sessionId) return;
+
+    const selectedDuration = Number(duration);
+    if (!ALLOWED_DURATIONS.includes(selectedDuration)) {
+      setError('Duration must be 15, 30, 45, 60, 90, or 120 minutes.');
+      return;
+    }
+
+    if (!scheduledAt) {
+      setError('Please select a date and time.');
+      return;
+    }
+
+    if (mode === 'online' && !meetLink?.trim()) {
+      setError('Meeting link is required for online sessions.');
+      return;
+    }
+
+    try {
+      setEditModal(prev => ({ ...prev, loading: true }));
+      setError('');
+      setSuccessMsg('');
+
+      const response = await fetchWithAuth(`${API_URL}/sessions/${sessionId}/schedule`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          scheduledAt,
+          mode,
+          meetLink: mode === 'online' ? meetLink.trim() : '',
+          duration: selectedDuration,
+          message: message ? message.trim() : ''
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to update session schedule');
+      }
+
+      handleCloseEditModal();
+      setSuccessMsg('🎉 Session schedule & meeting link updated successfully!');
+      setTimeout(() => setSuccessMsg(''), 4000);
+
+      const updatedSession = data?.data?.session;
+      if (updatedSession) {
+        updateSessionInState(updatedSession);
+      } else {
+        await loadSessions(currentUser);
+      }
+    } catch (err) {
+      console.error('Failed to update session schedule:', err);
+      setError(err.message || 'Failed to update session schedule');
+      setEditModal(prev => ({ ...prev, loading: false }));
+    }
+  };
+
   const handleScheduleSession = async (sessionId, scheduledAt, mode, meetLink, duration) => {
     const selectedDuration = Number(duration);
     if (!ALLOWED_DURATIONS.includes(selectedDuration)) {
@@ -384,6 +482,57 @@ export default function SessionsPage() {
     }
   };
 
+  // Open Dispute Modal
+  const handleOpenDispute = (session) => {
+    setDisputeModal({
+      open: true,
+      session,
+      loading: false
+    });
+  };
+
+  const handleCloseDisputeModal = () => {
+    setDisputeModal({
+      open: false,
+      session: null,
+      loading: false
+    });
+  };
+
+  const handleSubmitDispute = async (sessionId, reason, details) => {
+    try {
+      setDisputeModal(prev => ({ ...prev, loading: true }));
+      setError('');
+      setSuccessMsg('');
+
+      const response = await fetchWithAuth(`${API_URL}/reports`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          sessionId,
+          reason,
+          details
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to submit report dispute');
+      }
+
+      handleCloseDisputeModal();
+      setSuccessMsg('🚨 Incident report submitted. Moderation team has received your dispute.');
+      setTimeout(() => setSuccessMsg(''), 5000);
+    } catch (err) {
+      console.error('Failed to submit dispute:', err);
+      setError(err.message || 'Failed to submit dispute');
+      setDisputeModal(prev => ({ ...prev, loading: false }));
+    }
+  };
+
   return (
     <>
       <div className="liquid-bg">
@@ -412,6 +561,12 @@ export default function SessionsPage() {
               </div>
             )}
 
+            {successMsg && (
+              <div className="glass-panel requests-success-banner">
+                {successMsg}
+              </div>
+            )}
+
             {loading ? (
               <SkillLoopLoader
                 title="Loading Swap Sessions"
@@ -430,6 +585,8 @@ export default function SessionsPage() {
                     onMarkComplete={handleMarkComplete}
                     onCancelSession={handleCancelSession}
                     onScheduleSession={handleScheduleSession}
+                    onOpenEditSchedule={handleOpenEditSchedule}
+                    onOpenDispute={handleOpenDispute}
                     onOpenReview={(s) => {
                       setReviewSession(s);
                       setReviewModalOpen(true);
@@ -449,6 +606,24 @@ export default function SessionsPage() {
 
         <MobileNav />
       </div>
+
+      {/* Host Edit & Reschedule Session Modal */}
+      <ScheduleSessionModal
+        isOpen={editModal.open}
+        session={editModal.session}
+        onClose={handleCloseEditModal}
+        onSubmit={handleSubmitEditSchedule}
+        loading={editModal.loading}
+      />
+
+      {/* Session Dispute / Incident Report Modal */}
+      <DisputeModal
+        isOpen={disputeModal.open}
+        session={disputeModal.session}
+        onClose={handleCloseDisputeModal}
+        onSubmitDispute={handleSubmitDispute}
+        loading={disputeModal.loading}
+      />
 
       <ReviewModal
         isOpen={reviewModalOpen}

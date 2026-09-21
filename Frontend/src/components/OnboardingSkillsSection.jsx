@@ -1,5 +1,9 @@
 // src/components/OnboardingSkillsSection.jsx
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { MASTER_CATEGORIES } from '../data/categoriesData';
+import './OnboardingSkillsSection.css';
+
+const DEFAULT_CATEGORIES = MASTER_CATEGORIES;
 
 export default function OnboardingSkillsSection({
   teachSkills = [],
@@ -16,28 +20,115 @@ export default function OnboardingSkillsSection({
   setSkillLevel,
   categoriesList = []
 }) {
-  const [activeTeachCategory, setActiveTeachCategory] = useState('');
-  const [activeLearnCategory, setActiveLearnCategory] = useState('');
+  // Merge live categories with default curated database
+  const categories = useMemo(() => {
+    if (categoriesList && categoriesList.length > 0) {
+      return categoriesList.map(cat => ({
+        ...cat,
+        icon: cat.icon || DEFAULT_CATEGORIES.find(d => d.name.toLowerCase() === cat.name.toLowerCase())?.icon || '⚡',
+        skills: Array.isArray(cat.skills) && cat.skills.length > 0 
+          ? cat.skills 
+          : DEFAULT_CATEGORIES.find(d => d.name.toLowerCase() === cat.name.toLowerCase())?.skills || []
+      }));
+    }
+    return DEFAULT_CATEGORIES;
+  }, [categoriesList]);
 
-  // Fallback default categories if not yet loaded from DB
-  const categories = categoriesList && categoriesList.length > 0 ? categoriesList : [
-    { name: 'Tech & Code', icon: '💻', skills: ['React JS', 'Node.js', 'Python', 'JavaScript', 'HTML & CSS', 'Next.js', 'MongoDB', 'SQL'] },
-    { name: 'AI & Data Science', icon: '🤖', skills: ['Machine Learning', 'Prompt Engineering & LLMs', 'ChatGPT & OpenAI API', 'Data Analysis'] },
-    { name: 'Design & Arts', icon: '🎨', skills: ['UI/UX Design', 'Figma & Prototyping', 'Logo & Brand Identity', 'Photoshop', 'Canva'] },
-    { name: 'Languages & Study', icon: '🗣️', skills: ['English Conversation & Fluency', 'Spanish Language', 'French Language', 'Public Speaking'] },
-    { name: 'Business & Growth', icon: '📈', skills: ['Digital Marketing', 'SEO Optimization', 'Content Strategy', 'Social Media Growth'] },
-    { name: 'Music & Audio', icon: '🎵', skills: ['Acoustic Guitar', 'Piano Basics & Chords', 'Vocal Training', 'Music Production'] },
-    { name: 'Lifestyle & Fitness', icon: '🧘', skills: ['Fitness & Gym Coaching', 'Yoga & Mindfulness', 'Cooking & Baking', 'Photography'] }
-  ];
+  // Flatten all skills with category metadata for instant search
+  const allFlattenedSkills = useMemo(() => {
+    const list = [];
+    const seen = new Set();
+    categories.forEach(cat => {
+      (cat.skills || []).forEach(skill => {
+        const key = skill.toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          list.push({
+            name: skill,
+            category: cat.name,
+            icon: cat.icon || '⚡'
+          });
+        }
+      });
+    });
+    return list;
+  }, [categories]);
 
-  const currentTeachCatName = activeTeachCategory || categories[0]?.name;
-  const currentLearnCatName = activeLearnCategory || categories[2]?.name || categories[0]?.name;
+  // Tab State
+  const [activeTeachCat, setActiveTeachCat] = useState(categories[0]?.name || 'AI & Data Science');
+  const [activeLearnCat, setActiveLearnCat] = useState(categories[1]?.name || 'Tech & Code');
 
-  const currentTeachCatObj = categories.find(c => c.name === currentTeachCatName) || categories[0];
-  const currentLearnCatObj = categories.find(c => c.name === currentLearnCatName) || categories[2] || categories[0];
+  // Search State for Teach
+  const [teachSearch, setTeachSearch] = useState('');
+  const [isTeachDropdownOpen, setIsTeachDropdownOpen] = useState(false);
+  const teachSearchRef = useRef(null);
 
-  const currentTeachSkills = currentTeachCatObj?.skills || [];
-  const currentLearnSkills = currentLearnCatObj?.skills || [];
+  // Search State for Learn
+  const [learnSearch, setLearnSearch] = useState('');
+  const [isLearnDropdownOpen, setIsLearnDropdownOpen] = useState(false);
+  const learnSearchRef = useRef(null);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (teachSearchRef.current && !teachSearchRef.current.contains(e.target)) {
+        setIsTeachDropdownOpen(false);
+      }
+      if (learnSearchRef.current && !learnSearchRef.current.contains(e.target)) {
+        setIsLearnDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
+  // Filter Search Results for Teach
+  const filteredTeachResults = useMemo(() => {
+    const query = teachSearch.trim().toLowerCase();
+    if (!query) return allFlattenedSkills.slice(0, 8);
+    return allFlattenedSkills.filter(item =>
+      item.name.toLowerCase().includes(query) ||
+      item.category.toLowerCase().includes(query)
+    );
+  }, [teachSearch, allFlattenedSkills]);
+
+  // Filter Search Results for Learn
+  const filteredLearnResults = useMemo(() => {
+    const query = learnSearch.trim().toLowerCase();
+    if (!query) return allFlattenedSkills.slice(0, 8);
+    return allFlattenedSkills.filter(item =>
+      item.name.toLowerCase().includes(query) ||
+      item.category.toLowerCase().includes(query)
+    );
+  }, [learnSearch, allFlattenedSkills]);
+
+  // Active Category Skills
+  const currentTeachCatObj = categories.find(c => c.name === activeTeachCat) || categories[0];
+  const currentLearnCatObj = categories.find(c => c.name === activeLearnCat) || categories[1] || categories[0];
+
+  const currentTeachCatSkills = currentTeachCatObj?.skills || [];
+  const currentLearnCatSkills = currentLearnCatObj?.skills || [];
+
+  // Handlers for adding custom skills safely
+  const handleAddCustomTeachSkill = (customName) => {
+    const skill = (customName || teachSearch).trim();
+    if (skill.length < 2) return;
+    if (!teachSkills.some(s => s.toLowerCase() === skill.toLowerCase())) {
+      toggleTeachSkill(skill);
+    }
+    setTeachSearch('');
+    setIsTeachDropdownOpen(false);
+  };
+
+  const handleAddCustomLearnSkill = (customName) => {
+    const skill = (customName || learnSearch).trim();
+    if (skill.length < 2) return;
+    if (!learnSkills.some(s => s.toLowerCase() === skill.toLowerCase())) {
+      toggleLearnSkill(skill);
+    }
+    setLearnSearch('');
+    setIsLearnDropdownOpen(false);
+  };
 
   return (
     <div className="onboarding-section">
@@ -46,208 +137,301 @@ export default function OnboardingSkillsSection({
         <h3>Skills &amp; Expertise</h3>
       </div>
 
-      {/* SECTION 1: SKILLS TO TEACH */}
-      <div className="form-group onboarding-group-spacing">
-        <div className="onboarding-label-row">
-          <label className="form-label onboarding-teach-label">
-            🎓 Skills You Can Teach <span className="req-star">* (at least 1)</span>
-          </label>
-          <span className="onboarding-count-badge">
-            Selected: <strong className="teach">{teachSkills.length}</strong>
-          </span>
-        </div>
+      <div className="oss-container">
+        {/* ======================================================== */}
+        {/* SECTION 1: SKILLS YOU CAN TEACH */}
+        {/* ======================================================== */}
+        <div className="oss-block">
+          <div className="oss-block-header">
+            <label className="oss-label teach">
+              🎓 Skills You Can Teach <span className="req-star">* (at least 1)</span>
+            </label>
+            <span className="oss-count-badge">
+              Selected: <strong className="teach">{teachSkills.length}</strong>
+            </span>
+          </div>
 
-        {/* Selected Teach Skills Chips Tray */}
-        {teachSkills.length > 0 && (
-          <div className="onboarding-chips-tray teach">
-            {teachSkills.map((skill) => (
-              <span
-                key={skill}
-                className="onboarding-chip teach"
-              >
-                <span>⚡ {skill}</span>
+          {/* Selected Teach Skills Chips Tray */}
+          {teachSkills.length > 0 && (
+            <div className="oss-selected-tray teach">
+              {teachSkills.map((skill) => (
+                <span key={skill} className="oss-chip teach">
+                  <span>⚡ {skill}</span>
+                  <button
+                    type="button"
+                    onClick={() => toggleTeachSkill(skill)}
+                    className="oss-chip-remove"
+                    title={`Remove ${skill}`}
+                  >
+                    ✕
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Search Dropdown Input for Teach */}
+          <div className="oss-search-wrapper" ref={teachSearchRef}>
+            <div className="oss-search-input-box">
+              <span className="oss-search-icon">🔍</span>
+              <input
+                type="text"
+                className="oss-search-input"
+                placeholder="Search genuine skills (e.g. Python, Figma, English, React, AI...)"
+                value={teachSearch}
+                onChange={(e) => {
+                  setTeachSearch(e.target.value);
+                  setIsTeachDropdownOpen(true);
+                }}
+                onFocus={() => setIsTeachDropdownOpen(true)}
+              />
+              {teachSearch && (
                 <button
                   type="button"
+                  className="oss-clear-btn"
+                  onClick={() => setTeachSearch('')}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* Dropdown Menu */}
+            {isTeachDropdownOpen && (
+              <div className="oss-dropdown-menu">
+                {filteredTeachResults.map((item) => {
+                  const isSelected = teachSkills.some(s => s.toLowerCase() === item.name.toLowerCase());
+                  return (
+                    <div
+                      key={item.name}
+                      className={`oss-dropdown-item ${isSelected ? 'selected' : ''}`}
+                      onClick={() => {
+                        toggleTeachSkill(item.name);
+                        setTeachSearch('');
+                        setIsTeachDropdownOpen(false);
+                      }}
+                    >
+                      <div className="oss-item-lead">
+                        <span>{item.icon}</span>
+                        <span className="oss-item-name">{item.name}</span>
+                        <span className="oss-item-cat">{item.category}</span>
+                      </div>
+                      <span className={`oss-item-action ${isSelected ? 'selected' : 'add-teach'}`}>
+                        {isSelected ? '✓ Added' : '+ Add'}
+                      </span>
+                    </div>
+                  );
+                })}
+
+                {/* Fallback Option for Custom Skill */}
+                {teachSearch.trim().length >= 2 && !allFlattenedSkills.some(s => s.name.toLowerCase() === teachSearch.trim().toLowerCase()) && (
+                  <div
+                    className="oss-custom-add-item"
+                    onClick={() => handleAddCustomTeachSkill(teachSearch)}
+                  >
+                    <span>✨</span>
+                    <span>+ Add custom skill: "<strong>{teachSearch.trim()}</strong>"</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Category Filter Tabs for Teach Skills */}
+          <div className="oss-category-tabs">
+            {categories.map((cat) => {
+              const isActive = activeTeachCat === cat.name;
+              return (
+                <button
+                  key={cat.name}
+                  type="button"
+                  onClick={() => setActiveTeachCat(cat.name)}
+                  className={`oss-category-tab ${isActive ? 'teach-active' : ''}`}
+                >
+                  <span>{cat.icon || '⚡'}</span> {cat.name}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Curated Skills Tag Pills Grid */}
+          <div className="oss-skills-grid">
+            {currentTeachCatSkills.map((skill) => {
+              const isSelected = teachSkills.some(s => s.toLowerCase() === skill.toLowerCase());
+              return (
+                <button
+                  key={skill}
+                  type="button"
+                  className={`oss-skill-pill ${isSelected ? 'selected-teach' : ''}`}
                   onClick={() => toggleTeachSkill(skill)}
-                  className="onboarding-chip-remove"
-                  title={`Remove ${skill}`}
                 >
-                  ✕
+                  <span>{skill}</span>
+                  <span>{isSelected ? '✓' : '+'}</span>
                 </button>
-              </span>
-            ))}
+              );
+            })}
           </div>
-        )}
-
-        {/* Category Filter Tabs for Teach Skills */}
-        <div className="onboarding-cat-scroll">
-          {categories.map((cat) => {
-            const isActive = currentTeachCatName === cat.name;
-            return (
-              <button
-                key={cat.name}
-                type="button"
-                onClick={() => setActiveTeachCategory(cat.name)}
-                className={`onboarding-cat-pill ${isActive ? 'teach-active' : ''}`}
-              >
-                <span>{cat.icon || '⚡'}</span> {cat.name}
-              </button>
-            );
-          })}
         </div>
 
-        {/* Category Skills Chips Grid */}
-        <div className="skill-tags-grid onboarding-tags-tray-spacing">
-          {currentTeachSkills.map((skill) => {
-            const isSelected = teachSkills.includes(skill);
-            return (
-              <button
-                key={skill}
-                type="button"
-                className={`skill-tag-chip ${isSelected ? 'selected-teach' : ''}`}
-                onClick={() => toggleTeachSkill(skill)}
-              >
-                {skill} {isSelected ? '✓' : '+'}
-              </button>
-            );
-          })}
-        </div>
+        {/* ======================================================== */}
+        {/* SECTION 2: SKILLS YOU WANT TO LEARN */}
+        {/* ======================================================== */}
+        <div className="oss-block">
+          <div className="oss-block-header">
+            <label className="oss-label learn">
+              🎯 Skills You Want to Learn <span className="req-star">* (at least 1)</span>
+            </label>
+            <span className="oss-count-badge">
+              Selected: <strong className="learn">{learnSkills.length}</strong>
+            </span>
+          </div>
 
-        {/* Custom Teach Skill Input */}
-        <div className="custom-skill-input-row">
-          <input
-            type="text"
-            className="form-input custom-skill-input onboarding-custom-input"
-            placeholder="Can't find your skill? Type custom skill..."
-            value={customTeach}
-            onChange={(e) => setCustomTeach(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                addCustomTeach();
-              }
-            }}
-          />
-          <button
-            type="button"
-            className="btn btn-secondary btn-pill-sm onboarding-custom-btn"
-            onClick={addCustomTeach}
-          >
-            + Add
-          </button>
-        </div>
-      </div>
+          {/* Selected Learn Skills Chips Tray */}
+          {learnSkills.length > 0 && (
+            <div className="oss-selected-tray learn">
+              {learnSkills.map((skill) => (
+                <span key={skill} className="oss-chip learn">
+                  <span>🎯 {skill}</span>
+                  <button
+                    type="button"
+                    onClick={() => toggleLearnSkill(skill)}
+                    className="oss-chip-remove"
+                    title={`Remove ${skill}`}
+                  >
+                    ✕
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
 
-      {/* SECTION 2: SKILLS TO LEARN */}
-      <div className="form-group form-group-padded onboarding-group-spacing">
-        <div className="onboarding-label-row">
-          <label className="form-label onboarding-learn-label">
-            🎯 Skills You Want to Learn <span className="req-star">* (at least 1)</span>
-          </label>
-          <span className="onboarding-count-badge">
-            Selected: <strong className="learn">{learnSkills.length}</strong>
-          </span>
-        </div>
-
-        {/* Selected Learn Skills Chips Tray */}
-        {learnSkills.length > 0 && (
-          <div className="onboarding-chips-tray learn">
-            {learnSkills.map((skill) => (
-              <span
-                key={skill}
-                className="onboarding-chip learn"
-              >
-                <span>🎯 {skill}</span>
+          {/* Search Dropdown Input for Learn */}
+          <div className="oss-search-wrapper" ref={learnSearchRef}>
+            <div className="oss-search-input-box">
+              <span className="oss-search-icon">🔍</span>
+              <input
+                type="text"
+                className="oss-search-input"
+                placeholder="Search genuine skills (e.g. AI, English, UI/UX, Python, Video Editing...)"
+                value={learnSearch}
+                onChange={(e) => {
+                  setLearnSearch(e.target.value);
+                  setIsLearnDropdownOpen(true);
+                }}
+                onFocus={() => setIsLearnDropdownOpen(true)}
+              />
+              {learnSearch && (
                 <button
                   type="button"
-                  onClick={() => toggleLearnSkill(skill)}
-                  className="onboarding-chip-remove"
-                  title={`Remove ${skill}`}
+                  className="oss-clear-btn"
+                  onClick={() => setLearnSearch('')}
                 >
                   ✕
                 </button>
-              </span>
+              )}
+            </div>
+
+            {/* Dropdown Menu */}
+            {isLearnDropdownOpen && (
+              <div className="oss-dropdown-menu">
+                {filteredLearnResults.map((item) => {
+                  const isSelected = learnSkills.some(s => s.toLowerCase() === item.name.toLowerCase());
+                  return (
+                    <div
+                      key={item.name}
+                      className={`oss-dropdown-item ${isSelected ? 'selected' : ''}`}
+                      onClick={() => {
+                        toggleLearnSkill(item.name);
+                        setLearnSearch('');
+                        setIsLearnDropdownOpen(false);
+                      }}
+                    >
+                      <div className="oss-item-lead">
+                        <span>{item.icon}</span>
+                        <span className="oss-item-name">{item.name}</span>
+                        <span className="oss-item-cat">{item.category}</span>
+                      </div>
+                      <span className={`oss-item-action ${isSelected ? 'selected' : 'add-learn'}`}>
+                        {isSelected ? '✓ Added' : '+ Add'}
+                      </span>
+                    </div>
+                  );
+                })}
+
+                {/* Fallback Option for Custom Skill */}
+                {learnSearch.trim().length >= 2 && !allFlattenedSkills.some(s => s.name.toLowerCase() === learnSearch.trim().toLowerCase()) && (
+                  <div
+                    className="oss-custom-add-item"
+                    onClick={() => handleAddCustomLearnSkill(learnSearch)}
+                  >
+                    <span>✨</span>
+                    <span>+ Add custom skill: "<strong>{learnSearch.trim()}</strong>"</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Category Filter Tabs for Learn Skills */}
+          <div className="oss-category-tabs">
+            {categories.map((cat) => {
+              const isActive = activeLearnCat === cat.name;
+              return (
+                <button
+                  key={cat.name}
+                  type="button"
+                  onClick={() => setActiveLearnCat(cat.name)}
+                  className={`oss-category-tab ${isActive ? 'learn-active' : ''}`}
+                >
+                  <span>{cat.icon || '⚡'}</span> {cat.name}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Curated Skills Tag Pills Grid */}
+          <div className="oss-skills-grid">
+            {currentLearnCatSkills.map((skill) => {
+              const isSelected = learnSkills.some(s => s.toLowerCase() === skill.toLowerCase());
+              return (
+                <button
+                  key={skill}
+                  type="button"
+                  className={`oss-skill-pill ${isSelected ? 'selected-learn' : ''}`}
+                  onClick={() => toggleLearnSkill(skill)}
+                >
+                  <span>{skill}</span>
+                  <span>{isSelected ? '✓' : '+'}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* SECTION 3: YOUR EXPERIENCE LEVEL */}
+        <div className="form-group form-group-padded">
+          <label className="form-label onboarding-level-label">
+            Your Experience Level
+          </label>
+          <div className="level-btn-grid">
+            {['beginner', 'intermediate', 'advanced'].map((lvl) => (
+              <button
+                key={lvl}
+                type="button"
+                className={`level-card-btn ${skillLevel === lvl ? 'active' : ''}`}
+                onClick={() => setSkillLevel(lvl)}
+              >
+                <span className="level-title">
+                  {lvl.charAt(0).toUpperCase() + lvl.slice(1)}
+                </span>
+                <span className="level-desc">
+                  {lvl === 'beginner' && 'Just starting out, eager to learn'}
+                  {lvl === 'intermediate' && 'Comfortable, looking to refine & swap'}
+                  {lvl === 'advanced' && 'Highly experienced mentor'}
+                </span>
+              </button>
             ))}
           </div>
-        )}
-
-        {/* Category Filter Tabs for Learn Skills */}
-        <div className="onboarding-cat-scroll">
-          {categories.map((cat) => {
-            const isActive = currentLearnCatName === cat.name;
-            return (
-              <button
-                key={cat.name}
-                type="button"
-                onClick={() => setActiveLearnCategory(cat.name)}
-                className={`onboarding-cat-pill ${isActive ? 'learn-active' : ''}`}
-              >
-                <span>{cat.icon || '⚡'}</span> {cat.name}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Category Skills Chips Grid */}
-        <div className="skill-tags-grid onboarding-tags-tray-spacing">
-          {currentLearnSkills.map((skill) => {
-            const isSelected = learnSkills.includes(skill);
-            return (
-              <button
-                key={skill}
-                type="button"
-                className={`skill-tag-chip ${isSelected ? 'selected-learn' : ''}`}
-                onClick={() => toggleLearnSkill(skill)}
-              >
-                {skill} {isSelected ? '✓' : '+'}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Custom Learn Skill Input */}
-        <div className="custom-skill-input-row">
-          <input
-            type="text"
-            className="form-input custom-skill-input onboarding-custom-input"
-            placeholder="Type any learning goal..."
-            value={customLearn}
-            onChange={(e) => setCustomLearn(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                addCustomLearn();
-              }
-            }}
-          />
-          <button
-            type="button"
-            className="btn btn-secondary btn-pill-sm onboarding-custom-btn"
-            onClick={addCustomLearn}
-          >
-            + Add
-          </button>
-        </div>
-      </div>
-
-      {/* SECTION 3: SKILL LEVEL */}
-      <div className="form-group form-group-padded">
-        <label className="form-label onboarding-level-label">Your Experience Level</label>
-        <div className="level-pills-row">
-          {[
-            { label: 'Beginner', value: 'beginner' },
-            { label: 'Intermediate', value: 'intermediate' },
-            { label: 'Advanced', value: 'advanced' }
-          ].map((level) => (
-            <button
-              key={level.value}
-              type="button"
-              className={`level-pill-btn ${skillLevel === level.value ? 'active' : ''}`}
-              onClick={() => setSkillLevel(level.value)}
-            >
-              {level.label}
-            </button>
-          ))}
         </div>
       </div>
     </div>

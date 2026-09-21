@@ -8,10 +8,10 @@ const BADGES = ['Live now', 'Trending', 'Popular', 'Top category'];
 
 export default function CategoriesSection() {
   const [categories, setCategories] = useState([
-    { name: 'Design & Product', badge: 'Live now', pill: 'pill-mint', teachers: 'Teachers available', cat: 'Design' },
-    { name: 'Code & Data', badge: 'Trending', pill: 'pill-violet', teachers: 'Teachers available', cat: 'Code' },
-    { name: 'Languages', badge: 'New', pill: 'pill-coral', teachers: 'Teachers available', cat: 'Languages' },
-    { name: 'Music & Craft', badge: 'Popular', pill: 'pill-gold', teachers: 'Teachers available', cat: 'Music' }
+    { name: 'Tech & Code', badge: 'Trending', pill: 'pill-violet', teachers: 'Teachers available', cat: 'Tech & Code' },
+    { name: 'AI & Data Science', badge: 'Live now', pill: 'pill-mint', teachers: 'Teachers available', cat: 'AI & Data Science' },
+    { name: 'Design & Arts', badge: 'New', pill: 'pill-coral', teachers: 'Teachers available', cat: 'Design & Arts' },
+    { name: 'Languages & Study', badge: 'Popular', pill: 'pill-gold', teachers: 'Teachers available', cat: 'Languages & Study' }
   ]);
 
   useEffect(() => {
@@ -49,6 +49,13 @@ export default function CategoriesSection() {
             </div>
           </Link>
         ))}
+        <Link className="glass-card category-card" to="/browse" style={{ border: '1px dashed var(--violet-primary, #2563EB)', background: 'rgba(37, 99, 235, 0.04)' }}>
+          <div>
+            <span className="pill-badge pill-violet">Full Directory</span>
+            <h4 style={{ color: 'var(--violet-primary, #2563EB)' }}>Explore All Categories →</h4>
+            <p>Browse 100+ skills & teachers</p>
+          </div>
+        </Link>
       </div>
     </section>
   );

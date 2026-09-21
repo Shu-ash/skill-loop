@@ -1,11 +1,17 @@
 // src/pages/BrowsePage.jsx
 import React, { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import MobileNav from '../components/MobileNav';
 import BrowseSearch from '../components/BrowseSearch';
 import MemberCard from '../components/MemberCard';
 import SkillLoopLoader from '../components/SkillLoopLoader';
+import { 
+  DEFAULT_CATEGORY_NAMES, 
+  MASTER_CATEGORIES, 
+  isMemberMatchingCategory 
+} from '../data/categoriesData';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -22,9 +28,10 @@ const getInitials = (name = '') => {
 };
 
 export default function BrowsePage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [members, setMembers] = useState([]);
-  const [categories, setCategories] = useState(['All categories', 'Design & UI', 'Code & Data', 'Languages', 'Music & Arts', 'Marketing & Growth']);
-  const [categoriesData, setCategoriesData] = useState([]);
+  const [categories, setCategories] = useState(DEFAULT_CATEGORY_NAMES);
+  const [categoriesData, setCategoriesData] = useState(MASTER_CATEGORIES);
   const [selectedCategory, setSelectedCategory] = useState('All categories');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -41,19 +48,48 @@ export default function BrowsePage() {
     }
   }, []);
 
-  // Fetch live categories from MongoDB database
+  // Sync category and search query from URL search params
+  useEffect(() => {
+    const categoryParam = searchParams.get('category');
+    const qParam = searchParams.get('q') || searchParams.get('search');
+
+    if (categoryParam) {
+      const catLower = categoryParam.toLowerCase().trim();
+      const matched = MASTER_CATEGORIES.find(c => 
+        c.name.toLowerCase() === catLower ||
+        c.name.toLowerCase().includes(catLower) ||
+        catLower.includes(c.name.toLowerCase()) ||
+        (c.keywords && c.keywords.some(kw => catLower.includes(kw) || kw.includes(catLower)))
+      );
+      if (matched) {
+        setSelectedCategory(matched.name);
+      } else {
+        setSelectedCategory(categoryParam);
+      }
+    } else {
+      setSelectedCategory('All categories');
+    }
+
+    if (qParam) {
+      setSearchQuery(qParam);
+    }
+  }, [searchParams]);
+
+  // Fetch live categories from MongoDB database (if any) and merge with master categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/categories`);
         const data = await response.json();
-        if (data.success && Array.isArray(data.data?.categories)) {
-          setCategoriesData(data.data.categories);
-          const names = ['All categories', ...data.data.categories.map(c => c.name)];
-          setCategories(names);
+        if (data.success && Array.isArray(data.data?.categories) && data.data.categories.length > 0) {
+          const liveCats = data.data.categories;
+          setCategoriesData(liveCats);
+          const liveNames = liveCats.map(c => c.name);
+          const allUniqueNames = Array.from(new Set(['All categories', ...liveNames, ...DEFAULT_CATEGORY_NAMES.slice(1)]));
+          setCategories(allUniqueNames);
         }
       } catch (err) {
-        console.error('Failed to load categories:', err);
+        console.error('Failed to load live categories in BrowsePage:', err);
       }
     };
     fetchCategories();
@@ -93,7 +129,11 @@ export default function BrowsePage() {
               return true;
             })
             .map((user) => {
-              const skills = user.skillsCanTeach || [];
+              const skills = Array.isArray(user.skillsCanTeach) && user.skillsCanTeach.length
+                ? user.skillsCanTeach
+                : Array.isArray(user.teachSkills) && user.teachSkills.length
+                  ? user.teachSkills
+                  : [];
               return {
                 id: user._id || user.id,
                 name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'SkillLoop Member',
@@ -104,6 +144,7 @@ export default function BrowsePage() {
                 rating: `⭐ ${(user.rating || 0).toFixed(1)} (${user.ratingCount || 0} reviews)`,
                 ratingValue: user.rating || 0,
                 skills: skills.length ? skills : ['Community Member'],
+                categories: Array.isArray(user.categories) ? user.categories : [],
                 username: user.username || '',
                 email: user.email || ''
               };
@@ -124,34 +165,49 @@ export default function BrowsePage() {
     fetchMembers();
   }, [accessToken, currentStoredUser]);
 
+  // Handler for category selection
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category);
+    const newParams = new URLSearchParams(searchParams);
+    if (category === 'All categories') {
+      newParams.delete('category');
+    } else {
+      newParams.set('category', category);
+    }
+    setSearchParams(newParams, { replace: true });
+  };
+
+  // Handler for search query change
+  const handleSearchChange = (val) => {
+    setSearchQuery(val);
+    const newParams = new URLSearchParams(searchParams);
+    if (!val.trim()) {
+      newParams.delete('q');
+    } else {
+      newParams.set('q', val.trim());
+    }
+    setSearchParams(newParams, { replace: true });
+  };
+
+  // Safe and reactive member filter
   const filteredMembers = useMemo(() => {
     const searchLower = searchQuery.trim().toLowerCase();
 
-    // Find skills belonging to currently selected category
-    const selectedCatObj = (categoriesData || []).find(c => c.name?.toLowerCase() === selectedCategory.toLowerCase());
-    const catSkills = selectedCatObj ? (selectedCatObj.skills || []).map(s => s.toLowerCase().trim()) : [];
-    const catNameLower = selectedCategory.toLowerCase().trim();
-
     return members.filter((member) => {
-      const memberSkillsLower = member.skills.map(s => s.toLowerCase().trim());
-
-      const matchesCategory =
-        selectedCategory === 'All categories' ||
-        member.categories.includes(selectedCategory) ||
-        member.skills.some((skill) => {
-          const catWords = selectedCategory.toLowerCase().split(/[\s&,/]+/);
-          return catWords.some(w => w.length > 2 && skill.toLowerCase().includes(w));
-        });
+      // Safe Category matching using robust helper
+      const matchesCategory = isMemberMatchingCategory(member, selectedCategory, categoriesData);
 
       if (!searchLower) {
         return matchesCategory;
       }
 
+      const memberSkills = Array.isArray(member.skills) ? member.skills : [];
       const matchesSearch =
-        member.name.toLowerCase().includes(searchLower) ||
-        member.title.toLowerCase().includes(searchLower) ||
-        member.skills.some((skill) =>
-          skill.toLowerCase().includes(searchLower)
+        (member.name || '').toLowerCase().includes(searchLower) ||
+        (member.title || '').toLowerCase().includes(searchLower) ||
+        (member.username || '').toLowerCase().includes(searchLower) ||
+        memberSkills.some((skill) =>
+          (skill || '').toLowerCase().includes(searchLower)
         );
 
       return matchesCategory && matchesSearch;
@@ -191,9 +247,9 @@ export default function BrowsePage() {
             {/* Dynamic Search & Live Categories Filter */}
             <BrowseSearch
               searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
+              onSearchChange={handleSearchChange}
               selectedCategory={selectedCategory}
-              onCategorySelect={setSelectedCategory}
+              onCategorySelect={handleCategorySelect}
               categories={categories}
             />
 
@@ -212,12 +268,26 @@ export default function BrowsePage() {
                   <MemberCard key={member.id} member={member} />
                 ))
               ) : (
-                <div className="glass-panel empty-requests-card empty-card-full">
-                  <span className="empty-card-icon">🔍</span>
+                <div className="glass-panel empty-requests-card empty-card-full" style={{ padding: '40px 24px', textAlign: 'center' }}>
+                  <span className="empty-card-icon" style={{ fontSize: '2.5rem', display: 'block', marginBottom: '12px' }}>🔍</span>
                   <h3 className="empty-card-title">No Other Members Found</h3>
-                  <p className="empty-card-desc">
+                  <p className="empty-card-desc" style={{ maxWidth: '440px', margin: '8px auto 20px' }}>
                     {searchQuery ? `No members matched "${searchQuery}". Try searching for another skill.` : selectedCategory !== 'All categories' ? `No other members found offering skills in "${selectedCategory}".` : 'When other members or friends sign up, they will appear here!'}
                   </p>
+                  {(selectedCategory !== 'All categories' || searchQuery) && (
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-pill-sm"
+                      onClick={() => {
+                        handleCategorySelect('All categories');
+                        handleSearchChange('');
+                      }}
+                      style={{ margin: '0 auto', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                    >
+                      <span>🔄</span>
+                      <span>Show all members</span>
+                    </button>
+                  )}
                 </div>
               )}
             </div>

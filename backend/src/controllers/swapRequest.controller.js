@@ -207,10 +207,12 @@ export const acceptSwapRequest = async (
                 teacher: request.receiver,
                 learner: request.sender,
                 skill: request.skillWant || "Skill Swap",
-                status: "pending",
-                scheduledAt: null,
-                duration: 45,
-                meetLink: ""
+                status: "scheduled",
+                scheduledAt: selectedDate,
+                duration: selectedDuration,
+                mode: selectedMode,
+                meetLink: selectedMeetLink,
+                message: message ? message.trim() : ""
             });
         } else {
             session.scheduledAt = selectedDate;
@@ -227,8 +229,8 @@ export const acceptSwapRequest = async (
 
         await Notification.create({
             user: request.sender,
-            title: "🎉 Swap Request Accepted!",
-            text: `${receiverName} accepted your skill swap request! Please wait for them to schedule the session.`,
+            title: "🎉 Swap Request Accepted & Scheduled!",
+            text: `${receiverName} accepted your skill swap request for ${request.skillWant || 'Skill'}! Class is scheduled for ${formattedTime}.`,
             type: "swap_accepted",
             link: "/sessions"
         });

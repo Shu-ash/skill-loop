@@ -1,5 +1,7 @@
 // src/components/BrowseSearch.jsx
-import React from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
+import { DEFAULT_CATEGORY_NAMES } from '../data/categoriesData';
+import './BrowseSearch.css';
 
 const getCategoryIcon = (category = '') => {
   const cat = category.toLowerCase();
@@ -19,40 +21,175 @@ export default function BrowseSearch({
   onSearchChange, 
   selectedCategory, 
   onCategorySelect,
-  categories = ['All categories', 'Design & UI', 'Code & Data', 'Languages', 'Music & Arts', 'Marketing & Growth']
+  categories = DEFAULT_CATEGORY_NAMES
 }) {
+  const scrollContainerRef = useRef(null);
+  const activeChipRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  // Check scroll position to dynamically show/hide navigation arrows
+  const checkScroll = useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    setCanScrollLeft(scrollLeft > 6);
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 6);
+  }, []);
+
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+
+    checkScroll();
+
+    el.addEventListener('scroll', checkScroll, { passive: true });
+    window.addEventListener('resize', checkScroll);
+
+    return () => {
+      el.removeEventListener('scroll', checkScroll);
+      window.removeEventListener('resize', checkScroll);
+    };
+  }, [checkScroll, categories]);
+
+  // Smoothly center the active chip in the carousel viewport
+  useEffect(() => {
+    if (activeChipRef.current) {
+      activeChipRef.current.scrollIntoView({
+        behavior: 'smooth',
+        inline: 'center',
+        block: 'nearest'
+      });
+    }
+  }, [selectedCategory]);
+
+  const handleScroll = (direction) => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const scrollAmount = direction === 'left' ? -280 : 280;
+    el.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    setTimeout(checkScroll, 320);
+  };
+
   return (
     <div className="glass-panel card-padding browse-search-box">
+      {/* Top Search & Category Quick Jump Bar */}
       <div className="browse-search-bar">
-        <input
-          className="form-input flex-1"
-          type="text"
-          placeholder="Search a skill — 'Photoshop', 'Spanish', 'guitar'..."
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-        />
-        <span className="text-subtle">📍 Online + In-person</span>
-        <button type="button" className="btn btn-primary btn-pill-sm">Search</button>
+        <div className="search-input-wrapper">
+          <span className="search-leading-icon">🔍</span>
+          <input
+            className="form-input search-main-input"
+            type="text"
+            placeholder="Search a skill — 'Photoshop', 'Python', 'Guitar', 'English'..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+          />
+          {searchQuery && (
+            <button 
+              type="button" 
+              className="search-clear-btn" 
+              onClick={() => onSearchChange('')}
+              title="Clear search"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
+        {/* Quick Category Jump Dropdown for immediate selection when there are many categories */}
+        <div className="category-quick-select-wrap">
+          <select
+            className="category-quick-select"
+            value={selectedCategory}
+            onChange={(e) => onCategorySelect(e.target.value)}
+            title="Jump to any category"
+          >
+            {categories.map((cat) => (
+              <option key={cat} value={cat}>
+                {getCategoryIcon(cat)} {cat}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <button 
+          type="button" 
+          className="btn btn-primary btn-pill-sm browse-search-action-btn"
+          onClick={() => {
+            // Focus on results
+          }}
+        >
+          Explore
+        </button>
       </div>
 
-      {/* Modern Horizontal Category Filter Chips */}
-      <div className="category-filters-wrapper">
-        <div className="category-filters-list">
+      {/* Modern Horizontal Category Slider with Left & Right Arrow Navigation */}
+      <div className="category-filters-container">
+        {/* Left Arrow Button */}
+        {canScrollLeft && (
+          <button
+            type="button"
+            className="category-scroll-btn scroll-btn-left"
+            onClick={() => handleScroll('left')}
+            aria-label="Scroll categories left"
+            title="Previous categories"
+          >
+            ‹
+          </button>
+        )}
+
+        {/* Left Gradient Fade Mask */}
+        <div className={`category-fade-mask fade-left ${canScrollLeft ? 'visible' : ''}`} />
+
+        {/* Category Chips Scroll Track */}
+        <div 
+          className="category-filters-list"
+          ref={scrollContainerRef}
+        >
           {categories.map((cat) => {
             const isSelected = selectedCategory === cat;
             return (
               <button
                 key={cat}
+                ref={isSelected ? activeChipRef : null}
                 type="button"
                 className={`category-filter-chip ${isSelected ? 'active' : ''}`}
                 onClick={() => onCategorySelect(cat)}
               >
                 <span className="category-chip-icon">{getCategoryIcon(cat)}</span>
                 <span className="category-chip-text">{cat}</span>
+                {isSelected && cat !== 'All categories' && (
+                  <span 
+                    className="category-chip-clear" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCategorySelect('All categories');
+                    }}
+                    title="Reset to All categories"
+                  >
+                    ✕
+                  </span>
+                )}
               </button>
             );
           })}
         </div>
+
+        {/* Right Gradient Fade Mask */}
+        <div className={`category-fade-mask fade-right ${canScrollRight ? 'visible' : ''}`} />
+
+        {/* Right Arrow Button */}
+        {canScrollRight && (
+          <button
+            type="button"
+            className="category-scroll-btn scroll-btn-right"
+            onClick={() => handleScroll('right')}
+            aria-label="Scroll categories right"
+            title="More categories"
+          >
+            ›
+          </button>
+        )}
       </div>
     </div>
   );

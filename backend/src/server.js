@@ -26,6 +26,7 @@ import reviewRoutes from "./routes/review.routes.js";
 import messageRoutes from "./routes/message.routes.js";
 import availabilityRoutes from "./routes/availability.routes.js";
 import badgeRoutes from "./routes/badge.routes.js";
+import reportRoutes from "./routes/report.routes.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -89,6 +90,7 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/availability", availabilityRoutes);
 app.use("/api/badges", badgeRoutes);
+app.use("/api/reports", reportRoutes);
 
 // 404 & ERROR HANDLERS
 app.use(notFound);

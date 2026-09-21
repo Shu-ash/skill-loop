@@ -5,6 +5,7 @@ import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import MobileNav from '../components/MobileNav';
 import SkillLoopLoader from '../components/SkillLoopLoader';
+import './ReviewsPage.css';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 

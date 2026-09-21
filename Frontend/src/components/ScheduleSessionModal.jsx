@@ -1,18 +1,21 @@
 // src/components/ScheduleSessionModal.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
 export default function ScheduleSessionModal({
   isOpen,
   onClose,
-  request,
+  request = null,
+  session = null,
   onSubmit,
   loading = false
 }) {
-  if (!isOpen || !request) return null;
+  if (!isOpen || (!request && !session)) return null;
 
-  const partnerName = request.user?.name || 'Student';
-  const skillWant = request.skillWant || 'Skill Swap';
+  const target = session || request;
+  const partnerName = session?.partnerName || request?.user?.name || 'Student';
+  const skillTitle = session?.skill || session?.title || request?.skillWant || 'Skill Swap';
+  const isEditMode = Boolean(session && session.scheduledAt);
 
   const getTomorrowDateTime = () => {
     const d = new Date(Date.now() + 86400000);
@@ -25,21 +28,68 @@ export default function ScheduleSessionModal({
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
-  const [scheduledAt, setScheduledAt] = useState(getTomorrowDateTime());
-  const [duration, setDuration] = useState(45);
-  const [mode, setMode] = useState('online');
-  const [meetLink, setMeetLink] = useState(`https://meet.google.com/skillloop-${request.id?.toString().slice(-6) || 'session'}`);
-  const [message, setMessage] = useState('');
+  const getInitialDateTime = () => {
+    const rawDate = session?.scheduledAt || request?.scheduledAt;
+    if (rawDate) {
+      const d = new Date(rawDate);
+      if (!Number.isNaN(d.getTime())) {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+      }
+    }
+    return getTomorrowDateTime();
+  };
+
+  const [scheduledAt, setScheduledAt] = useState(getInitialDateTime);
+  const [duration, setDuration] = useState(session?.duration ? Number(session.duration) : 45);
+  const [mode, setMode] = useState(
+    session?.mode === 'In Person' || session?.mode === 'in_person' ? 'in_person' : 'online'
+  );
+  const [meetLink, setMeetLink] = useState(
+    session?.meetLink ||
+    `https://meet.google.com/skillloop-${(session?.id || request?.id || '').toString().slice(-6) || 'session'}`
+  );
+  const [message, setMessage] = useState(session?.message || request?.message || '');
   const [error, setError] = useState('');
 
+  // Sync state whenever modal opens for a new target
+  useEffect(() => {
+    if (isOpen && target) {
+      setScheduledAt(getInitialDateTime());
+      setDuration(session?.duration ? Number(session.duration) : 45);
+      setMode(session?.mode === 'In Person' || session?.mode === 'in_person' ? 'in_person' : 'online');
+      setMeetLink(
+        session?.meetLink ||
+        `https://meet.google.com/skillloop-${(session?.id || request?.id || '').toString().slice(-6) || 'session'}`
+      );
+      setMessage(session?.message || request?.message || '');
+      setError('');
+    }
+  }, [isOpen, session, request]);
+
   const getMinDateTime = () => {
-    const now = new Date();
+    // 15-minute buffer for present time / clock variance
+    const now = new Date(Date.now() - 15 * 60 * 1000);
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const day = String(now.getDate()).padStart(2, '0');
     const hours = String(now.getHours()).padStart(2, '0');
     const minutes = String(now.getMinutes()).padStart(2, '0');
     return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
+  const setPresetDateTime = (offsetMinutes) => {
+    const targetDate = new Date(Date.now() + offsetMinutes * 60 * 1000);
+    const year = targetDate.getFullYear();
+    const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+    const day = String(targetDate.getDate()).padStart(2, '0');
+    const hours = String(targetDate.getHours()).padStart(2, '0');
+    const minutes = String(targetDate.getMinutes()).padStart(2, '0');
+    setScheduledAt(`${year}-${month}-${day}T${hours}:${minutes}`);
   };
 
   const handleSubmit = (e) => {
@@ -51,8 +101,10 @@ export default function ScheduleSessionModal({
       return;
     }
 
-    if (new Date(scheduledAt) <= new Date()) {
-      setError('Please pick a future time for the class.');
+    const selectedDate = new Date(scheduledAt);
+    const graceWindow = new Date(Date.now() - 15 * 60 * 1000);
+    if (selectedDate < graceWindow) {
+      setError('Please select a present or future date and time for the class.');
       return;
     }
 
@@ -62,8 +114,9 @@ export default function ScheduleSessionModal({
     }
 
     onSubmit({
-      requestId: request.id,
-      scheduledAt,
+      sessionId: session?.id,
+      requestId: request?.id,
+      scheduledAt: selectedDate.toISOString(),
       duration: Number(duration) || 45,
       mode,
       meetLink: mode === 'online' ? meetLink.trim() : '',
@@ -82,13 +135,13 @@ export default function ScheduleSessionModal({
       >
         <div className="user-modal-header">
           <div className="user-modal-header-lead">
-            <span className="user-modal-header-icon">📅</span>
+            <span className="user-modal-header-icon">{isEditMode ? '✏️' : '📅'}</span>
             <div>
               <h3 className="user-modal-title">
-                Schedule Session
+                {isEditMode ? 'Edit / Reschedule Session' : 'Schedule Class Session'}
               </h3>
               <p className="user-modal-subtitle">
-                Teaching <strong>{skillWant}</strong> to <strong>{partnerName}</strong>
+                {isEditMode ? 'Update class schedule with' : 'Teaching'} <strong>{partnerName}</strong> ({skillTitle})
               </p>
             </div>
           </div>
@@ -105,7 +158,7 @@ export default function ScheduleSessionModal({
           {/* Date & Time */}
           <div className="form-group user-modal-form-group">
             <label className="form-label user-modal-label">
-              🗓️ Select Class Date &amp; Time *
+              🗓️ Class Date &amp; Time *
             </label>
             <input
               className="form-input user-modal-input"
@@ -116,6 +169,36 @@ export default function ScheduleSessionModal({
               required
               disabled={loading}
             />
+            {/* Quick Presets */}
+            <div className="session-preset-buttons-row" style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="btn btn-secondary btn-pill-sm"
+                onClick={() => setPresetDateTime(0)}
+                disabled={loading}
+                style={{ fontSize: '0.78rem', padding: '4px 10px' }}
+              >
+                ⚡ Start Now
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-pill-sm"
+                onClick={() => setPresetDateTime(15)}
+                disabled={loading}
+                style={{ fontSize: '0.78rem', padding: '4px 10px' }}
+              >
+                ⚡ In 15 Mins
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-pill-sm"
+                onClick={() => setPresetDateTime(24 * 60)}
+                disabled={loading}
+                style={{ fontSize: '0.78rem', padding: '4px 10px' }}
+              >
+                📅 Tomorrow (Same time)
+              </button>
+            </div>
           </div>
 
           {/* Duration */}
@@ -129,7 +212,7 @@ export default function ScheduleSessionModal({
               onChange={(e) => setDuration(Number(e.target.value))}
               disabled={loading}
             >
-              <option value={15}>15 Minutes</option>
+              <option value={15}>15 Minutes (Quick catchup)</option>
               <option value={30}>30 Minutes</option>
               <option value={45}>45 Minutes (Recommended)</option>
               <option value={60}>60 Minutes (1 Hour)</option>
@@ -149,7 +232,7 @@ export default function ScheduleSessionModal({
               onChange={(e) => setMode(e.target.value)}
               disabled={loading}
             >
-              <option value="online">🎥 Online Video Call (Google Meet)</option>
+              <option value="online">🎥 Online Video Call (Google Meet / Zoom)</option>
               <option value="in_person">🤝 In-Person Meeting</option>
             </select>
           </div>
@@ -169,8 +252,8 @@ export default function ScheduleSessionModal({
                 required
                 disabled={loading}
               />
-              <span className="user-modal-hint">
-                🔒 <em>Note: The meeting link will stay locked for both participants and will automatically unlock when class time arrives.</em>
+              <span className="user-modal-hint" style={{ fontSize: '0.76rem', color: 'var(--slate-500)', marginTop: '4px', display: 'block' }}>
+                🔒 <em>The meeting link is shared securely with {partnerName} and automatically unlocks when class time arrives.</em>
               </span>
             </div>
           )}
@@ -178,14 +261,14 @@ export default function ScheduleSessionModal({
           {/* Notes for Student */}
           <div className="form-group user-modal-form-group spacing-lg">
             <label className="form-label user-modal-label">
-              💬 Note for {partnerName} (Optional)
+              💬 Instructions / Note for {partnerName} (Optional)
             </label>
             <textarea
               className="form-input user-modal-textarea"
               rows={2}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder={`Hi ${partnerName}! Looking forward to our session.`}
+              placeholder={`Hi ${partnerName}! Please be ready with your environment and questions.`}
               disabled={loading}
             />
           </div>
@@ -205,7 +288,7 @@ export default function ScheduleSessionModal({
               className="btn btn-primary user-modal-btn-submit"
               disabled={loading}
             >
-              {loading ? 'Scheduling...' : 'Confirm & Schedule Class 🚀'}
+              {loading ? (isEditMode ? 'Updating...' : 'Scheduling...') : (isEditMode ? 'Update Session Schedule ✓' : 'Confirm & Schedule Class 🚀')}
             </button>
           </div>
         </form>

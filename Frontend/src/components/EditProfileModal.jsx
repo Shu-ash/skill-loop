@@ -1,13 +1,14 @@
 // src/components/EditProfileModal.jsx
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { MASTER_CATEGORIES } from '../data/categoriesData';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
 export default function EditProfileModal({ isOpen, user, availability = {}, onClose, onSave }) {
   const [activeTab, setActiveTab] = useState('basic'); // 'basic' | 'skills' | 'availability'
 
-  const [categoriesList, setCategoriesList] = useState([]);
+  const [categoriesList, setCategoriesList] = useState(MASTER_CATEGORIES);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -22,10 +23,10 @@ export default function EditProfileModal({ isOpen, user, availability = {}, onCl
     sessionMode: 'Online Only'
   });
 
-  const [selectedTeachCategory, setSelectedTeachCategory] = useState('');
+  const [selectedTeachCategory, setSelectedTeachCategory] = useState(MASTER_CATEGORIES[0]?.name || '');
   const [customTeachSkill, setCustomTeachSkill] = useState('');
 
-  const [selectedLearnCategory, setSelectedLearnCategory] = useState('');
+  const [selectedLearnCategory, setSelectedLearnCategory] = useState(MASTER_CATEGORIES[1]?.name || MASTER_CATEGORIES[0]?.name || '');
   const [customLearnSkill, setCustomLearnSkill] = useState('');
 
   // Fetch live categories and nested skills from MongoDB database
