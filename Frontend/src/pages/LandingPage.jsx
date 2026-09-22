@@ -1,11 +1,11 @@
-//src/pages/LandingPage.jsx
-
+// src/pages/LandingPage.jsx
 import React from 'react';
 import Navbar from '../components/Navbar';
 import HeroSection from '../components/HeroSection';
 import StepsSection from '../components/StepsSection';
 import CategoriesSection from '../components/CategoriesSection';
 import CtaSection from '../components/CtaSection';
+import Footer from '../components/Footer';
 
 export default function LandingPage() {
   return (
@@ -21,12 +21,13 @@ export default function LandingPage() {
       <HeroSection />
 
       {/* Main content stack: Steps, Categories, CTA */}
-
       <div className="landing-body-stack" id="how-it-works">
         <StepsSection />
         <CategoriesSection />
         <CtaSection />
       </div>
+
+      <Footer />
     </>
   );
 }

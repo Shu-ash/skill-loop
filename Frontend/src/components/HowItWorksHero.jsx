@@ -1,9 +1,13 @@
 // src/components/HowItWorksHero.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { getAuthStatus } from '../utils/auth';
 
 // HowItWorksHero: Top banner introducing the peer-to-peer skill loop concept
 export default function HowItWorksHero() {
+  const { isAuthenticated } = getAuthStatus();
+  const targetLink = isAuthenticated ? '/browse' : '/login?mode=signup';
+
   return (
     <section className="how-hero-section">
       <span className="pill-badge pill-violet">✦ ZERO COST SKILL ECONOMY</span>
@@ -16,8 +20,8 @@ export default function HowItWorksHero() {
       </p>
 
       <div className="how-hero-btns">
-        <Link to="/login" className="btn btn-primary">
-          Join the loop →
+        <Link to={targetLink} className="btn btn-primary">
+          {isAuthenticated ? 'Explore skills to learn →' : 'Join the loop →'}
         </Link>
         <Link to="/browse" className="btn btn-secondary">
           Explore skills

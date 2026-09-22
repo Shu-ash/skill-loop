@@ -1,15 +1,42 @@
-// src/components/MatchCard.jsx
-
 import React from 'react';
 
+const renderMatchAvatar = (match) => {
+  if (!match) return 'SL';
+  const imgUrl = match.profilePhotoUrl || (typeof match.avatar === 'string' && (match.avatar.startsWith('data:image') || match.avatar.startsWith('http')) ? match.avatar : null);
+
+  if (imgUrl) {
+    return (
+      <img
+        src={imgUrl}
+        alt={match.name}
+        className="avatar-round-img"
+        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+      />
+    );
+  }
+
+  const initials = typeof match.avatar === 'string' && match.avatar.length <= 4 && !match.avatar.includes('/')
+    ? match.avatar
+    : (match.name || 'SL')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((p) => p[0])
+        .join('')
+        .toUpperCase() || 'SL';
+
+  return initials;
+};
+
 export default function MatchCard({ match, onRequestSwap }) {
-  const { name, avatar, avatarBg, title, teachSkills, learnSkills, rating } = match;
+  const { name, avatarBg, title, teachSkills, learnSkills, rating } = match;
 
   return (
     <div className="glass-panel match-card">
       <div className="match-card-top">
-        <div className="match-avatar" style={{ background: avatarBg || 'var(--violet-primary)' }}>
-          {avatar}
+        <div className="match-avatar">
+          {renderMatchAvatar(match)}
         </div>
         <div>
           <h4>{name}</h4>

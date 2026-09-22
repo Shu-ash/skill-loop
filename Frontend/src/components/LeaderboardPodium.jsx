@@ -1,6 +1,36 @@
 // src/components/LeaderboardPodium.jsx
 import React from 'react';
 
+// Safe avatar renderer: never output raw base64 strings as text!
+const renderAvatar = (teacher) => {
+  if (!teacher) return 'SL';
+  const imgUrl = teacher.profilePhotoUrl || (typeof teacher.avatar === 'string' && (teacher.avatar.startsWith('data:image') || teacher.avatar.startsWith('http')) ? teacher.avatar : null);
+
+  if (imgUrl) {
+    return (
+      <img
+        src={imgUrl}
+        alt={teacher.name}
+        className="avatar-round-img"
+        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+      />
+    );
+  }
+
+  const initials = typeof teacher.avatar === 'string' && teacher.avatar.length <= 4 && !teacher.avatar.includes('/')
+    ? teacher.avatar
+    : (teacher.name || 'SL')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((p) => p[0])
+        .join('')
+        .toUpperCase() || 'SL';
+
+  return initials;
+};
+
 // LeaderboardPodium: Top 3 teachers podium cards (#1 Gold, #2 Silver, #3 Bronze)
 export default function LeaderboardPodium({ topTeachers = [] }) {
   // Sort or extract 1st, 2nd, 3rd places
@@ -14,8 +44,8 @@ export default function LeaderboardPodium({ topTeachers = [] }) {
       {/* 2nd Place - Silver */}
       {second && (
         <div className="podium-card podium-silver">
-          <div className="podium-avatar-wrap" style={{ background: 'var(--violet-primary)' }}>
-            {second.avatar}
+          <div className="podium-avatar-wrap">
+            {renderAvatar(second)}
           </div>
           <h4>{second.name}</h4>
           <p>{second.sessions} sessions</p>
@@ -26,8 +56,8 @@ export default function LeaderboardPodium({ topTeachers = [] }) {
       {/* 1st Place - Gold */}
       {first && (
         <div className="podium-card podium-gold">
-          <div className="podium-avatar-wrap" style={{ background: 'var(--gold-primary)' }}>
-            {first.avatar}
+          <div className="podium-avatar-wrap">
+            {renderAvatar(first)}
           </div>
           <h4>{first.name}</h4>
           <p>{first.sessions} sessions</p>
@@ -38,8 +68,8 @@ export default function LeaderboardPodium({ topTeachers = [] }) {
       {/* 3rd Place - Bronze */}
       {third && (
         <div className="podium-card podium-bronze">
-          <div className="podium-avatar-wrap" style={{ background: 'var(--mint-primary)' }}>
-            {third.avatar}
+          <div className="podium-avatar-wrap">
+            {renderAvatar(third)}
           </div>
           <h4>{third.name}</h4>
           <p>{third.sessions} sessions</p>

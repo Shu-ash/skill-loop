@@ -1,27 +1,40 @@
 // src/pages/LeaderboardPage.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import MobileNav from '../components/MobileNav';
 import LeaderboardPodium from '../components/LeaderboardPodium';
 import LeaderboardTable from '../components/LeaderboardTable';
+import SkillLoopLoader from '../components/SkillLoopLoader';
 
-// Top Teachers Leaderboard Mock Data
-const TOP_TEACHERS = [
-  { rank: 1, name: 'Harsh Vishwakarma', avatar: 'HV', sessions: 24, rating: '5.0 ★' },
-  { rank: 2, name: 'Sujit Bauna', avatar: 'SB', sessions: 18, rating: '4.9 ★' },
-  { rank: 3, name: 'Debosmita Laha', avatar: 'DL', sessions: 15, rating: '5.0 ★' }
-];
-
-const RANKED_LIST = [
-  { rank: 4, name: 'Milon Hackathon', avatar: 'MH', avatarBg: 'var(--coral-primary)', skills: 'MongoDB • Express.js', sessions: 12 },
-  { rank: 5, name: 'Harsh Vishwakarma', avatar: 'HV', avatarBg: 'var(--deep-violet)', skills: 'React • HTML/CSS', sessions: 12, isCurrentUser: true },
-  { rank: 6, name: 'Sample Member 1', avatar: 'S1', avatarBg: 'var(--mint-primary)', skills: 'Conversational English', sessions: 9 },
-  { rank: 7, name: 'Sample Member 2', avatar: 'S2', avatarBg: 'var(--violet-primary)', skills: 'Python • Data Science', sessions: 7 }
-];
+const API_BASE_URL = 'http://localhost:5000/api';
 
 export default function LeaderboardPage() {
   const [filterMode, setFilterMode] = useState('month'); // 'month' | 'all'
+  const [topTeachers, setTopTeachers] = useState([]);
+  const [rankedList, setRankedList] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`${API_BASE_URL}/users/leaderboard`);
+        const data = await response.json();
+
+        if (data.success && data.data) {
+          setTopTeachers(data.data.podium || []);
+          setRankedList(data.data.rankedList || []);
+        }
+      } catch (err) {
+        console.error('Failed to load leaderboard from database:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLeaderboard();
+  }, [filterMode]);
 
   return (
     <>
@@ -35,20 +48,19 @@ export default function LeaderboardPage() {
         <Navbar />
 
         <div className="app-layout">
-          <Sidebar user={{ name: 'Harsh', credits: 3, avatar: 'HA' }} />
+          <Sidebar />
 
           <main className="main-content">
             <div className="page-title-row">
               <div>
                 <h2>Top teachers this month</h2>
-                <p>Ranked by sessions taught &amp; average rating.</p>
+                <p>Live rankings ranked by sessions taught &amp; member ratings from MongoDB.</p>
               </div>
 
               {/* Time Filter Toggle */}
-              <div className="sliding-tab-nav" style={{ width: '220px', margin: 0 }}>
+              <div className="sliding-tab-nav leaderboard-tab-nav">
                 <div 
-                  className="sliding-glider"
-                  style={{ transform: filterMode === 'month' ? 'translateX(0%)' : 'translateX(100%)' }}
+                  className={`sliding-glider ${filterMode === 'month' ? 'glider-pos-left' : 'glider-pos-right'}`}
                 ></div>
                 <button
                   type="button"
@@ -67,11 +79,30 @@ export default function LeaderboardPage() {
               </div>
             </div>
 
-            {/* Component 1: Top 3 Podium */}
-            <LeaderboardPodium topTeachers={TOP_TEACHERS} />
+            {loading ? (
+              <SkillLoopLoader
+                title="Loading Live Leaderboard"
+                subtitle="Calculating community reputation & teaching sessions from MongoDB..."
+                badgeText="MongoDB Live Sync"
+                variant="card"
+              />
+            ) : topTeachers.length > 0 ? (
+              <>
+                {/* Component 1: Top 3 Podium */}
+                <LeaderboardPodium topTeachers={topTeachers} />
 
-            {/* Component 2: Ranked List Table */}
-            <LeaderboardTable members={RANKED_LIST} />
+                {/* Component 2: Ranked List Table */}
+                {rankedList.length > 0 && <LeaderboardTable members={rankedList} />}
+              </>
+            ) : (
+              <div className="glass-panel empty-requests-card empty-card-full">
+                <span className="empty-card-icon">🏆</span>
+                <h3 className="empty-card-title">No Teachers Ranked Yet</h3>
+                <p className="empty-card-desc">
+                  The database is fresh. Register a new user, teach a skill swap session, and your profile will appear on the podium!
+                </p>
+              </div>
+            )}
           </main>
         </div>
 

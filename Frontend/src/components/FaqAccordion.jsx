@@ -43,13 +43,13 @@ export default function FaqAccordion() {
               key={idx} 
               className={`glass-panel faq-item ${isOpen ? 'open' : ''}`}
             >
-              <div className="faq-question-row" onClick={() => toggleFaq(idx)} style={{ cursor: 'pointer' }}>
+              <div className="faq-question-row" onClick={() => toggleFaq(idx)}>
                 <h4>{faq.q}</h4>
                 <span className="faq-toggle-icon">+</span>
               </div>
               <div className="faq-answer-wrapper">
                 <div className="faq-answer-content">
-                  <p className="faq-answer-text" style={{ userSelect: 'text' }}>{faq.a}</p>
+                  <p className="faq-answer-text">{faq.a}</p>
                 </div>
               </div>
             </div>

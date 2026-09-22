@@ -1,37 +1,304 @@
 // src/components/MemberCard.jsx
 
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
+import { getAuthStatus } from '../utils/auth';
+
+const API_BASE_URL = 'http://localhost:5000/api';
+
+const renderMemberAvatar = (member) => {
+  if (!member) return 'SL';
+  const imgUrl = member.profilePhotoUrl || (typeof member.avatar === 'string' && (member.avatar.startsWith('data:image') || member.avatar.startsWith('http')) ? member.avatar : null);
+
+  if (imgUrl) {
+    return (
+      <img
+        src={imgUrl}
+        alt={member.name}
+        className="avatar-round-img"
+        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+      />
+    );
+  }
+
+  const initials = typeof member.avatar === 'string' && member.avatar.length <= 4 && !member.avatar.includes('/')
+    ? member.avatar
+    : (member.name || 'SL')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((p) => p[0])
+        .join('')
+        .toUpperCase() || 'SL';
+
+  return initials;
+};
 
 export default function MemberCard({ member }) {
-  return (
-    <div className="glass-panel member-card">
-      <div>
-        <div className="member-avatar-row">
-          <div className="user-avatar" style={{ background: member.avatarBg }}>
-            {member.avatar}
-          </div>
-          <span className="rating-text">{member.rating}</span>
-        </div>
-        <h4>{member.name}</h4>
-        <p className="text-subtle margin-bottom-xs" style={{ fontSize: '0.8rem', color: 'var(--slate-500)' }}>
-          {member.title}
-        </p>
+  const navigate = useNavigate();
+  const {
+    id,
+    name,
+    avatar,
+    avatarBg,
+    title,
+    rating,
+    skills = []
+  } = member;
 
-        {/* Member Skills section */}
-        <div className="tag-picker margin-bottom" style={{ margin: '0.5rem 0 1rem' }}>
-          {member.skills.map((skill, idx) => (
-            <span key={idx} className="pill-badge pill-violet" style={{ marginRight: '0.3rem' }}>
-              {skill}
+  const [selectedSkill, setSelectedSkill] = useState(skills[0] || '');
+  const [message, setMessage] = useState('');
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState('');
+  const [error, setError] = useState('');
+
+  const { isAuthenticated } = getAuthStatus();
+
+  const handleOpenRequest = () => {
+    setSuccess('');
+    setError('');
+
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
+
+    if (skills.length === 0) {
+      alert('This member has no teaching skills available right now.');
+      return;
+    }
+
+    setSelectedSkill(selectedSkill || skills[0]);
+    setShowRequestModal(true);
+  };
+
+  const handleSendRequest = async () => {
+    const accessToken = localStorage.getItem('accessToken');
+
+    if (!isAuthenticated || !accessToken) {
+      setShowAuthModal(true);
+      return;
+    }
+
+    if (!selectedSkill) {
+      setError('Please select a skill you want to learn.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/requests`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          receiverId: id,
+          skillWant: selectedSkill,
+          message: message.trim()
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to send swap request');
+      }
+
+      setSuccess(`Swap request sent successfully to ${name}!`);
+      setMessage('');
+      setTimeout(() => {
+        setShowRequestModal(false);
+        setSuccess('');
+      }, 1500);
+    } catch (err) {
+      console.error('Swap request error:', err.message);
+      setError(err.message || 'Failed to send request');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="glass-panel member-card">
+        <div>
+          <div className="member-avatar-row">
+            <div className="user-avatar member-avatar-circle">
+              {renderMemberAvatar(member)}
+            </div>
+
+            <span className="rating-text">
+              {rating || '⭐ 5.0'}
             </span>
-          ))}
+          </div>
+
+          <h4>{name}</h4>
+          <p className="text-subtle margin-bottom-xs member-headline">
+            {title}
+          </p>
+
+          {/* Member Skills section */}
+          <div className="tag-picker margin-bottom member-tags">
+            {skills.length > 0 ? (
+              skills.map((skill, idx) => (
+                <span key={idx} className="pill-badge pill-violet tag-margin-right">
+                  {skill}
+                </span>
+              ))
+            ) : (
+              <span className="text-subtle">No teaching skills</span>
+            )}
+          </div>
+        </div>
+
+        <div className="member-card-actions">
+          <button
+            type="button"
+            className="btn btn-primary btn-full btn-pill-sm"
+            onClick={handleOpenRequest}
+            disabled={skills.length === 0}
+          >
+            🔄 Request Skill Swap
+          </button>
+
+          <button
+            type="button"
+            className="btn btn-secondary btn-pill-sm btn-full"
+            onClick={() => {
+              if (isAuthenticated) {
+                navigate(`/requests`);
+              } else {
+                setShowAuthModal(true);
+              }
+            }}
+          >
+            View requests
+          </button>
         </div>
       </div>
 
-      {/* View profile & swap button */}
-      <Link className="btn btn-secondary btn-pill-sm btn-full" to={`/requests?user=${member.id}`}>
-        View profile &amp; swap
-      </Link>
-    </div>
+      {/* Guest Auth Modal rendered directly to body via Portal */}
+      {showAuthModal && createPortal(
+        <div className="modal-overlay full-viewport-blur-overlay" onClick={() => setShowAuthModal(false)}>
+          <div className="glass-panel logout-confirm-box clay-card-3d modal-box-sm" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>🔒 Login Required</h3>
+              <button type="button" className="close-modal-btn" onClick={() => setShowAuthModal(false)}>✕</button>
+            </div>
+            <p className="logout-modal-text margin-bottom-xs">
+              Log in or create a free account to request a skill swap with <strong>{name}</strong>!
+            </p>
+            <div className="modal-action-buttons">
+              <button type="button" className="btn btn-secondary" onClick={() => setShowAuthModal(false)}>
+                Cancel
+              </button>
+              <button type="button" className="btn btn-primary" onClick={() => navigate('/login')}>
+                Log In →
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Center Screen Swap Request Modal with Full Member Details rendered directly to body via Portal */}
+      {showRequestModal && createPortal(
+        <div className="modal-overlay full-viewport-blur-overlay" onClick={() => setShowRequestModal(false)}>
+          <div className="glass-panel swap-request-center-modal clay-card-3d modal-box-md" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="swap-modal-user-header">
+                <div className="user-avatar swap-modal-avatar">
+                  {renderMemberAvatar(member)}
+                </div>
+                <div>
+                  <div className="swap-modal-name-row">
+                    <h3 className="swap-modal-name-title">{name}</h3>
+                    <span className="rating-text swap-modal-rating">
+                      {rating || '⭐ 5.0'}
+                    </span>
+                  </div>
+                  <p className="text-subtle swap-modal-headline">{title}</p>
+                </div>
+              </div>
+              <button type="button" className="close-modal-btn" onClick={() => setShowRequestModal(false)}>✕</button>
+            </div>
+
+            {/* Member Teaching Skills Preview */}
+            <div className="swap-modal-member-details glass-panel margin-bottom-xs swap-skills-preview-box">
+              <div className="swap-skills-preview-title">
+                Skills {name} Can Teach:
+              </div>
+              <div className="tag-picker">
+                {skills.map((skill, idx) => (
+                  <span key={idx} className="pill-badge pill-violet swap-skill-pill">
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Skill Selection */}
+            <div className="form-group margin-bottom-xs">
+              <label className="form-label modal-form-label">Skill you want to learn *</label>
+              <select
+                className="form-select-styled"
+                value={selectedSkill}
+                onChange={(e) => setSelectedSkill(e.target.value)}
+                disabled={loading}
+              >
+                {skills.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Message Box */}
+            <div className="form-group margin-bottom-xs">
+              <label className="form-label modal-form-label">Message for {name}</label>
+              <textarea
+                className="form-textarea-styled"
+                rows={3}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder={`Hi ${name}, I saw your ${selectedSkill} skill and would love to exchange skills in a session!`}
+                disabled={loading}
+              />
+            </div>
+
+            {error && (
+              <div className="onboarding-error-banner margin-bottom-xs alert-banner-danger">
+                ⚠️ {error}
+              </div>
+            )}
+
+            {success && (
+              <div className="request-success-banner margin-bottom-xs alert-banner-success">
+                ✓ {success}
+              </div>
+            )}
+
+            <div className="modal-action-buttons modal-actions-spaced">
+              <button type="button" className="btn btn-secondary" onClick={() => setShowRequestModal(false)} disabled={loading}>
+                Cancel
+              </button>
+              <button type="button" className="btn btn-primary" onClick={handleSendRequest} disabled={loading || !selectedSkill}>
+                {loading ? 'Sending...' : 'Send Swap Request →'}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
   );
 }
