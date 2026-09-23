@@ -1,5 +1,20 @@
 import User from "../models/user.js";
 
+const normalize = (skill) => String(skill || "").trim().toLowerCase();
+
+const isSkillMatch = (skillA, skillB) => {
+    const a = normalize(skillA);
+    const b = normalize(skillB);
+    if (!a || !b) return false;
+    if (a === b) return true;
+    if (a.includes(b) || b.includes(a)) return true;
+    
+    // Check keyword tokens
+    const wordsA = a.split(/[\s,./\-+]+/).filter((w) => w.length > 2);
+    const wordsB = b.split(/[\s,./\-+]+/).filter((w) => w.length > 2);
+    return wordsA.some((w) => wordsB.includes(w));
+};
+
 export const getRecommendedUsers = async (req, res, next) => {
     try {
         const currentUser = await User.findById(req.user._id).lean();
@@ -11,66 +26,110 @@ export const getRecommendedUsers = async (req, res, next) => {
             });
         }
 
-        const skillsToLearn = currentUser.skillsWantToLearn || [];
-        const skillsToTeach = currentUser.skillsCanTeach || [];
+        const myLearnSkills = Array.isArray(currentUser.skillsWantToLearn) ? currentUser.skillsWantToLearn : [];
+        const myTeachSkills = Array.isArray(currentUser.skillsCanTeach) ? currentUser.skillsCanTeach : [];
 
         const users = await User.find({
-            _id: { $ne: req.user._id }
+            _id: { $ne: req.user._id },
+            status: { $ne: "banned" },
+            role: { $nin: ["superadmin", "admin"] }
         })
             .select(
-                "name username profilePhotoUrl bio headline skillsCanTeach skillsWantToLearn skillLevel rating ratingCount credits"
+                "name firstName lastName username profilePhotoUrl bio headline skillsCanTeach skillsWantToLearn skillLevel rating ratingCount credits"
             )
             .lean();
 
-        const normalize = (skill) =>
-            String(skill).trim().toLowerCase();
+        const scoredUsers = users.map((otherUser) => {
+            const theirTeach = Array.isArray(otherUser.skillsCanTeach) ? otherUser.skillsCanTeach : [];
+            const theirLearn = Array.isArray(otherUser.skillsWantToLearn) ? otherUser.skillsWantToLearn : [];
 
-        const learnSet = new Set(
-            skillsToLearn.map(normalize)
-        );
+            // 1. Skills they teach that I want to learn
+            const canTeachMe = theirTeach.filter((theirSkill) =>
+                myLearnSkills.some((mySkill) => isSkillMatch(theirSkill, mySkill))
+            );
 
-        const teachSet = new Set(
-            skillsToTeach.map(normalize)
-        );
+            // 2. Skills I teach that they want to learn
+            const canLearnFromMe = theirLearn.filter((theirSkill) =>
+                myTeachSkills.some((mySkill) => isSkillMatch(theirSkill, mySkill))
+            );
 
-        const recommendations = users
-            .map((user) => {
-                const userTeachSet = new Set(
-                    (user.skillsCanTeach || []).map(normalize)
-                );
+            // 3. Similar skills (shared teaching or learning domains)
+            const similarSkills = theirTeach.filter((theirSkill) =>
+                myTeachSkills.some((mySkill) => isSkillMatch(theirSkill, mySkill))
+            );
 
-                const userLearnSet = new Set(
-                    (user.skillsWantToLearn || []).map(normalize)
-                );
+            const isMutual = canTeachMe.length > 0 && canLearnFromMe.length > 0;
+            const isLearnMatch = canTeachMe.length > 0;
+            const isTeachMatch = canLearnFromMe.length > 0;
+            const isSimilar = similarSkills.length > 0;
 
-                // Skills this user can teach that I want to learn
-                const canTeachMe = [
-                    ...userTeachSet
-                ].filter((skill) => learnSet.has(skill));
+            let matchScore = 0;
+            let matchType = "community";
 
-                // Skills I can teach that this user wants to learn
-                const canLearnFromMe = [
-                    ...userLearnSet
-                ].filter((skill) => teachSet.has(skill));
+            if (isMutual) {
+                matchScore = 100 + canTeachMe.length * 15 + canLearnFromMe.length * 15;
+                matchType = "mutual";
+            } else if (isLearnMatch) {
+                matchScore = 60 + canTeachMe.length * 10;
+                matchType = "learn";
+            } else if (isTeachMatch) {
+                matchScore = 40 + canLearnFromMe.length * 10;
+                matchType = "teach";
+            } else if (isSimilar) {
+                matchScore = 20 + similarSkills.length * 5;
+                matchType = "similar";
+            } else {
+                matchScore = 5 + (otherUser.rating || 5.0);
+                matchType = "community";
+            }
 
-                const totalMatches =
-                    canTeachMe.length +
-                    canLearnFromMe.length;
+            const fullName = otherUser.name || `${otherUser.firstName || ""} ${otherUser.lastName || ""}`.trim() || "SkillLoop Member";
 
-                return {
-                    ...user,
-                    matchScore: totalMatches,
-                    matchedSkills: canTeachMe,
-                    reciprocalSkills: canLearnFromMe
-                };
-            })
-            .filter((user) => user.matchScore > 0)
-            .sort((a, b) => b.matchScore - a.matchScore);
+            return {
+                _id: otherUser._id,
+                id: otherUser._id.toString(),
+                name: fullName,
+                username: otherUser.username ? `@${otherUser.username.replace(/^@/, "")}` : `@${(fullName).toLowerCase().replace(/\s+/g, "_")}`,
+                headline: otherUser.headline || otherUser.bio || "SkillLoop Community Member 🚀",
+                bio: otherUser.bio || "",
+                profilePhotoUrl: otherUser.profilePhotoUrl || "",
+                skillsCanTeach: theirTeach,
+                skillsWantToLearn: theirLearn,
+                rating: otherUser.rating !== undefined ? otherUser.rating : 5.0,
+                ratingCount: otherUser.ratingCount || 0,
+                credits: otherUser.credits ?? 10,
+                matchScore,
+                matchType,
+                canTeachMe,
+                canLearnFromMe,
+                similarSkills,
+                isMutual,
+                isLearnMatch,
+                isTeachMatch,
+                isSimilar
+            };
+        });
+
+        // Sort by match score descending, then rating descending
+        scoredUsers.sort((a, b) => {
+            if (b.matchScore !== a.matchScore) return b.matchScore - a.matchScore;
+            return (b.rating || 5.0) - (a.rating || 5.0);
+        });
+
+        const mutualMatches = scoredUsers.filter((u) => u.isMutual);
+        const learnMatches = scoredUsers.filter((u) => u.isLearnMatch);
+        const teachMatches = scoredUsers.filter((u) => u.isTeachMatch);
+        const similarMatches = scoredUsers.filter((u) => u.isSimilar);
 
         return res.status(200).json({
             success: true,
             data: {
-                recommendations
+                recommendations: scoredUsers,
+                mutualMatches,
+                learnMatches,
+                teachMatches,
+                similarMatches,
+                totalCommunityMembers: scoredUsers.length
             }
         });
     } catch (error) {
