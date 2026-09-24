@@ -181,7 +181,15 @@ export const updateUserPasswordByAdmin = async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found." });
     }
 
+    if (targetUser.role === "superadmin" || targetUser.email === "admin@skillloop.com") {
+      return res.status(403).json({
+        success: false,
+        message: "Super Admin account password cannot be modified by standard administrators."
+      });
+    }
+
     targetUser.password = await hashPassword(password);
+    targetUser.refreshTokenHash = null;
     await targetUser.save();
 
     await Notification.create({

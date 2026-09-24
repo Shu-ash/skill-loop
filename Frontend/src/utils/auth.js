@@ -40,10 +40,20 @@ export const getAuthStatus = () => {
   return { isAuthenticated: false, userType: 'guest', user: null };
 };
 
-export const clearAuthSession = () => {
+export const clearAuthSession = async () => {
   localStorage.removeItem('accessToken');
   localStorage.removeItem('skillloop_user');
   localStorage.removeItem('skillloop_admin');
+
+  try {
+    await fetch(`${API_URL}/auth/logout`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (err) {
+    // Non-blocking on network failure
+  }
 };
 
 /**

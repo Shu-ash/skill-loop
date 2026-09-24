@@ -7,36 +7,58 @@ export const protectAdmin = async (req, res, next) => {
     const authHeader = req.headers.authorization;
     const token = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : req.cookies?.accessToken;
 
-    // Check optional admin security token header for dev/demo override
-    const adminToken = req.headers["x-admin-token"];
-    if (adminToken === "admin2026" || adminToken === "admin_token_active") {
-      req.user = { role: "superadmin", name: "Super Admin", email: "admin@skillloop.com" };
-      return next();
-    }
-
     if (!token) {
-      // Allow fallback if user is logged in as superadmin in local storage / session
-      req.user = { role: "admin", name: "System Admin" };
-      return next();
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required. Admin access denied."
+      });
     }
 
+    let decoded;
     try {
-      const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET || "default_secret");
-      const user = await User.findById(decoded.userId).select("-password");
-
-      if (user && (user.role === "admin" || user.role === "superadmin")) {
-        req.user = user;
-        return next();
-      }
-    } catch (e) {
-      // Fallback for demo admin access
+      decoded = jwt.verify(token, env.JWT_ACCESS_SECRET);
+    } catch (jwtErr) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid or expired admin token."
+      });
     }
 
-    // Default allow admin access if token is active
-    req.user = { role: "admin", name: "Admin Moderator" };
-    next();
+    const userId = decoded.userId || decoded.sub;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid token payload."
+      });
+    }
+
+    const user = await User.findById(userId).select("-password");
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "User not found."
+      });
+    }
+
+    if (user.status === "banned") {
+      return res.status(403).json({
+        success: false,
+        message: "Your account has been suspended by an administrator."
+      });
+    }
+
+    if (user.role !== "admin" && user.role !== "superadmin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. Administrator privileges required."
+      });
+    }
+
+    req.user = user;
+    return next();
   } catch (error) {
-    return res.status(403).json({
+    return res.status(500).json({
       success: false,
       message: "Admin authorization failed."
     });

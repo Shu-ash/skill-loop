@@ -606,6 +606,24 @@ export const refresh = async (req, res, next) => {
             });
         }
 
+        if (user.status === "banned") {
+            return res.status(403).json({
+                success: false,
+                message: "Your account has been suspended by an administrator."
+            });
+        }
+
+        const incomingTokenHash = hashRefreshToken(token);
+        if (!user.refreshTokenHash || user.refreshTokenHash !== incomingTokenHash) {
+            // Token reuse / revoked token detected: invalidate session
+            user.refreshTokenHash = null;
+            await user.save();
+            return res.status(401).json({
+                success: false,
+                message: "Invalid or revoked refresh token. Please sign in again."
+            });
+        }
+
         const newAccessToken = createAccessToken(user._id.toString());
         const newRefreshToken = createRefreshToken(user._id.toString());
 
@@ -636,5 +654,32 @@ export const refresh = async (req, res, next) => {
             success: false,
             message: "Invalid or expired refresh token"
         });
+    }
+};
+
+export const logout = async (req, res, next) => {
+    try {
+        const token = req.cookies?.refreshToken || req.body?.refreshToken;
+        if (token) {
+            try {
+                const decoded = verifyRefreshToken(token);
+                if (decoded?.sub) {
+                    await User.findByIdAndUpdate(decoded.sub, { $unset: { refreshTokenHash: 1 } });
+                }
+            } catch (_) {}
+        }
+
+        res.clearCookie("refreshToken", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax"
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Logged out successfully"
+        });
+    } catch (error) {
+        next(error);
     }
 };

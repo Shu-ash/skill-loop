@@ -42,6 +42,13 @@ export const protect = async (req, res, next) => {
             });
         }
 
+        if (user.status === "banned") {
+            return res.status(403).json({
+                success: false,
+                message: "Your account has been suspended by an administrator."
+            });
+        }
+
         req.user = user;
 
         next();
@@ -72,7 +79,7 @@ export const optionalAuth = async (req, res, next) => {
 
         if (decoded?.sub && decoded.type === "access") {
             const user = await User.findById(decoded.sub);
-            if (user) {
+            if (user && user.status !== "banned") {
                 req.user = user;
             }
         }

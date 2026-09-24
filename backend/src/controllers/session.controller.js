@@ -23,9 +23,25 @@ export const autoCompleteExpiredSessions = async () => {
             const sessionEnd = new Date(new Date(session.scheduledAt).getTime() + durationMs);
 
             if (now >= sessionEnd) {
-                session.status = "completed";
-                session.completedAt = sessionEnd;
-                await session.save();
+                // ATOMIC LOCK: Only transition if status is still scheduled or in_progress
+                const updatedSession = await Session.findOneAndUpdate(
+                    {
+                        _id: session._id,
+                        status: { $in: ["scheduled", "in_progress"] }
+                    },
+                    {
+                        $set: {
+                            status: "completed",
+                            completedAt: sessionEnd
+                        }
+                    },
+                    { new: true }
+                );
+
+                if (!updatedSession) {
+                    // Another request/worker already completed this session
+                    continue;
+                }
 
                 const teacherId = session.teacher?._id || session.teacher;
                 const learnerId = session.learner?._id || session.learner;
@@ -33,10 +49,17 @@ export const autoCompleteExpiredSessions = async () => {
                 const learnerName = session.learner?.name || 'Learner';
 
                 if (teacherId && learnerId) {
-                    // Update user credits: Teacher +1, Learner -1
+                    // Update user credits: Teacher +1, Learner -1 (protect against negative balance)
                     await Promise.all([
                         User.findByIdAndUpdate(teacherId, { $inc: { credits: 1, ratingCount: 1 } }),
-                        User.findByIdAndUpdate(learnerId, { $inc: { credits: -1 } })
+                        User.findOneAndUpdate(
+                            { _id: learnerId, credits: { $gte: 1 } },
+                            { $inc: { credits: -1 } }
+                        ).then(async (doc) => {
+                            if (!doc) {
+                                await User.findByIdAndUpdate(learnerId, { $set: { credits: 0 } });
+                            }
+                        })
                     ]);
 
                     // Audit ledger entry (Single transfer from learner to teacher)
@@ -634,11 +657,29 @@ export const completeSession =
                 });
             }
 
-            session.status = "completed";
-            session.completedAt = new Date();
-            await session.save();
+            // ATOMIC LOCK: Only transition if status is still scheduled or in_progress
+            const updatedSession = await Session.findOneAndUpdate(
+                {
+                    _id: session._id,
+                    status: { $in: ["scheduled", "in_progress"] }
+                },
+                {
+                    $set: {
+                        status: "completed",
+                        completedAt: new Date()
+                    }
+                },
+                { new: true }
+            );
 
-            await session.populate([
+            if (!updatedSession) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Session is already completed or cancelled"
+                });
+            }
+
+            await updatedSession.populate([
                 {
                     path: "teacher",
                     select: "firstName lastName name username profilePhotoUrl headline rating credits"
@@ -649,13 +690,20 @@ export const completeSession =
                 }
             ]);
 
-            const teacherName = session.teacher?.name || `${session.teacher?.firstName || ''} ${session.teacher?.lastName || ''}`.trim() || 'Teacher';
-            const learnerName = session.learner?.name || `${session.learner?.firstName || ''} ${session.learner?.lastName || ''}`.trim() || 'Learner';
+            const teacherName = updatedSession.teacher?.name || `${updatedSession.teacher?.firstName || ''} ${updatedSession.teacher?.lastName || ''}`.trim() || 'Teacher';
+            const learnerName = updatedSession.learner?.name || `${updatedSession.learner?.firstName || ''} ${updatedSession.learner?.lastName || ''}`.trim() || 'Learner';
 
-            // 1. Credit Economy: Teacher earns +1, Learner spends -1
+            // 1. Credit Economy: Teacher earns +1, Learner spends -1 (protect against negative balance)
             await Promise.all([
-                User.findByIdAndUpdate(session.teacher._id, { $inc: { credits: 1, ratingCount: 1 } }),
-                User.findByIdAndUpdate(session.learner._id, { $inc: { credits: -1 } })
+                User.findByIdAndUpdate(updatedSession.teacher._id, { $inc: { credits: 1, ratingCount: 1 } }),
+                User.findOneAndUpdate(
+                    { _id: updatedSession.learner._id, credits: { $gte: 1 } },
+                    { $inc: { credits: -1 } }
+                ).then(async (doc) => {
+                    if (!doc) {
+                        await User.findByIdAndUpdate(updatedSession.learner._id, { $set: { credits: 0 } });
+                    }
+                })
             ]);
 
             // 2. Audit Trail: Create single CreditLedger record (Transfer from learner to teacher)

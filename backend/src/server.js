@@ -30,6 +30,7 @@ import reportRoutes from "./routes/report.routes.js";
 
 const app = express();
 app.disable("x-powered-by");
+app.set("trust proxy", 1);
 
 // SECURITY & CORS
 app.use(
@@ -38,14 +39,39 @@ app.use(
   })
 );
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:3000",
+  "http://127.0.0.1:3000"
+];
+if (env.CLIENT_URL) {
+  try {
+    allowedOrigins.push(new URL(env.CLIENT_URL).origin);
+  } catch (_) {
+    allowedOrigins.push(env.CLIENT_URL);
+  }
+}
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || origin.includes("localhost") || origin.includes("127.0.0.1")) {
-        callback(null, true);
-      } else {
-        callback(null, env.CLIENT_URL || true);
-      }
+      // Allow mobile apps, curl, or Postman requests with no origin
+      if (!origin) return callback(null, true);
+
+      try {
+        const originUrl = new URL(origin);
+        const isAllowed =
+          allowedOrigins.includes(origin) ||
+          originUrl.hostname === "localhost" ||
+          originUrl.hostname === "127.0.0.1";
+
+        if (isAllowed) {
+          return callback(null, true);
+        }
+      } catch (_) {}
+
+      return callback(new Error("CORS policy violation: origin not allowed"), false);
     },
     credentials: true
   })

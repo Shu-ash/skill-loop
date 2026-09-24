@@ -11,6 +11,10 @@ const hashRefreshToken = (token) => {
   return crypto.createHash('sha256').update(token).digest('hex');
 };
 
+const hashOtpValue = (code) => {
+  return crypto.createHash('sha256').update(String(code).trim()).digest('hex');
+};
+
 const refreshCookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
@@ -54,7 +58,8 @@ export const sendAuthOtp = async (req, res, next) => {
 
     await Otp.create({
       email: normalizedEmail,
-      otp: otpCode,
+      otp: hashOtpValue(otpCode),
+      attempts: 0,
       purpose,
       expiresAt
     });
@@ -70,9 +75,7 @@ export const sendAuthOtp = async (req, res, next) => {
       success: true,
       message: `6-Digit OTP sent successfully to ${normalizedEmail}`,
       data: {
-        email: normalizedEmail,
-        // In dev mode, return debug OTP for convenience if needed
-        devOtp: process.env.NODE_ENV !== 'production' ? otpCode : undefined
+        email: normalizedEmail
       }
     });
   } catch (error) {
@@ -95,12 +98,26 @@ export const verifyRegisterOtp = async (req, res, next) => {
 
     const validOtpRecord = await Otp.findOne({
       email: normalizedEmail,
-      otp: otp.trim(),
       purpose: 'register'
     });
 
     if (!validOtpRecord) {
-      return res.status(400).json({ success: false, message: 'Invalid or expired OTP code. Please try again.' });
+      return res.status(400).json({ success: false, message: 'Invalid or expired OTP code. Please request a new one.' });
+    }
+
+    if (validOtpRecord.attempts >= 5) {
+      await Otp.deleteMany({ email: normalizedEmail, purpose: 'register' });
+      return res.status(429).json({ success: false, message: 'Too many incorrect attempts. Please request a new OTP.' });
+    }
+
+    if (validOtpRecord.otp !== hashOtpValue(otp)) {
+      validOtpRecord.attempts = (validOtpRecord.attempts || 0) + 1;
+      await validOtpRecord.save();
+      const remaining = 5 - validOtpRecord.attempts;
+      return res.status(400).json({
+        success: false,
+        message: `Incorrect OTP code. ${remaining > 0 ? `${remaining} attempts remaining.` : 'Code invalidated. Please request a new one.'}`
+      });
     }
 
     const existingUser = await User.findOne({ email: normalizedEmail });
@@ -180,12 +197,26 @@ export const verifyLoginOtp = async (req, res, next) => {
 
     const validOtpRecord = await Otp.findOne({
       email: normalizedEmail,
-      otp: otp.trim(),
       purpose: 'login'
     });
 
     if (!validOtpRecord) {
-      return res.status(400).json({ success: false, message: 'Invalid or expired OTP code.' });
+      return res.status(400).json({ success: false, message: 'Invalid or expired OTP code. Please request a new one.' });
+    }
+
+    if (validOtpRecord.attempts >= 5) {
+      await Otp.deleteMany({ email: normalizedEmail, purpose: 'login' });
+      return res.status(429).json({ success: false, message: 'Too many incorrect attempts. Please request a new OTP.' });
+    }
+
+    if (validOtpRecord.otp !== hashOtpValue(otp)) {
+      validOtpRecord.attempts = (validOtpRecord.attempts || 0) + 1;
+      await validOtpRecord.save();
+      const remaining = 5 - validOtpRecord.attempts;
+      return res.status(400).json({
+        success: false,
+        message: `Incorrect OTP code. ${remaining > 0 ? `${remaining} attempts remaining.` : 'Code invalidated. Please request a new one.'}`
+      });
     }
 
     const user = await User.findOne({ email: normalizedEmail });
@@ -255,7 +286,8 @@ export const forgotPassword = async (req, res, next) => {
 
     await Otp.create({
       email: normalizedEmail,
-      otp: otpCode,
+      otp: hashOtpValue(otpCode),
+      attempts: 0,
       purpose: 'forgot_password',
       expiresAt
     });
@@ -271,8 +303,7 @@ export const forgotPassword = async (req, res, next) => {
       success: true,
       message: `Password reset OTP has been sent to ${normalizedEmail}`,
       data: {
-        email: normalizedEmail,
-        devOtp: process.env.NODE_ENV !== 'production' ? otpCode : undefined
+        email: normalizedEmail
       }
     });
   } catch (error) {
@@ -299,12 +330,26 @@ export const resetPasswordWithOtp = async (req, res, next) => {
 
     const validOtpRecord = await Otp.findOne({
       email: normalizedEmail,
-      otp: otp.trim(),
       purpose: 'forgot_password'
     });
 
     if (!validOtpRecord) {
-      return res.status(400).json({ success: false, message: 'Invalid or expired reset code.' });
+      return res.status(400).json({ success: false, message: 'Invalid or expired reset code. Please request a new one.' });
+    }
+
+    if (validOtpRecord.attempts >= 5) {
+      await Otp.deleteMany({ email: normalizedEmail, purpose: 'forgot_password' });
+      return res.status(429).json({ success: false, message: 'Too many incorrect attempts. Please request a new reset code.' });
+    }
+
+    if (validOtpRecord.otp !== hashOtpValue(otp)) {
+      validOtpRecord.attempts = (validOtpRecord.attempts || 0) + 1;
+      await validOtpRecord.save();
+      const remaining = 5 - validOtpRecord.attempts;
+      return res.status(400).json({
+        success: false,
+        message: `Incorrect OTP code. ${remaining > 0 ? `${remaining} attempts remaining.` : 'Code invalidated. Please request a new one.'}`
+      });
     }
 
     const user = await User.findOne({ email: normalizedEmail });
@@ -313,6 +358,8 @@ export const resetPasswordWithOtp = async (req, res, next) => {
     }
 
     user.password = await hashPassword(newPassword);
+    // Invalidate any active refresh tokens to force re-login on all devices
+    user.refreshTokenHash = null;
     await user.save();
 
     await Otp.deleteMany({ email: normalizedEmail, purpose: 'forgot_password' });
@@ -341,7 +388,7 @@ export const resetPasswordWithOtp = async (req, res, next) => {
  */
 export const socialLogin = async (req, res, next) => {
   try {
-    const { provider, email, name, avatar, providerId } = req.body;
+    const { provider, email, name, avatar } = req.body;
     if (!email) {
       return res.status(400).json({ success: false, message: 'Social account email is required' });
     }
@@ -349,11 +396,19 @@ export const socialLogin = async (req, res, next) => {
     const normalizedEmail = email.toLowerCase().trim();
     let user = await User.findOne({ email: normalizedEmail });
 
+    // Block social login takeover of administrative accounts
+    if (user && (user.role === 'admin' || user.role === 'superadmin' || user.email === 'admin@skillloop.com')) {
+      return res.status(403).json({
+        success: false,
+        message: 'Administrative accounts cannot use one-click social login. Please sign in via the admin portal with your credentials.'
+      });
+    }
+
     if (!user) {
       // Auto-register new social user
-      const fName = name ? name.split(' ')[0] : (provider === 'google' ? 'Google' : 'Microsoft');
+      const fName = name ? name.split(' ')[0] : (provider === 'microsoft' ? 'Microsoft' : 'Google');
       const lName = name ? name.split(' ').slice(1).join(' ') : 'User';
-      const dummyPassword = await hashPassword(`social_${Date.now()}_${Math.random()}`);
+      const dummyPassword = await hashPassword(`social_${Date.now()}_${crypto.randomBytes(16).toString('hex')}`);
 
       user = await User.create({
         firstName: fName,
@@ -365,6 +420,7 @@ export const socialLogin = async (req, res, next) => {
         profilePhotoUrl: avatar || '',
         role: 'user',
         credits: 10,
+        emailVerified: true,
         onboardingCompleted: true
       });
 

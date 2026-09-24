@@ -39,6 +39,14 @@ export const createSwapRequest = async (req, res, next) => {
             });
         }
 
+        // Require at least 1 credit to request a class
+        if (req.user.credits !== undefined && req.user.credits < 1) {
+            return res.status(400).json({
+                success: false,
+                message: "You need at least 1 credit to send a skill swap request."
+            });
+        }
+
         // Check receiver exists
         const receiver = await User.findById(receiverId);
 
@@ -188,6 +196,15 @@ export const acceptSwapRequest = async (
             return res.status(404).json({
                 success: false,
                 message: "Pending request not found or already accepted"
+            });
+        }
+
+        // Verify the requesting learner has sufficient credits to schedule
+        const learner = await User.findById(request.sender);
+        if (!learner || (learner.credits !== undefined && learner.credits < 1)) {
+            return res.status(400).json({
+                success: false,
+                message: "The student does not have sufficient credits (minimum 1 required) to schedule this session."
             });
         }
 

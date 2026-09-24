@@ -7,7 +7,8 @@ import {
     requestLoginOtp, 
     verifyLoginOtp, 
     me, 
-    refresh 
+    refresh,
+    logout 
 } from "../controllers/auth.controller.js";
 import { 
     sendAuthOtp, 
@@ -29,11 +30,12 @@ router.post("/signup", authLimiter, validate(registerSchema), register);
 router.post("/verify-email", authLimiter, verifyEmail);
 router.post("/resend-otp", authLimiter, resendOtp);
 
-// Login (Password & Passwordless Email OTP)
+// Login (Password & Passwordless Email OTP) & Logout
 router.post("/login", authLimiter, validate(loginSchema), login);
 router.post("/request-login-otp", authLimiter, requestLoginOtp);
 router.post("/verify-login-otp", authLimiter, verifyLoginOtp);
 router.post("/refresh", refresh);
+router.post("/logout", logout);
 router.get("/me", protect, me);
 
 // Password Reset & Legacy OTP Helpers
