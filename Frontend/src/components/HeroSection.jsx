@@ -1,13 +1,44 @@
 // src/components/HeroSection.jsx
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { getAuthStatus } from '../utils/auth';
+
+const API_BASE_URL = 'http://localhost:5000/api';
 
 export default function HeroSection() {
-  return (
-    <main className="landing-hero">
+  const { isAuthenticated } = getAuthStatus();
+  const targetLink = isAuthenticated ? '/browse' : '/login?mode=signup';
 
-        {/* Left side: Hero text and stats */}
+  const [stats, setStats] = useState({
+    members: '10+',
+    sessions: '20+',
+    rating: '5.0 ★'
+  });
+
+  useEffect(() => {
+    const fetchCommunityStats = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/users/community-stats`);
+        const data = await res.json();
+        if (data.success && data.data) {
+          setStats({
+            members: String(data.data.totalMembers || 0),
+            sessions: String(data.data.totalSessionsSwapped || 0),
+            rating: data.data.averageRating || '5.0 ★'
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load community stats:', err);
+      }
+    };
+
+    fetchCommunityStats();
+  }, []);
+
+  return (
+    <section className="landing-hero">
+      {/* Left side: Hero text and stats */}
       <div className="hero-left">
         <div className="hero-tag">
           <span className="pill-badge pill-violet">✦ No fees. No tutors. Just trade skills.</span>
@@ -23,29 +54,30 @@ export default function HeroSection() {
 
         {/* Call-to-action buttons */}
         <div className="hero-btns">
-          <Link className="btn btn-primary" to="/login">Join the loop →</Link>
-          <a className="btn btn-secondary" href="#how-it-works">See how it works</a>
+          <Link className="btn btn-primary" to={targetLink}>
+            {isAuthenticated ? 'Browse skills to learn →' : 'Join the loop →'}
+          </Link>
+          <Link className="btn btn-secondary" to="/how-it-works">See how it works</Link>
         </div>
 
         {/* Hero stats */}
         <div className="hero-stats">
           <div className="stat-item">
-            <h3>2,140</h3>
+            <span className="stat-number">{stats.members}</span>
             <p>active members</p>
           </div>
           <div className="stat-item">
-            <h3>5,600+</h3>
+            <span className="stat-number">{stats.sessions}</span>
             <p>sessions swapped</p>
           </div>
           <div className="stat-item">
-            <h3>4.9 ★</h3>
+            <span className="stat-number">{stats.rating}</span>
             <p>average rating</p>
           </div>
         </div>
       </div>
 
-
-        {/* Right side: Hero visual */}
+      {/* Right side: Hero visual */}
       <div className="hero-visual">
         <div className="hero-visual-card">
           <div className="orbit-container">
@@ -58,7 +90,6 @@ export default function HeroSection() {
               </div>
             </div>
 
-
             {/* Orbit cards for teaching and learning */}
             <div className="orbit-card orbit-card-teach">
               <span className="pill-badge pill-violet">YOU TEACH</span>
@@ -68,12 +99,12 @@ export default function HeroSection() {
 
             <div className="orbit-card orbit-card-learn">
               <span className="pill-badge pill-mint">YOU LEARN</span>
-              <h4>Conversational Spanish</h4>
+              <h4>Build Powerful Web APIs</h4>
               <p>-1 Skill Credit spent</p>
             </div>
           </div>
         </div>
       </div>
-    </main>
+    </section>
   );
 }

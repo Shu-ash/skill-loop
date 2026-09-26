@@ -1,0 +1,202 @@
+/* VerifyEmailPage.css - Modern SkillLoop Email Verification Interface */
+
+.verify-email-page-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.verify-email-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.5rem;
+  position: relative;
+  z-index: 10;
+}
+
+.verify-card {
+  max-width: 480px;
+  width: 100%;
+  padding: 2.75rem 2.25rem;
+  border-radius: 28px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.08), inset 0 2px 4px rgba(255, 255, 255, 0.95);
+  animation: modalScaleIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.verify-icon-bubble {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(168, 85, 247, 0.15) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  margin: 0 auto 1.5rem auto;
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
+}
+
+.verify-title {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--slate-900, #0f172a);
+  margin: 0 0 0.6rem 0;
+  font-family: var(--font-display, inherit);
+  letter-spacing: -0.5px;
+}
+
+.verify-subtitle {
+  color: var(--slate-600, #475569);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  margin: 0 0 1.75rem 0;
+}
+
+.verify-email-highlight {
+  color: var(--violet-primary, #4f46e5);
+  font-weight: 700;
+  word-break: break-all;
+}
+
+.verify-otp-inputs {
+  display: flex;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-bottom: 1.75rem;
+}
+
+.otp-box-input {
+  width: 52px;
+  height: 60px;
+  border-radius: 14px;
+  border: 2px solid var(--slate-200, #e2e8f0);
+  background: rgba(248, 250, 252, 0.9);
+  font-size: 1.6rem;
+  font-weight: 800;
+  text-align: center;
+  color: var(--slate-900, #0f172a);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.otp-box-input:focus {
+  border-color: var(--violet-primary, #4f46e5);
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15);
+  transform: translateY(-2px);
+}
+
+.otp-box-input.has-value {
+  border-color: var(--violet-primary, #4f46e5);
+  background: #ffffff;
+}
+
+.verify-resend-row {
+  margin-top: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  color: var(--slate-500, #64748b);
+}
+
+.resend-btn {
+  background: none;
+  border: none;
+  color: var(--violet-primary, #4f46e5);
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  font-size: 0.88rem;
+}
+
+.resend-btn:hover:not(:disabled) {
+  text-decoration: underline;
+  background: rgba(79, 70, 229, 0.08);
+}
+
+.resend-btn:disabled {
+  color: var(--slate-400, #94a3b8);
+  cursor: not-allowed;
+}
+
+.verify-change-email-row {
+  margin-top: 1rem;
+  font-size: 0.82rem;
+  color: var(--slate-400, #94a3b8);
+}
+
+.verify-change-email-link {
+  color: var(--slate-600, #475569);
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.verify-change-email-link:hover {
+  color: var(--violet-primary, #4f46e5);
+}
+
+/* Dark Mode Overrides */
+html[data-theme="dark"] .verify-card {
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.6), inset 0 2px 3px rgba(255, 255, 255, 0.08);
+}
+
+html[data-theme="dark"] .verify-title {
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .verify-subtitle {
+  color: var(--slate-300, #cbd5e1);
+}
+
+html[data-theme="dark"] .verify-email-highlight {
+  color: #a5b4fc;
+}
+
+html[data-theme="dark"] .otp-box-input {
+  background: rgba(15, 23, 42, 0.8);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .otp-box-input:focus {
+  background: rgba(30, 41, 59, 0.9);
+  border-color: #818cf8;
+  box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.25);
+}
+
+html[data-theme="dark"] .resend-btn {
+  color: #a5b4fc;
+}
+
+html[data-theme="dark"] .verify-resend-row {
+  color: var(--slate-400, #94a3b8);
+}
+
+@media (max-width: 480px) {
+  .verify-card {
+    padding: 2rem 1.25rem;
+  }
+  .otp-box-input {
+    width: 42px;
+    height: 52px;
+    font-size: 1.35rem;
+  }
+}
