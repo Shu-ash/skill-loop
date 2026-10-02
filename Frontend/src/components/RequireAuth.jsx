@@ -2,7 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthGuardModal from './AuthGuardModal';
-import { getAuthStatus } from '../utils/auth';
+import { getAuthStatus, clearAuthSession } from '../utils/auth';
 
 export default function RequireAuth({ children, pageTitle = "this page", roleRequired = "user" }) {
   const { isAuthenticated, userType } = getAuthStatus();
@@ -44,12 +44,12 @@ function AdminUserGuardModal({ pageTitle }) {
           <button 
             type="button" 
             className="btn btn-secondary btn-full"
-            onClick={() => {
-              localStorage.clear();
+            onClick={async () => {
+              await clearAuthSession();
               navigate('/login');
             }}
           >
-            Log Out Admin & Test Guest/User
+            Log Out Admin & Sign in as Member
           </button>
         </div>
       </div>

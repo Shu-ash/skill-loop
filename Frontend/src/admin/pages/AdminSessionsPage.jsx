@@ -5,6 +5,7 @@ import AdminSidebar from '../components/AdminSidebar';
 import AdminSessionsTable from '../components/AdminSessionsTable';
 import AdminSearchFilterBar from '../components/AdminSearchFilterBar';
 import AdminActionModal from '../components/AdminActionModal';
+import { fetchWithAuth } from '../../utils/auth';
 import '../admin.css';
 
 const API_BASE_URL = 'http://localhost:5000/api';
@@ -32,14 +33,8 @@ export default function AdminSessionsPage() {
   });
 
   const fetchSessions = async () => {
-    const token = localStorage.getItem('accessToken');
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/sessions`, {
-        headers: {
-          'Authorization': `Bearer ${token || ''}`,
-          'x-admin-token': 'admin2026'
-        }
-      });
+      const response = await fetchWithAuth(`${API_BASE_URL}/admin/sessions`);
       const data = await response.json();
       if (data.success && data.data?.sessions?.length) {
         setSessions(data.data.sessions);
@@ -91,15 +86,10 @@ export default function AdminSessionsPage() {
       isDetailsOnly: false,
       onConfirm: async () => {
         setModalConfig(prev => ({ ...prev, loading: true }));
-        const token = localStorage.getItem('accessToken');
         try {
-          const response = await fetch(`${API_BASE_URL}/admin/sessions/${s.id}/dispute`, {
+          const response = await fetchWithAuth(`${API_BASE_URL}/admin/sessions/${s.id}/dispute`, {
             method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token || ''}`,
-              'x-admin-token': 'admin2026'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ resolution: 'Resolved by Admin', awardTo: 'teacher' })
           });
           if (response.ok) {

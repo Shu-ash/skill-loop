@@ -7,6 +7,7 @@ export const getAuthStatus = () => {
   const userStr = localStorage.getItem('skillloop_user');
   const token = localStorage.getItem('accessToken');
 
+  // Check explicit admin storage
   if (adminStr) {
     try {
       const admin = JSON.parse(adminStr);
@@ -18,23 +19,23 @@ export const getAuthStatus = () => {
     }
   }
 
-  if (token) {
-    try {
-      const user = userStr ? JSON.parse(userStr) : null;
-      return { isAuthenticated: true, userType: 'user', token, user };
-    } catch (e) {}
-    return { isAuthenticated: true, userType: 'user', token };
-  }
-
+  // Parse user if available to check for admin role
+  let parsedUser = null;
   if (userStr) {
     try {
-      const user = JSON.parse(userStr);
-      if (user && !user.guest && (user.email || user.name) && user.name !== 'User Account') {
-        return { isAuthenticated: true, userType: 'user', user };
+      parsedUser = JSON.parse(userStr);
+      if (parsedUser && (parsedUser.role === 'admin' || parsedUser.role === 'superadmin')) {
+        return { isAuthenticated: true, userType: 'admin', token, user: parsedUser };
       }
-    } catch (e) {
-      // Invalid JSON
-    }
+    } catch (e) {}
+  }
+
+  if (token) {
+    return { isAuthenticated: true, userType: 'user', token, user: parsedUser };
+  }
+
+  if (parsedUser && !parsedUser.guest && (parsedUser.email || parsedUser.name) && parsedUser.name !== 'User Account') {
+    return { isAuthenticated: true, userType: 'user', user: parsedUser };
   }
 
   return { isAuthenticated: false, userType: 'guest', user: null };
@@ -46,6 +47,10 @@ export const clearAuthSession = async () => {
   localStorage.removeItem('skillloop_admin');
 
   try {
+    window.dispatchEvent(new Event('auth-change'));
+  } catch (e) {}
+
+  try {
     await fetch(`${API_URL}/auth/logout`, {
       method: 'POST',
       credentials: 'include',
@@ -54,6 +59,62 @@ export const clearAuthSession = async () => {
   } catch (err) {
     // Non-blocking on network failure
   }
+};
+
+let refreshPromise = null;
+
+export const refreshAccessToken = async () => {
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = (async () => {
+    try {
+      const refreshRes = await fetch(`${API_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      });
+
+      if (!refreshRes.ok) {
+        // Refresh token is revoked or expired: wipe dead credentials immediately
+        await clearAuthSession();
+        return null;
+      }
+
+      const refreshData = await refreshRes.json();
+      if (refreshData?.success && refreshData?.data?.accessToken) {
+        const token = refreshData.data.accessToken;
+        localStorage.setItem('accessToken', token);
+
+        if (refreshData.data.user) {
+          const user = refreshData.data.user;
+          const isAdmin = user.role === 'admin' || user.role === 'superadmin';
+          if (isAdmin) {
+            localStorage.setItem('skillloop_admin', JSON.stringify(user));
+            localStorage.removeItem('skillloop_user');
+          } else {
+            localStorage.setItem('skillloop_user', JSON.stringify(user));
+            localStorage.removeItem('skillloop_admin');
+          }
+        }
+
+        try {
+          window.dispatchEvent(new Event('auth-change'));
+        } catch (e) {}
+
+        return token;
+      } else {
+        await clearAuthSession();
+        return null;
+      }
+    } catch (err) {
+      console.warn('Silent refresh network failure:', err);
+      return null;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
 };
 
 /**
@@ -68,30 +129,15 @@ export const fetchWithAuth = async (url, options = {}) => {
 
   let response = await fetch(url, { ...options, headers, credentials: 'include' });
 
-  // If unauthorized, attempt silent refresh before giving up
+  // If unauthorized, attempt silent refresh once before giving up
   if (response.status === 401) {
-    try {
-      const refreshRes = await fetch(`${API_URL}/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
-      });
-      const refreshData = await refreshRes.json();
-      if (refreshRes.ok && refreshData?.data?.accessToken) {
-        token = refreshData.data.accessToken;
-        localStorage.setItem('accessToken', token);
-        if (refreshData.data.user) {
-          localStorage.setItem('skillloop_user', JSON.stringify(refreshData.data.user));
-        }
-        // Retry original request with refreshed token
-        const retryHeaders = {
-          ...options.headers,
-          Authorization: `Bearer ${token}`
-        };
-        response = await fetch(url, { ...options, headers: retryHeaders, credentials: 'include' });
-      }
-    } catch (err) {
-      console.warn('Silent refresh attempt failed:', err);
+    const newToken = await refreshAccessToken();
+    if (newToken) {
+      const retryHeaders = {
+        ...options.headers,
+        Authorization: `Bearer ${newToken}`
+      };
+      response = await fetch(url, { ...options, headers: retryHeaders, credentials: 'include' });
     }
   }
 

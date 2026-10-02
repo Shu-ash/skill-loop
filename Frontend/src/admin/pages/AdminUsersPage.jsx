@@ -5,6 +5,7 @@ import AdminSidebar from '../components/AdminSidebar';
 import AdminUsersTable from '../components/AdminUsersTable';
 import AdminSearchFilterBar from '../components/AdminSearchFilterBar';
 import AdminActionModal from '../components/AdminActionModal';
+import { fetchWithAuth } from '../../utils/auth';
 import '../admin.css';
 
 const API_BASE_URL = 'http://localhost:5000/api';
@@ -33,14 +34,8 @@ export default function AdminUsersPage() {
   });
 
   const fetchUsers = async () => {
-    const token = localStorage.getItem('accessToken');
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/users`, {
-        headers: {
-          'Authorization': `Bearer ${token || ''}`,
-          'x-admin-token': 'admin2026'
-        }
-      });
+      const response = await fetchWithAuth(`${API_BASE_URL}/admin/users`);
       const data = await response.json();
       if (data.success && Array.isArray(data.data?.users)) {
         setUsers(data.data.users);
@@ -109,13 +104,9 @@ export default function AdminUsersPage() {
         const token = localStorage.getItem('accessToken');
         const userId = user.id || user._id;
         try {
-          await fetch(`${API_BASE_URL}/admin/users/${userId}/role`, {
+          await fetchWithAuth(`${API_BASE_URL}/admin/users/${userId}/role`, {
             method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token || ''}`,
-              'x-admin-token': 'admin2026'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ role: targetRole })
           });
         } catch (err) {
@@ -151,15 +142,10 @@ export default function AdminUsersPage() {
       isDetailsOnly: false,
       onConfirm: async () => {
         setModalConfig(prev => ({ ...prev, loading: true }));
-        const token = localStorage.getItem('accessToken');
         try {
-          await fetch(`${API_BASE_URL}/admin/users/${userId}/status`, {
+          await fetchWithAuth(`${API_BASE_URL}/admin/users/${userId}/status`, {
             method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token || ''}`,
-              'x-admin-token': 'admin2026'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status: targetStatus })
           });
         } catch (err) {

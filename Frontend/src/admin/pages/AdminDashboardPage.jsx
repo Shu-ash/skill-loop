@@ -4,6 +4,7 @@ import AdminNavbar from '../components/AdminNavbar';
 import AdminSidebar from '../components/AdminSidebar';
 import AdminMetricsGrid from '../components/AdminMetricsGrid';
 import AdminUsersTable from '../components/AdminUsersTable';
+import { fetchWithAuth } from '../../utils/auth';
 import '../admin.css';
 
 const API_BASE_URL = 'http://localhost:5000/api';
@@ -16,21 +17,10 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     const fetchAdminData = async () => {
-      const token = localStorage.getItem('accessToken');
       try {
         const [metricsRes, usersRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/admin/metrics`, {
-            headers: {
-              'Authorization': `Bearer ${token || ''}`,
-              'x-admin-token': 'admin2026'
-            }
-          }),
-          fetch(`${API_BASE_URL}/admin/users`, {
-            headers: {
-              'Authorization': `Bearer ${token || ''}`,
-              'x-admin-token': 'admin2026'
-            }
-          })
+          fetchWithAuth(`${API_BASE_URL}/admin/metrics`),
+          fetchWithAuth(`${API_BASE_URL}/admin/users`)
         ]);
 
         const metricsData = await metricsRes.json();

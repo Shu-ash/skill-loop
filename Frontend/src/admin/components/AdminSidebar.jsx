@@ -1,6 +1,7 @@
 // src/admin/components/AdminSidebar.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { clearAuthSession } from '../../utils/auth';
 
 export default function AdminSidebar({ activeTab = 'dashboard' }) {
   const navigate = useNavigate();
@@ -37,10 +38,11 @@ export default function AdminSidebar({ activeTab = 'dashboard' }) {
     setShowLogoutModal(true);
   };
 
-  const confirmLogout = () => {
+  const confirmLogout = async () => {
     setShowLogoutModal(false);
     localStorage.removeItem('admin_sidebar_collapsed');
-    navigate('/login');
+    await clearAuthSession();
+    navigate('/login', { replace: true });
   };
 
   return (

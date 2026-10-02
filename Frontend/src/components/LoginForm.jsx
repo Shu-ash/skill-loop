@@ -56,19 +56,30 @@ export default function LoginForm({ onSwitchToSignup }) {
         localStorage.setItem('accessToken', accessToken);
       }
 
-      if (activeRoleTab === 'admin') {
-        if (user.role !== 'admin' && user.role !== 'superadmin') {
-          throw new Error('Access denied. This account does not have Admin moderator privileges.');
-        }
+      const isAdmin = user.role === 'admin' || user.role === 'superadmin';
+
+      if (isAdmin) {
+        // ALWAYS route admin accounts directly to Admin Control Panel
         localStorage.setItem('skillloop_admin', JSON.stringify(user));
         localStorage.removeItem('skillloop_user');
+        try {
+          window.dispatchEvent(new Event('auth-change'));
+        } catch (e) {}
         navigate('/admin', { replace: true });
-      } else {
-        localStorage.setItem('skillloop_user', JSON.stringify(user));
-        localStorage.removeItem('skillloop_admin');
-        const redirectPath = location.state?.from || '/dashboard';
-        navigate(redirectPath, { replace: true });
+        return;
       }
+
+      if (activeRoleTab === 'admin') {
+        throw new Error('Access denied. This account does not have Admin moderator privileges.');
+      }
+
+      localStorage.setItem('skillloop_user', JSON.stringify(user));
+      localStorage.removeItem('skillloop_admin');
+      try {
+        window.dispatchEvent(new Event('auth-change'));
+      } catch (e) {}
+      const redirectPath = location.state?.from || '/dashboard';
+      navigate(redirectPath, { replace: true });
 
     } catch (err) {
       console.error('Authentication error:', err);

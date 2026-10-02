@@ -5,6 +5,7 @@ import AdminSidebar from '../components/AdminSidebar';
 import AdminReportsTable from '../components/AdminReportsTable';
 import AdminSearchFilterBar from '../components/AdminSearchFilterBar';
 import AdminActionModal from '../components/AdminActionModal';
+import { fetchWithAuth } from '../../utils/auth';
 import '../admin.css';
 
 const API_BASE_URL = 'http://localhost:5000/api';
@@ -32,14 +33,8 @@ export default function AdminReportsPage() {
   });
 
   const fetchReports = async () => {
-    const token = localStorage.getItem('accessToken');
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/reports`, {
-        headers: {
-          'Authorization': `Bearer ${token || ''}`,
-          'x-admin-token': 'admin2026'
-        }
-      });
+      const response = await fetchWithAuth(`${API_BASE_URL}/admin/reports`);
       const data = await response.json();
       if (data.success && data.data?.reports) {
         setReports(data.data.reports);
@@ -94,15 +89,10 @@ export default function AdminReportsPage() {
       isDetailsOnly: false,
       onConfirm: async () => {
         setModalConfig(prev => ({ ...prev, loading: true }));
-        const token = localStorage.getItem('accessToken');
         try {
-          const response = await fetch(`${API_BASE_URL}/admin/reports/${r.id}/resolve`, {
+          const response = await fetchWithAuth(`${API_BASE_URL}/admin/reports/${r.id}/resolve`, {
             method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token || ''}`,
-              'x-admin-token': 'admin2026'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status: resolutionAction })
           });
           if (response.ok) {

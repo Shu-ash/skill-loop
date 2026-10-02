@@ -13,11 +13,24 @@ export default function Navbar() {
   const [showNotifs, setShowNotifs] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [authStatus, setAuthStatus] = useState(getAuthStatus);
 
-  const { isAuthenticated, userType } = getAuthStatus();
+  useEffect(() => {
+    const handleAuthChange = () => {
+      setAuthStatus(getAuthStatus());
+    };
+    window.addEventListener('auth-change', handleAuthChange);
+    window.addEventListener('storage', handleAuthChange);
+    return () => {
+      window.removeEventListener('auth-change', handleAuthChange);
+      window.removeEventListener('storage', handleAuthChange);
+    };
+  }, []);
+
+  const { isAuthenticated, userType } = authStatus;
 
   const fetchNotifications = async () => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || userType === 'admin') return;
 
     try {
       const response = await fetchWithAuth(`${API_BASE_URL}/notifications`);
@@ -31,10 +44,10 @@ export default function Navbar() {
   };
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && userType !== 'admin') {
       fetchNotifications();
     }
-  }, [isAuthenticated, location.pathname]);
+  }, [isAuthenticated, userType, location.pathname]);
 
   const toggleNotifications = () => {
     setShowNotifs(!showNotifs);

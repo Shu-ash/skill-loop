@@ -6,6 +6,7 @@ import AdminCategoriesTable from '../components/AdminCategoriesTable';
 import AdminSearchFilterBar from '../components/AdminSearchFilterBar';
 import AdminActionModal from '../components/AdminActionModal';
 import EmojiPickerMenu from '../../components/EmojiPickerMenu';
+import { fetchWithAuth } from '../../utils/auth';
 import '../admin.css';
 
 const API_BASE_URL = 'http://localhost:5000/api';
@@ -56,14 +57,8 @@ export default function AdminCategoriesPage() {
   });
 
   const fetchCategories = async () => {
-    const token = localStorage.getItem('accessToken');
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/categories`, {
-        headers: {
-          'Authorization': `Bearer ${token || ''}`,
-          'x-admin-token': 'admin2026'
-        }
-      });
+      const response = await fetchWithAuth(`${API_BASE_URL}/admin/categories`);
       const data = await response.json();
       if (data.success && Array.isArray(data.data?.categories)) {
         setCategories(data.data.categories);
@@ -172,20 +167,14 @@ export default function AdminCategoriesPage() {
     if (!catName.trim()) return;
 
     setSubmitting(true);
-    const token = localStorage.getItem('accessToken');
-
     try {
       const isEdit = modalMode === 'edit' && editingCatId;
       const url = isEdit ? `${API_BASE_URL}/admin/categories/${editingCatId}` : `${API_BASE_URL}/admin/categories`;
       const method = isEdit ? 'PATCH' : 'POST';
 
-      const response = await fetch(url, {
+      const response = await fetchWithAuth(url, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token || ''}`,
-          'x-admin-token': 'admin2026'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: catName.trim(),
           icon: catIcon || '⚡',
@@ -226,13 +215,9 @@ export default function AdminCategoriesPage() {
     const catId = cat.id || cat._id;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/categories/${catId}`, {
+      const response = await fetchWithAuth(`${API_BASE_URL}/admin/categories/${catId}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token || ''}`,
-          'x-admin-token': 'admin2026'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ skills: updatedSkills })
       });
 
@@ -267,17 +252,12 @@ export default function AdminCategoriesPage() {
       category: { ...prev.category, skills: updatedSkills }
     }));
 
-    const token = localStorage.getItem('accessToken');
     const catId = cat.id || cat._id;
 
     try {
-      await fetch(`${API_BASE_URL}/admin/categories/${catId}`, {
+      await fetchWithAuth(`${API_BASE_URL}/admin/categories/${catId}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token || ''}`,
-          'x-admin-token': 'admin2026'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ skills: updatedSkills })
       });
       fetchCategories();
@@ -305,14 +285,9 @@ export default function AdminCategoriesPage() {
       isDetailsOnly: false,
       onConfirm: async () => {
         setModalConfig(prev => ({ ...prev, loading: true }));
-        const token = localStorage.getItem('accessToken');
         try {
-          const response = await fetch(`${API_BASE_URL}/admin/categories/${catId}`, {
-            method: 'DELETE',
-            headers: {
-              'Authorization': `Bearer ${token || ''}`,
-              'x-admin-token': 'admin2026'
-            }
+          const response = await fetchWithAuth(`${API_BASE_URL}/admin/categories/${catId}`, {
+            method: 'DELETE'
           });
 
           if (response.ok) {

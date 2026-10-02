@@ -5,6 +5,7 @@ import AdminSidebar from '../components/AdminSidebar';
 import AdminCreditsLedgerTable from '../components/AdminCreditsLedgerTable';
 import AdminSearchFilterBar from '../components/AdminSearchFilterBar';
 import AdminActionModal from '../components/AdminActionModal';
+import { fetchWithAuth } from '../../utils/auth';
 import '../admin.css';
 
 const API_BASE_URL = 'http://localhost:5000/api';
@@ -33,14 +34,8 @@ export default function AdminCreditsPage() {
 
   useEffect(() => {
     const fetchCredits = async () => {
-      const token = localStorage.getItem('accessToken');
       try {
-        const response = await fetch(`${API_BASE_URL}/admin/credits`, {
-          headers: {
-            'Authorization': `Bearer ${token || ''}`,
-            'x-admin-token': 'admin2026'
-          }
-        });
+        const response = await fetchWithAuth(`${API_BASE_URL}/admin/credits`);
         const data = await response.json();
         if (data.success && data.data?.transactions) {
           setTransactions(data.data.transactions);

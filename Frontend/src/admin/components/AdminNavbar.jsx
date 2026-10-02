@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
+import { clearAuthSession } from '../../utils/auth';
 
 export default function AdminNavbar() {
   const { theme, toggleTheme } = useTheme();
@@ -19,10 +20,11 @@ export default function AdminNavbar() {
     setMobileMenuOpen(false);
   };
 
-  const confirmLogout = () => {
+  const confirmLogout = async () => {
     setShowLogoutModal(false);
     localStorage.removeItem('admin_sidebar_collapsed');
-    navigate('/login');
+    await clearAuthSession();
+    navigate('/login', { replace: true });
   };
 
   const navLinks = [

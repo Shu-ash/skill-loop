@@ -319,17 +319,41 @@ export const getAdminCreditsLedger = async (req, res) => {
 // GET /api/admin/categories - Skill Categories Audit
 export const getAdminCategories = async (req, res) => {
   try {
-    let categories = await Category.find().sort({ name: 1 });
+    const categories = await Category.find().sort({ name: 1 });
+    const users = await User.find({ status: { $ne: "banned" } })
+      .select("skillsCanTeach skillsWantToLearn teachSkills learnSkills")
+      .lean();
 
-    const formatted = categories.map(c => ({
-      id: c._id,
-      name: c.name,
-      description: c.description || 'Skill category',
-      icon: c.icon || '⚡',
-      skills: Array.isArray(c.skills) ? c.skills : [],
-      count: c.memberCount || 0,
-      status: c.status || 'Active'
-    }));
+    const formatted = categories.map(c => {
+      const catKeywords = c.name.toLowerCase().split(/[\s&,/]+/);
+      const catSkillsLower = (c.skills || []).map(s => s.toLowerCase());
+
+      const realMembersCount = users.filter(u => {
+        const userSkills = [
+          ...(u.skillsCanTeach || []),
+          ...(u.skillsWantToLearn || []),
+          ...(u.teachSkills || []),
+          ...(u.learnSkills || [])
+        ].map(s => String(s).toLowerCase().trim());
+
+        return userSkills.some(us => 
+          catSkillsLower.some(cs => cs.includes(us) || us.includes(cs)) ||
+          catKeywords.some(kw => kw.length > 2 && us.includes(kw))
+        );
+      }).length;
+
+      return {
+        id: c._id,
+        displayId: `#CAT-${c._id.toString().slice(-6).toUpperCase()}`,
+        name: c.name,
+        description: c.description || 'Skill category',
+        icon: c.icon || '⚡',
+        skills: Array.isArray(c.skills) ? c.skills : [],
+        count: realMembersCount,
+        memberCount: realMembersCount,
+        status: c.status || 'Active'
+      };
+    });
 
     res.status(200).json({
       success: true,
