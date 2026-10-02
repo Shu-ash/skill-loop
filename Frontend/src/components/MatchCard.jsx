@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { getAuthStatus } from '../utils/auth';
+import { fetchWithAuth, getAuthStatus } from '../utils/auth';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -88,8 +88,8 @@ export default function MatchCard({ match, onRequestSwap }) {
   };
 
   const handleSendSwap = async () => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) {
+    const { isAuthenticated } = getAuthStatus();
+    if (!isAuthenticated) {
       navigate('/login');
       return;
     }
@@ -104,13 +104,11 @@ export default function MatchCard({ match, onRequestSwap }) {
     setSuccess('');
 
     try {
-      const res = await fetch(`${API_BASE_URL}/requests`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/requests`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
-        credentials: 'include',
         body: JSON.stringify({
           receiverId: targetId,
           skillWant: selectedSkill,
@@ -120,6 +118,11 @@ export default function MatchCard({ match, onRequestSwap }) {
 
       const data = await res.json();
       if (!res.ok) {
+        if (res.status === 401) {
+          setError('Session expired. Please sign in again.');
+          setTimeout(() => navigate('/login'), 1500);
+          return;
+        }
         throw new Error(data.message || 'Failed to send swap request');
       }
 

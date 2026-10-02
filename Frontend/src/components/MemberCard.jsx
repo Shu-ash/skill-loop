@@ -2,8 +2,7 @@
 
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate } from 'react-router-dom';
-import { getAuthStatus } from '../utils/auth';
+import { fetchWithAuth, getAuthStatus } from '../utils/auth';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -77,9 +76,7 @@ export default function MemberCard({ member }) {
   };
 
   const handleSendRequest = async () => {
-    const accessToken = localStorage.getItem('accessToken');
-
-    if (!isAuthenticated || !accessToken) {
+    if (!isAuthenticated) {
       setShowAuthModal(true);
       return;
     }
@@ -94,13 +91,11 @@ export default function MemberCard({ member }) {
     setSuccess('');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/requests`, {
+      const response = await fetchWithAuth(`${API_BASE_URL}/requests`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`
+          'Content-Type': 'application/json'
         },
-        credentials: 'include',
         body: JSON.stringify({
           receiverId: id,
           skillWant: selectedSkill,
@@ -111,6 +106,10 @@ export default function MemberCard({ member }) {
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 401) {
+          setError('Session expired. Please sign in again.');
+          return;
+        }
         throw new Error(data.message || 'Failed to send swap request');
       }
 

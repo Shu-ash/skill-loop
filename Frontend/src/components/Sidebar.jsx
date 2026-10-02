@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { clearAuthSession } from '../utils/auth';
+import { clearAuthSession, fetchWithAuth } from '../utils/auth';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -37,12 +37,8 @@ export default function Sidebar({ user: propUser }) {
   // Fetch pending received requests count dynamically from MongoDB database
   useEffect(() => {
     const fetchPendingCount = async () => {
-      const token = localStorage.getItem('accessToken');
-      if (!token) return;
       try {
-        const res = await fetch(`${API_BASE_URL}/requests/received`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await fetchWithAuth(`${API_BASE_URL}/requests/received`);
         const data = await res.json();
         if (res.ok && Array.isArray(data.data?.requests)) {
           const pendingCount = data.data.requests.filter(r => r.status === 'pending').length;
@@ -79,13 +75,9 @@ export default function Sidebar({ user: propUser }) {
         }
       }
 
-      const token = localStorage.getItem('accessToken');
-      if (token) {
-        try {
-          const res = await fetch(`${API_BASE_URL}/users/me`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          const data = await res.json();
+      try {
+        const res = await fetchWithAuth(`${API_BASE_URL}/users/me`);
+        const data = await res.json();
           if (res.ok && data.data?.user) {
             const u = data.data.user;
             const name = u.name || `${u.firstName || ''} ${u.lastName || ''}`.trim() || 'SkillLoop Member';
@@ -101,7 +93,6 @@ export default function Sidebar({ user: propUser }) {
         } catch (e) {
           // offline fallback
         }
-      }
     };
 
     loadActiveUser();

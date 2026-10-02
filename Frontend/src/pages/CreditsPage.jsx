@@ -6,6 +6,7 @@ import MobileNav from '../components/MobileNav';
 import CreditBalanceCards from '../components/CreditBalanceCards';
 import TransactionLedgerTable from '../components/TransactionLedgerTable';
 import CreditsHowItWorksCard from '../components/CreditsHowItWorksCard';
+import { fetchWithAuth } from '../utils/auth';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -47,9 +48,7 @@ export default function CreditsPage() {
 
       try {
         setLoading(true);
-        const response = await fetch(`${API_BASE_URL}/credits/my-ledger`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await fetchWithAuth(`${API_BASE_URL}/credits/my-ledger`);
         const data = await response.json();
         if (data.success && data.data) {
           if (data.data.credits !== undefined) setBalance(data.data.credits);

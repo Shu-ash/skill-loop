@@ -5,6 +5,7 @@ import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import MobileNav from '../components/MobileNav';
 import SkillLoopLoader from '../components/SkillLoopLoader';
+import { fetchWithAuth } from '../utils/auth';
 import './ReviewsPage.css';
 
 const API_BASE_URL = 'http://localhost:5000/api';
@@ -31,12 +32,7 @@ export default function ReviewsPage() {
       try {
         setLoading(true);
         setError('');
-        const response = await fetch(`${API_BASE_URL}/reviews/my-reviews`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          },
-          credentials: 'include'
-        });
+        const response = await fetchWithAuth(`${API_BASE_URL}/reviews/my-reviews`);
 
         const data = await response.json();
 

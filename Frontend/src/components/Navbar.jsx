@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
-import { getAuthStatus } from '../utils/auth';
+import { fetchWithAuth, getAuthStatus } from '../utils/auth';
 import './Navbar.css';
 
 const API_BASE_URL = 'http://localhost:5000/api';
@@ -17,13 +17,10 @@ export default function Navbar() {
   const { isAuthenticated, userType } = getAuthStatus();
 
   const fetchNotifications = async () => {
-    const token = localStorage.getItem('accessToken');
-    if (!token || !isAuthenticated) return;
+    if (!isAuthenticated) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/notifications`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await fetchWithAuth(`${API_BASE_URL}/notifications`);
       const data = await response.json();
       if (data.success && data.data?.notifications) {
         setNotifications(data.data.notifications);
@@ -47,18 +44,14 @@ export default function Navbar() {
   };
 
   const markAllRead = async () => {
-    const token = localStorage.getItem('accessToken');
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
 
-    if (token) {
-      try {
-        await fetch(`${API_BASE_URL}/notifications/mark-all-read`, {
-          method: 'PATCH',
-          headers: { Authorization: `Bearer ${token}` }
-        });
-      } catch (err) {
-        console.error('Error marking notifications as read:', err);
-      }
+    try {
+      await fetchWithAuth(`${API_BASE_URL}/notifications/mark-all-read`, {
+        method: 'PATCH'
+      });
+    } catch (err) {
+      console.error('Error marking notifications as read:', err);
     }
   };
 
@@ -73,16 +66,12 @@ export default function Navbar() {
     // Remove ONLY this single notification from UI state
     setNotifications(prev => prev.filter(n => (n.id || n._id) !== notifId));
 
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      try {
-        await fetch(`${API_BASE_URL}/notifications/${notifId}`, {
-          method: 'DELETE',
-          headers: { Authorization: `Bearer ${token}` }
-        });
-      } catch (err) {
-        console.error('Error deleting notification:', err);
-      }
+    try {
+      await fetchWithAuth(`${API_BASE_URL}/notifications/${notifId}`, {
+        method: 'DELETE'
+      });
+    } catch (err) {
+      console.error('Error deleting notification:', err);
     }
   };
 
