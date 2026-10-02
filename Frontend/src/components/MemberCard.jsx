@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { fetchWithAuth, getAuthStatus } from '../utils/auth';
 
 const API_BASE_URL = 'http://localhost:5000/api';
