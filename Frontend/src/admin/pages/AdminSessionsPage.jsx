@@ -36,7 +36,7 @@ export default function AdminSessionsPage() {
     try {
       const response = await fetchWithAuth(`${API_BASE_URL}/admin/sessions`);
       const data = await response.json();
-      if (data.success && data.data?.sessions?.length) {
+      if (data.success && Array.isArray(data.data?.sessions)) {
         setSessions(data.data.sessions);
       }
     } catch (err) {
