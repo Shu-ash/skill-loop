@@ -1,0 +1,640 @@
+// src/pages/SessionsPage.jsx
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Navbar from '../components/Navbar';
+import Sidebar from '../components/Sidebar';
+import MobileNav from '../components/MobileNav';
+import SessionCard from '../components/SessionCard';
+import ScheduleSessionModal from '../components/ScheduleSessionModal';
+import ReviewModal from '../components/ReviewModal';
+import DisputeModal from '../components/DisputeModal';
+import SkillLoopLoader from '../components/SkillLoopLoader';
+import { fetchWithAuth, getAuthStatus } from '../utils/auth';
+
+const API_URL = 'http://localhost:5000/api';
+const ALLOWED_DURATIONS = [15, 30, 45, 60, 90, 120];
+
+export default function SessionsPage() {
+  const navigate = useNavigate();
+
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // Edit / Reschedule Modal State
+  const [editModal, setEditModal] = useState({
+    open: false,
+    session: null,
+    loading: false
+  });
+
+  // Dispute Modal State
+  const [disputeModal, setDisputeModal] = useState({
+    open: false,
+    session: null,
+    loading: false
+  });
+
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewSession, setReviewSession] = useState(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewedSessionIds, setReviewedSessionIds] = useState(new Set());
+
+  const getCurrentUser = () => {
+    try {
+      const storedUser = localStorage.getItem('skillloop_user');
+      if (!storedUser) return null;
+      return JSON.parse(storedUser);
+    } catch (err) {
+      console.error('Failed to parse user:', err);
+      return null;
+    }
+  };
+
+  const formatDate = (date) => {
+    if (!date) return 'Not scheduled';
+    const parsedDate = new Date(date);
+    if (Number.isNaN(parsedDate.getTime())) return 'Not scheduled';
+
+    return parsedDate.toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
+
+  const formatTime = (date) => {
+    if (!date) return 'Not scheduled';
+    const parsedDate = new Date(date);
+    if (Number.isNaN(parsedDate.getTime())) return 'Not scheduled';
+
+    return parsedDate.toLocaleTimeString('en-IN', {
+      hour: 'numeric',
+      minute: '2-digit'
+    });
+  };
+
+  const formatSession = (backendSession, user) => {
+    if (!backendSession) return null;
+
+    const teacher = backendSession.teacher || {};
+    const learner = backendSession.learner || {};
+
+    const userId = user?._id || user?.id || user?.userId;
+    const teacherId = typeof teacher === 'object' ? (teacher?._id || teacher?.id) : teacher;
+    const learnerId = typeof learner === 'object' ? (learner?._id || learner?.id) : learner;
+
+    const isTeacher = Boolean(userId && teacherId && String(userId) === String(teacherId));
+    const isLearner = Boolean(userId && learnerId && String(userId) === String(learnerId));
+
+    const partner = isTeacher ? learner : teacher;
+    const partnerName =
+      partner?.name ||
+      partner?.username ||
+      `${partner?.firstName || ''} ${partner?.lastName || ''}`.trim() ||
+      'Skill Loop User';
+
+    const partnerAvatar =
+      partnerName
+        .split(' ')
+        .filter(Boolean)
+        .map((part) => part[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase() || 'SL';
+
+    return {
+      id: backendSession._id || backendSession.id,
+      isTeacher,
+      isLearner,
+      learnerJoined: Boolean(backendSession.learnerJoined),
+      teacherJoined: Boolean(backendSession.teacherJoined),
+      scheduledAt: backendSession.scheduledAt || null,
+      title: `${backendSession.skill || 'Skill'} Session`,
+      partnerName,
+      partnerAvatar,
+      date: formatDate(backendSession.scheduledAt),
+      time: formatTime(backendSession.scheduledAt),
+      mode: backendSession.mode === 'in_person' ? 'In Person' : 'Online Video Call',
+      meetLink: backendSession.meetLink || '',
+      duration: Number(backendSession.duration) || 45,
+      status: backendSession.status,
+      skill: backendSession.skill,
+      message: backendSession.message || ''
+    };
+  };
+
+  const loadSessions = async (userOverride = currentUser) => {
+    const { isAuthenticated } = getAuthStatus();
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+
+    try {
+      setError('');
+
+      const response = await fetchWithAuth(`${API_URL}/sessions`, {
+        method: 'GET'
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to load sessions');
+      }
+
+      const backendSessions = data?.data?.sessions || [];
+      const formattedSessions = backendSessions
+        .map((item) => formatSession(item, userOverride))
+        .filter(Boolean);
+
+      setSessions(formattedSessions);
+
+    } catch (err) {
+      console.error('Failed to load sessions:', err);
+      setError(err.message || 'Failed to load sessions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const user = getCurrentUser();
+    setCurrentUser(user);
+    loadSessions(user);
+
+    // Auto-refresh sessions every 5s so when student joins, teacher screen updates live
+    const pollInterval = setInterval(() => {
+      loadSessions(user);
+    }, 5000);
+
+    return () => clearInterval(pollInterval);
+  }, []);
+
+  const updateSessionInState = (backendSession) => {
+    if (!backendSession) return;
+    const formattedSession = formatSession(backendSession, currentUser);
+    if (!formattedSession) return;
+
+    setSessions((previousSessions) =>
+      previousSessions.map((item) =>
+        String(item.id) === String(formattedSession.id) ? formattedSession : item
+      )
+    );
+  };
+
+  const handleJoinCall = (meetLink, sessionId) => {
+    if (!meetLink) {
+      setError('Meeting link is not available.');
+      return;
+    }
+
+    // Call backend to record join timestamp & learnerJoined status
+    if (sessionId) {
+      try {
+        fetchWithAuth(`${API_URL}/sessions/${sessionId}/join`, {
+          method: 'PATCH'
+        }).then(() => loadSessions(currentUser)).catch(() => {});
+      } catch (e) {}
+    }
+
+    const normalizedLink =
+      meetLink.startsWith('http://') || meetLink.startsWith('https://')
+        ? meetLink
+        : `https://${meetLink}`;
+
+    window.open(normalizedLink, '_blank', 'noopener,noreferrer');
+
+    if (sessionId) {
+      handleStartSession(sessionId);
+    }
+  };
+
+  const handleStartSession = async (sessionId) => {
+    try {
+      setActionLoading(true);
+      setError('');
+
+      const response = await fetchWithAuth(`${API_URL}/sessions/${sessionId}/start`, {
+        method: 'PATCH'
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to start session');
+      }
+
+      const updatedSession = data?.data?.session;
+      if (updatedSession) {
+        updateSessionInState(updatedSession);
+      } else {
+        await loadSessions(currentUser);
+      }
+    } catch (err) {
+      console.error('Failed to start session:', err);
+      setError(err.message || 'Failed to start session');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Open Edit Schedule Modal
+  const handleOpenEditSchedule = (session) => {
+    setEditModal({
+      open: true,
+      session,
+      loading: false
+    });
+  };
+
+  const handleCloseEditModal = () => {
+    setEditModal({
+      open: false,
+      session: null,
+      loading: false
+    });
+  };
+
+  // Submit Updated Schedule from Modal
+  const handleSubmitEditSchedule = async ({ scheduledAt, duration, mode, meetLink, message }) => {
+    const sessionId = editModal.session?.id;
+    if (!sessionId) return;
+
+    const selectedDuration = Number(duration);
+    if (!ALLOWED_DURATIONS.includes(selectedDuration)) {
+      setError('Duration must be 15, 30, 45, 60, 90, or 120 minutes.');
+      return;
+    }
+
+    if (!scheduledAt) {
+      setError('Please select a date and time.');
+      return;
+    }
+
+    if (mode === 'online' && !meetLink?.trim()) {
+      setError('Meeting link is required for online sessions.');
+      return;
+    }
+
+    try {
+      setEditModal(prev => ({ ...prev, loading: true }));
+      setError('');
+      setSuccessMsg('');
+
+      const response = await fetchWithAuth(`${API_URL}/sessions/${sessionId}/schedule`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          scheduledAt,
+          mode,
+          meetLink: mode === 'online' ? meetLink.trim() : '',
+          duration: selectedDuration,
+          message: message ? message.trim() : ''
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to update session schedule');
+      }
+
+      handleCloseEditModal();
+      setSuccessMsg('🎉 Session schedule & meeting link updated successfully!');
+      setTimeout(() => setSuccessMsg(''), 4000);
+
+      const updatedSession = data?.data?.session;
+      if (updatedSession) {
+        updateSessionInState(updatedSession);
+      } else {
+        await loadSessions(currentUser);
+      }
+    } catch (err) {
+      console.error('Failed to update session schedule:', err);
+      setError(err.message || 'Failed to update session schedule');
+      setEditModal(prev => ({ ...prev, loading: false }));
+    }
+  };
+
+  const handleScheduleSession = async (sessionId, scheduledAt, mode, meetLink, duration) => {
+    const selectedDuration = Number(duration);
+    if (!ALLOWED_DURATIONS.includes(selectedDuration)) {
+      setError('Duration must be 15, 30, 45, 60, 90, or 120 minutes.');
+      return;
+    }
+
+    if (!scheduledAt) {
+      setError('Please select a date and time.');
+      return;
+    }
+
+    if (mode === 'online' && !meetLink?.trim()) {
+      setError('Meeting link is required for online sessions.');
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      setError('');
+
+      const response = await fetchWithAuth(`${API_URL}/sessions/${sessionId}/schedule`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          scheduledAt,
+          mode,
+          meetLink: mode === 'online' ? meetLink.trim() : '',
+          duration: selectedDuration
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to schedule session');
+      }
+
+      const updatedSession = data?.data?.session;
+      if (updatedSession) {
+        updateSessionInState(updatedSession);
+      } else {
+        await loadSessions(currentUser);
+      }
+    } catch (err) {
+      console.error('Failed to schedule session:', err);
+      setError(err.message || 'Failed to schedule session');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleMarkComplete = async (sessionId) => {
+    try {
+      setActionLoading(true);
+      setError('');
+
+      const response = await fetchWithAuth(`${API_URL}/sessions/${sessionId}/complete`, {
+        method: 'PATCH'
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to complete session');
+      }
+
+      const updatedSession = data?.data?.session;
+      if (updatedSession) {
+        updateSessionInState(updatedSession);
+      } else {
+        await loadSessions(currentUser);
+      }
+
+      // Auto-open review modal after completing session
+      const completedSessionForReview = formatSession(updatedSession || { ...data?.data?.session }, currentUser);
+      if (completedSessionForReview) {
+        setReviewSession(completedSessionForReview);
+        setReviewModalOpen(true);
+      }
+    } catch (err) {
+      console.error('Failed to complete session:', err);
+      setError(err.message || 'Failed to complete session');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleCancelSession = async (sessionId) => {
+    const confirmed = window.confirm('Are you sure you want to cancel this session?');
+    if (!confirmed) return;
+
+    try {
+      setActionLoading(true);
+      setError('');
+
+      const response = await fetchWithAuth(`${API_URL}/sessions/${sessionId}/cancel`, {
+        method: 'PATCH'
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to cancel session');
+      }
+
+      const updatedSession = data?.data?.session;
+      if (updatedSession) {
+        updateSessionInState(updatedSession);
+      } else {
+        await loadSessions(currentUser);
+      }
+    } catch (err) {
+      console.error('Failed to cancel session:', err);
+      setError(err.message || 'Failed to cancel session');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleSubmitReview = async (sessionId, rating, comment) => {
+    const accessToken = localStorage.getItem('accessToken');
+    if (!accessToken) {
+      navigate('/login');
+      return;
+    }
+
+    try {
+      setReviewLoading(true);
+
+      const response = await fetch(`${API_URL}/reviews`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ sessionId, rating, comment })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to submit review');
+      }
+
+      setReviewedSessionIds(prev => new Set([...prev, sessionId]));
+      setReviewModalOpen(false);
+      setReviewSession(null);
+    } catch (err) {
+      console.error('Failed to submit review:', err);
+      setError(err.message || 'Failed to submit review');
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
+  // Open Dispute Modal
+  const handleOpenDispute = (session) => {
+    setDisputeModal({
+      open: true,
+      session,
+      loading: false
+    });
+  };
+
+  const handleCloseDisputeModal = () => {
+    setDisputeModal({
+      open: false,
+      session: null,
+      loading: false
+    });
+  };
+
+  const handleSubmitDispute = async (sessionId, reason, details) => {
+    try {
+      setDisputeModal(prev => ({ ...prev, loading: true }));
+      setError('');
+      setSuccessMsg('');
+
+      const response = await fetchWithAuth(`${API_URL}/reports`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          sessionId,
+          reason,
+          details
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to submit report dispute');
+      }
+
+      handleCloseDisputeModal();
+      setSuccessMsg('🚨 Incident report submitted. Moderation team has received your dispute.');
+      setTimeout(() => setSuccessMsg(''), 5000);
+    } catch (err) {
+      console.error('Failed to submit dispute:', err);
+      setError(err.message || 'Failed to submit dispute');
+      setDisputeModal(prev => ({ ...prev, loading: false }));
+    }
+  };
+
+  return (
+    <>
+      <div className="liquid-bg">
+        <div className="liquid-blob blob-1" />
+        <div className="liquid-blob blob-2" />
+        <div className="liquid-blob blob-3" />
+      </div>
+
+      <div id="app">
+        <Navbar />
+
+        <div className="app-layout">
+          <Sidebar />
+
+          <main className="main-content">
+            <div className="page-title-row">
+              <div>
+                <h2>Your sessions</h2>
+                <p>Manage your upcoming and completed skill swap sessions.</p>
+              </div>
+            </div>
+
+            {error && (
+              <div className="glass-panel onboarding-error-banner">
+                {error}
+              </div>
+            )}
+
+            {successMsg && (
+              <div className="glass-panel requests-success-banner">
+                {successMsg}
+              </div>
+            )}
+
+            {loading ? (
+              <SkillLoopLoader
+                title="Loading Swap Sessions"
+                subtitle="Retrieving scheduled meetings, active calls & past history from MongoDB..."
+                badgeText="MongoDB Live Sync"
+                variant="card"
+              />
+            ) : sessions.length > 0 ? (
+              <div className="sessions-list">
+                {sessions.map((session) => (
+                  <SessionCard
+                    key={session.id}
+                    session={session}
+                    onJoinCall={handleJoinCall}
+                    onStartSession={handleStartSession}
+                    onMarkComplete={handleMarkComplete}
+                    onCancelSession={handleCancelSession}
+                    onScheduleSession={handleScheduleSession}
+                    onOpenEditSchedule={handleOpenEditSchedule}
+                    onOpenDispute={handleOpenDispute}
+                    onOpenReview={(s) => {
+                      setReviewSession(s);
+                      setReviewModalOpen(true);
+                    }}
+                    actionLoading={actionLoading}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="glass-panel empty-requests-card">
+                <h3>No sessions yet</h3>
+                <p>Accept a swap request to create a session.</p>
+              </div>
+            )}
+          </main>
+        </div>
+
+        <MobileNav />
+      </div>
+
+      {/* Host Edit & Reschedule Session Modal */}
+      <ScheduleSessionModal
+        isOpen={editModal.open}
+        session={editModal.session}
+        onClose={handleCloseEditModal}
+        onSubmit={handleSubmitEditSchedule}
+        loading={editModal.loading}
+      />
+
+      {/* Session Dispute / Incident Report Modal */}
+      <DisputeModal
+        isOpen={disputeModal.open}
+        session={disputeModal.session}
+        onClose={handleCloseDisputeModal}
+        onSubmitDispute={handleSubmitDispute}
+        loading={disputeModal.loading}
+      />
+
+      <ReviewModal
+        isOpen={reviewModalOpen}
+        onClose={() => {
+          setReviewModalOpen(false);
+          setReviewSession(null);
+        }}
+        session={reviewSession}
+        onSubmitReview={handleSubmitReview}
+        loading={reviewLoading}
+      />
+    </>
+  );
+}

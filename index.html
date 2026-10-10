@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkillLoop - Home</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="landing">
+
+  <div class="liquid-bg">
+    <div class="liquid-blob blob-1"></div>
+    <div class="liquid-blob blob-2"></div>
+    <div class="liquid-blob blob-3"></div>
+  </div>
+
+  <div id="app">
+    <header class="navbar">
+      <a class="brand-logo" href="index.html">
+        <div class="brand-icon">
+          <span class="circle-violet"></span>
+          <span class="circle-mint"></span>
+        </div>
+        <span class="brand-name">Skill<span>Loop</span></span>
+      </a>
+
+      <ul class="nav-links">
+        <li><a class="nav-item" href="browse.html">Explore</a></li>
+        <li><a class="nav-item" href="#how-it-works">How it works</a></li>
+        <li><a class="nav-item" href="credits.html">Credits</a></li>
+        <li><a class="nav-item" href="leaderboard.html">Community</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <button class="nav-notification-btn" id="notif-bell-btn" title="Notifications" onclick="toggleNotifications()">
+          🔔
+          <span class="notification-badge"></span>
+        </button>
+        <a class="btn btn-secondary btn-pill-sm" href="login.html">Log in</a>
+        <a class="btn btn-primary btn-pill-sm" href="onboarding.html">Get started</a>
+      </div>
+    </header>
+
+    <div class="notifications-panel glass-panel" id="notifications-dropdown">
+      <div class="notif-header">
+        <h4>Notifications</h4>
+        <span onclick="markNotificationsRead()">Mark all read</span>
+      </div>
+      <div class="notif-list" id="notifications-list"></div>
+    </div>
+
+    <!-- Hero Section -->
+    <main class="landing-hero">
+      <div class="hero-left">
+        <div class="hero-tag">
+          <span class="pill-badge pill-violet">✦ No fees. No tutors. Just trade skills.</span>
+        </div>
+        <h1 class="hero-title">
+          Teach what you know.<br>
+          Learn what you<br>
+          <span class="highlight-violet">don't</span> <span class="highlight-mint">— for free.</span>
+        </h1>
+        <p class="hero-desc">SkillLoop pairs people who want to trade knowledge. Teach a session, earn a Skill Credit, spend it learning from anyone else in the loop. No money changes hands — ever.</p>
+        <div class="hero-btns">
+          <a class="btn btn-primary" href="login.html">Join the loop →</a>
+          <a class="btn btn-secondary" href="#how-it-works">See how it works</a>
+        </div>
+        <div class="hero-stats">
+          <div class="stat-item">
+            <h3>2,140</h3>
+            <p>active members</p>
+          </div>
+          <div class="stat-item">
+            <h3>5,600+</h3>
+            <p>sessions swapped</p>
+          </div>
+          <div class="stat-item">
+            <h3>4.9 ★</h3>
+            <p>average rating</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <div class="hero-visual-card">
+          <div class="orbit-container">
+            <div class="orbit-line"></div>
+            
+            <div class="center-loop-ring">
+              <div class="center-loop-inner">
+                <span class="loop-infinity-icon">∞</span>
+                <span class="loop-label">THE LOOP</span>
+              </div>
+            </div>
+
+            <div class="orbit-card orbit-card-teach">
+              <span class="pill-badge pill-violet">YOU TEACH</span>
+              <h4>UI Design in Figma</h4>
+              <p>+1 Skill Credit earned</p>
+            </div>
+
+            <div class="orbit-card orbit-card-learn">
+              <span class="pill-badge pill-mint">YOU LEARN</span>
+              <h4>Conversational Spanish</h4>
+              <p>-1 Skill Credit spent</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Lower Section Stack -->
+    <div class="landing-body-stack" id="how-it-works">
+      <!-- Three steps section -->
+      <section class="steps-section">
+        <p class="section-subtitle">THE LOOP</p>
+        <h2 class="section-title">Three steps. Zero cost.</h2>
+        <div class="steps-grid">
+          <div class="glass-panel step-card">
+            <div class="step-number">1</div>
+            <h3>List your skills</h3>
+            <p>Add what you can teach and what you're dying to learn. Takes two minutes.</p>
+          </div>
+          <div class="glass-panel step-card">
+            <div class="step-number" style="background:var(--mint-primary);">2</div>
+            <h3>Match & swap</h3>
+            <p>Browse the community, send a swap request, and schedule a session on a call link.</p>
+          </div>
+          <div class="glass-panel step-card">
+            <div class="step-number" style="background:var(--coral-primary);">3</div>
+            <h3>Earn & spend credits</h3>
+            <p>Teaching earns a credit. Spend it learning from literally anyone else on SkillLoop.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Category cards row -->
+      <section class="categories-section">
+        <div class="categories-feed">
+          <a class="glass-card category-card" href="browse.html?category=Design">
+            <div>
+              <span class="pill-badge pill-mint">Live now</span>
+              <h4>Design & Product</h4>
+              <p>214 teachers online</p>
+            </div>
+          </a>
+          <a class="glass-card category-card" href="browse.html?category=Code">
+            <div>
+              <span class="pill-badge pill-violet">Trending</span>
+              <h4>Code & Data</h4>
+              <p>380 teachers online</p>
+            </div>
+          </a>
+          <a class="glass-card category-card" href="browse.html?category=Languages">
+            <div>
+              <span class="pill-badge pill-coral">New</span>
+              <h4>Languages</h4>
+              <p>96 teachers online</p>
+            </div>
+          </a>
+          <a class="glass-card category-card" href="browse.html?category=Music">
+            <div>
+              <span class="pill-badge pill-gold">Popular</span>
+              <h4>Music & Craft</h4>
+              <p>142 teachers online</p>
+            </div>
+          </a>
+        </div>
+      </section>
+
+      <!-- Bottom  Box  placement -->
+      <section class="cta-section">
+        <div class="glass-panel cta-box">
+          <h2>Your first swap is one click away.</h2>
+          <p>Bring one skill. Leave with a new one.</p>
+          <a class="btn btn-primary" href="login.html">Create your profile →</a>
+        </div>
+      </section>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
