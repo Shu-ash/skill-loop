@@ -28,6 +28,7 @@ export default function AdminCategoriesPage() {
     search: '',
     newSkillInput: '',
     loading: false,
+    error: '',
     success: ''
   });
 
@@ -40,6 +41,7 @@ export default function AdminCategoriesPage() {
   const [catDesc, setCatDesc] = useState('');
   const [skillsList, setSkillsList] = useState([]);
   const [skillInput, setSkillInput] = useState('');
+  const [skillError, setSkillError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   // Center Modal State for Alerts / Details / Delete
@@ -64,9 +66,11 @@ export default function AdminCategoriesPage() {
         setCategories(data.data.categories);
         // If skills modal is open, refresh active category
         if (skillsModal.open && skillsModal.category) {
-          const updatedActive = data.data.categories.find(c => (c.id || c._id) === (skillsModal.category.id || skillsModal.category._id));
+          const updatedActive = data.data.categories.find(
+            (c) => (c.id || c._id) === (skillsModal.category.id || skillsModal.category._id)
+          );
           if (updatedActive) {
-            setSkillsModal(prev => ({ ...prev, category: updatedActive }));
+            setSkillsModal((prev) => ({ ...prev, category: updatedActive }));
           }
         }
       } else {
@@ -87,14 +91,16 @@ export default function AdminCategoriesPage() {
   const filteredCategories = useMemo(() => {
     return categories.filter((c) => {
       const search = searchQuery.trim().toLowerCase();
-      const matchesSearch = !search ||
+      const matchesSearch =
+        !search ||
         (c.name && c.name.toLowerCase().includes(search)) ||
         (c.description && c.description.toLowerCase().includes(search)) ||
         (c.id && c.id.toString().toLowerCase().includes(search)) ||
         (c.displayId && c.displayId.toLowerCase().includes(search)) ||
-        (Array.isArray(c.skills) && c.skills.some(s => s.toLowerCase().includes(search)));
+        (Array.isArray(c.skills) && c.skills.some((s) => s.toLowerCase().includes(search)));
 
-      const matchesStatus = selectedStatus === 'All Status' ||
+      const matchesStatus =
+        selectedStatus === 'All Status' ||
         (c.status && c.status.toLowerCase() === selectedStatus.toLowerCase());
 
       return matchesSearch && matchesStatus;
@@ -110,6 +116,7 @@ export default function AdminCategoriesPage() {
     setCatDesc('');
     setSkillsList([]);
     setSkillInput('');
+    setSkillError('');
     setShowModal(true);
   };
 
@@ -122,6 +129,7 @@ export default function AdminCategoriesPage() {
     setCatDesc(cat.description || '');
     setSkillsList(Array.isArray(cat.skills) ? [...cat.skills] : []);
     setSkillInput('');
+    setSkillError('');
     setShowModal(true);
   };
 
@@ -133,6 +141,7 @@ export default function AdminCategoriesPage() {
       search: '',
       newSkillInput: '',
       loading: false,
+      error: '',
       success: ''
     });
   };
@@ -142,9 +151,6 @@ export default function AdminCategoriesPage() {
     handleOpenManageSkills(cat);
   };
 
-<<<<<<< HEAD
-  const [skillError, setSkillError] = useState('');
-
   const isValidSkillNameForCatalog = (s) => {
     const cleaned = String(s || '').trim();
     if (cleaned.length < 1 || cleaned.length > 60) return false;
@@ -153,17 +159,14 @@ export default function AdminCategoriesPage() {
     return true;
   };
 
-=======
->>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
   // Add a skill tag in full create/edit category form
   const handleAddSkillTag = (e) => {
     if (e) e.preventDefault();
     const trimmed = skillInput.trim();
     if (!trimmed) return;
 
-<<<<<<< HEAD
     const rawSkills = trimmed.includes(',')
-      ? trimmed.split(',').map(s => s.trim()).filter(Boolean)
+      ? trimmed.split(',').map((s) => s.trim()).filter(Boolean)
       : [trimmed];
 
     const validSkills = rawSkills.filter(isValidSkillNameForCatalog);
@@ -173,20 +176,13 @@ export default function AdminCategoriesPage() {
     }
 
     setSkillError('');
-    setSkillsList(prev => [...new Set([...prev, ...validSkills])]);
-=======
-    const newSkills = trimmed.includes(',')
-      ? trimmed.split(',').map(s => s.trim()).filter(Boolean)
-      : [trimmed];
-
-    setSkillsList(prev => [...new Set([...prev, ...newSkills])]);
->>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
+    setSkillsList((prev) => [...new Set([...prev, ...validSkills])]);
     setSkillInput('');
   };
 
   // Remove a skill tag in full create/edit category form
   const handleRemoveSkillTag = (skillToRemove) => {
-    setSkillsList(prev => prev.filter(s => s !== skillToRemove));
+    setSkillsList((prev) => prev.filter((s) => s !== skillToRemove));
   };
 
   // Submit Category Create or Update
@@ -197,7 +193,9 @@ export default function AdminCategoriesPage() {
     setSubmitting(true);
     try {
       const isEdit = modalMode === 'edit' && editingCatId;
-      const url = isEdit ? `${API_BASE_URL}/admin/categories/${editingCatId}` : `${API_BASE_URL}/admin/categories`;
+      const url = isEdit
+        ? `${API_BASE_URL}/admin/categories/${editingCatId}`
+        : `${API_BASE_URL}/admin/categories`;
       const method = isEdit ? 'PATCH' : 'POST';
 
       const response = await fetchWithAuth(url, {
@@ -231,14 +229,13 @@ export default function AdminCategoriesPage() {
     const input = skillsModal.newSkillInput.trim();
     if (!input) return;
 
-<<<<<<< HEAD
     const rawSkills = input.includes(',')
-      ? input.split(',').map(s => s.trim()).filter(Boolean)
+      ? input.split(',').map((s) => s.trim()).filter(Boolean)
       : [input];
 
     const addedSkills = rawSkills.filter(isValidSkillNameForCatalog);
     if (addedSkills.length === 0) {
-      setSkillsModal(prev => ({
+      setSkillsModal((prev) => ({
         ...prev,
         error: 'Invalid skill name. Numbers-only strings (e.g. "1234") cannot be added as skills.'
       }));
@@ -248,18 +245,7 @@ export default function AdminCategoriesPage() {
     const currentSkills = Array.isArray(cat.skills) ? cat.skills : [];
     const updatedSkills = [...new Set([...currentSkills, ...addedSkills])];
 
-    setSkillsModal(prev => ({ ...prev, loading: true, success: '', error: '' }));
-=======
-    const addedSkills = input.includes(',')
-      ? input.split(',').map(s => s.trim()).filter(Boolean)
-      : [input];
-
-    const currentSkills = Array.isArray(cat.skills) ? cat.skills : [];
-    const updatedSkills = [...new Set([...currentSkills, ...addedSkills])];
-
-    setSkillsModal(prev => ({ ...prev, loading: true, success: '' }));
-    const token = localStorage.getItem('accessToken');
->>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
+    setSkillsModal((prev) => ({ ...prev, loading: true, success: '', error: '' }));
     const catId = cat.id || cat._id;
 
     try {
@@ -271,23 +257,20 @@ export default function AdminCategoriesPage() {
 
       const data = await response.json();
       if (response.ok && data.success) {
-        setSkillsModal(prev => ({
+        setSkillsModal((prev) => ({
           ...prev,
           category: { ...prev.category, skills: updatedSkills },
           newSkillInput: '',
           loading: false,
-<<<<<<< HEAD
           error: '',
-=======
->>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
           success: `Added ${addedSkills.join(', ')} to ${cat.name}!`
         }));
         fetchCategories();
-        setTimeout(() => setSkillsModal(prev => ({ ...prev, success: '' })), 2500);
+        setTimeout(() => setSkillsModal((prev) => ({ ...prev, success: '' })), 2500);
       }
     } catch (err) {
       console.error('Failed to add skill:', err);
-      setSkillsModal(prev => ({ ...prev, loading: false }));
+      setSkillsModal((prev) => ({ ...prev, loading: false }));
     }
   };
 
@@ -297,9 +280,9 @@ export default function AdminCategoriesPage() {
     if (!cat) return;
 
     const currentSkills = Array.isArray(cat.skills) ? cat.skills : [];
-    const updatedSkills = currentSkills.filter(s => s !== skillToRemove);
+    const updatedSkills = currentSkills.filter((s) => s !== skillToRemove);
 
-    setSkillsModal(prev => ({
+    setSkillsModal((prev) => ({
       ...prev,
       category: { ...prev.category, skills: updatedSkills }
     }));
@@ -332,32 +315,33 @@ export default function AdminCategoriesPage() {
         'Category ID': cat.displayId || `#CAT-${(catId || '').toString().slice(-6).toUpperCase()}`,
         'Attached Skills Count': `${(cat.skills || []).length} Skills`,
         'Total Members': `${cat.count || cat.memberCount || 0} Members`,
-        'Status': cat.status || 'Active'
+        Status: cat.status || 'Active'
       },
       isDetailsOnly: false,
       onConfirm: async () => {
-        setModalConfig(prev => ({ ...prev, loading: true }));
+        setModalConfig((prev) => ({ ...prev, loading: true }));
         try {
           const response = await fetchWithAuth(`${API_BASE_URL}/admin/categories/${catId}`, {
             method: 'DELETE'
           });
 
           if (response.ok) {
-            setCategories(prev => prev.filter(c => (c.id || c._id) !== catId));
+            setCategories((prev) => prev.filter((c) => (c.id || c._id) !== catId));
           }
         } catch (err) {
           console.error('Failed to delete category:', err);
         }
-        setModalConfig(prev => ({ ...prev, isOpen: false, loading: false }));
+        setModalConfig((prev) => ({ ...prev, isOpen: false, loading: false }));
       }
     });
   };
 
   const handleViewDetails = (cat) => {
     const catId = cat.id || cat._id;
-    const skills = Array.isArray(cat.skills) && cat.skills.length 
-      ? cat.skills.join(', ') 
-      : 'No specific skills added yet';
+    const skills =
+      Array.isArray(cat.skills) && cat.skills.length
+        ? cat.skills.join(', ')
+        : 'No specific skills added yet';
 
     setModalConfig({
       isOpen: true,
@@ -370,9 +354,9 @@ export default function AdminCategoriesPage() {
         'Category ID': cat.displayId || `#CAT-${(catId || '').toString().slice(-6).toUpperCase()}`,
         'Total Skills Count': `${(cat.skills || []).length} skills configured`,
         'Skills in this Category': skills,
-        'Description': cat.description || 'General skill exchange category',
+        Description: cat.description || 'General skill exchange category',
         'Member & Activity': `${cat.count || cat.memberCount || 0} registered members`,
-        'Status': cat.status || 'Active'
+        Status: cat.status || 'Active'
       },
       onConfirm: null
     });
@@ -388,7 +372,7 @@ export default function AdminCategoriesPage() {
     if (!skillsModal.category) return [];
     const list = Array.isArray(skillsModal.category.skills) ? skillsModal.category.skills : [];
     if (!skillsModal.search.trim()) return list;
-    return list.filter(s => s.toLowerCase().includes(skillsModal.search.trim().toLowerCase()));
+    return list.filter((s) => s.toLowerCase().includes(skillsModal.search.trim().toLowerCase()));
   }, [skillsModal.category, skillsModal.search]);
 
   return (
@@ -409,13 +393,12 @@ export default function AdminCategoriesPage() {
             <div className="page-header admin-categories-header">
               <div>
                 <h2>Skill Categories &amp; Skills Directory</h2>
-                <p>Manage platform categories, nested skill tags, and member classifications in real-time.</p>
+                <p>
+                  Manage platform categories, nested skill tags, and member classifications in
+                  real-time.
+                </p>
               </div>
-              <button 
-                type="button" 
-                className="btn btn-primary"
-                onClick={handleOpenAddModal}
-              >
+              <button type="button" className="btn btn-primary" onClick={handleOpenAddModal}>
                 + Add New Category
               </button>
             </div>
@@ -436,9 +419,9 @@ export default function AdminCategoriesPage() {
               onClearFilters={handleClearFilters}
             />
 
-            <AdminCategoriesTable 
-              categories={filteredCategories} 
-              title={`Platform Skill Categories (${filteredCategories.length})`} 
+            <AdminCategoriesTable
+              categories={filteredCategories}
+              title={`Platform Skill Categories (${filteredCategories.length})`}
               onManageSkills={handleOpenManageSkills}
               onQuickAddSkill={handleQuickAddSkill}
               onEditCategory={handleOpenEditModal}
@@ -452,56 +435,72 @@ export default function AdminCategoriesPage() {
 
       {/* DEDICATED SKILLS MANAGER MODAL FOR SPECIFIC CATEGORY */}
       {skillsModal.open && skillsModal.category && (
-        <div className="modal-overlay" onClick={() => setSkillsModal(prev => ({ ...prev, open: false }))}>
-          <div 
-            className="glass-panel logout-confirm-box clay-card-3d category-manager-modal-box" 
+        <div
+          className="modal-overlay"
+          onClick={() => setSkillsModal((prev) => ({ ...prev, open: false }))}
+        >
+          <div
+            className="glass-panel logout-confirm-box clay-card-3d category-manager-modal-box"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header with Icon & Category Name */}
             <div className="modal-header category-manager-header">
               <div className="category-manager-title-group">
-                <span className="category-manager-title-icon">{skillsModal.category.icon || '⚡'}</span>
+                <span className="category-manager-title-icon">
+                  {skillsModal.category.icon || '⚡'}
+                </span>
                 <div>
                   <h3 className="category-manager-title">
-                    {skillsModal.category.name} — Skills ({skillsModal.category.skills?.length || 0})
+                    {skillsModal.category.name} — Skills ({skillsModal.category.skills?.length || 0}
+                    )
                   </h3>
                   <p className="category-manager-subtitle">
                     Add or remove skills taught and learned under this category
                   </p>
                 </div>
               </div>
-              <button type="button" className="close-modal-btn" onClick={() => setSkillsModal(prev => ({ ...prev, open: false }))}>✕</button>
+              <button
+                type="button"
+                className="close-modal-btn"
+                onClick={() => setSkillsModal((prev) => ({ ...prev, open: false }))}
+              >
+                ✕
+              </button>
             </div>
 
             {skillsModal.success && (
-              <div className="category-manager-alert-success">
-                ✓ {skillsModal.success}
-              </div>
+              <div className="category-manager-alert-success">✓ {skillsModal.success}</div>
             )}
-<<<<<<< HEAD
             {skillsModal.error && (
-              <div style={{ color: '#dc2626', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.65rem' }}>
+              <div
+                style={{
+                  color: '#dc2626',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  marginBottom: '0.65rem'
+                }}
+              >
                 ⚠️ {skillsModal.error}
               </div>
             )}
-=======
->>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
 
             {/* Quick Add Skill to This Category Form */}
             <form onSubmit={handleAddSkillInManager} className="category-manager-form">
               <label className="category-manager-label">
-                ➕ Add New Skill(s) to "{skillsModal.category.name}"
+                ➕ Add New Skill(s) to &ldquo;{skillsModal.category.name}&rdquo;
               </label>
               <div className="category-manager-row">
                 <input
                   className="form-input category-manager-input"
                   type="text"
                   value={skillsModal.newSkillInput}
-<<<<<<< HEAD
-                  onChange={(e) => setSkillsModal(prev => ({ ...prev, newSkillInput: e.target.value, error: '' }))}
-=======
-                  onChange={(e) => setSkillsModal(prev => ({ ...prev, newSkillInput: e.target.value }))}
->>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
+                  onChange={(e) =>
+                    setSkillsModal((prev) => ({
+                      ...prev,
+                      newSkillInput: e.target.value,
+                      error: ''
+                    }))
+                  }
                   placeholder="e.g. Next.js, Flutter, Docker (or comma-separated)"
                   disabled={skillsModal.loading}
                   autoFocus
@@ -515,7 +514,8 @@ export default function AdminCategoriesPage() {
                 </button>
               </div>
               <span className="category-manager-tip">
-                💡 Tip: You can add multiple skills at once by separating them with commas (e.g. <code>React Native, SwiftUI, Kotlin</code>).
+                💡 Tip: You can add multiple skills at once by separating them with commas (e.g.{' '}
+                <code>React Native, SwiftUI, Kotlin</code>).
               </span>
             </form>
 
@@ -525,7 +525,7 @@ export default function AdminCategoriesPage() {
                 className="form-input category-manager-search-input"
                 type="text"
                 value={skillsModal.search}
-                onChange={(e) => setSkillsModal(prev => ({ ...prev, search: e.target.value }))}
+                onChange={(e) => setSkillsModal((prev) => ({ ...prev, search: e.target.value }))}
                 placeholder={`Search among ${(skillsModal.category.skills || []).length} skills...`}
               />
             </div>
@@ -534,10 +534,7 @@ export default function AdminCategoriesPage() {
             <div className="skills-modal-tags-container">
               {managerFilteredSkills.length > 0 ? (
                 managerFilteredSkills.map((skill, idx) => (
-                  <span
-                    key={idx}
-                    className="skills-modal-tag-chip"
-                  >
+                  <span key={idx} className="skills-modal-tag-chip">
                     <span>⚡</span>
                     <span>{skill}</span>
                     <button
@@ -552,7 +549,9 @@ export default function AdminCategoriesPage() {
                 ))
               ) : (
                 <div className="category-manager-empty-text">
-                  {skillsModal.search ? 'No matching skills found.' : 'No skills in this category yet. Type a skill name above!'}
+                  {skillsModal.search
+                    ? 'No matching skills found.'
+                    : 'No skills in this category yet. Type a skill name above!'}
                 </div>
               )}
             </div>
@@ -560,12 +559,13 @@ export default function AdminCategoriesPage() {
             {/* Modal Footer */}
             <div className="category-manager-footer">
               <span className="category-manager-footer-meta">
-                Total: <strong>{skillsModal.category.skills?.length || 0} skills</strong> saved in MongoDB
+                Total: <strong>{skillsModal.category.skills?.length || 0} skills</strong> saved in
+                MongoDB
               </span>
               <button
                 type="button"
                 className="btn btn-secondary category-manager-done-btn"
-                onClick={() => setSkillsModal(prev => ({ ...prev, open: false }))}
+                onClick={() => setSkillsModal((prev) => ({ ...prev, open: false }))}
               >
                 Done
               </button>
@@ -577,13 +577,20 @@ export default function AdminCategoriesPage() {
       {/* FULL CATEGORY CREATE / EDIT MODAL */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="glass-panel logout-confirm-box clay-card-3d category-edit-modal-box" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="glass-panel logout-confirm-box clay-card-3d category-edit-modal-box"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="modal-header">
               <div className="admin-action-modal-header">
                 <span className="category-form-icon-preview">{catIcon}</span>
-                <h3 className="admin-action-modal-title">{modalMode === 'edit' ? 'Edit Category & Skills' : 'Add New Category'}</h3>
+                <h3 className="admin-action-modal-title">
+                  {modalMode === 'edit' ? 'Edit Category & Skills' : 'Add New Category'}
+                </h3>
               </div>
-              <button type="button" className="close-modal-btn" onClick={() => setShowModal(false)}>✕</button>
+              <button type="button" className="close-modal-btn" onClick={() => setShowModal(false)}>
+                ✕
+              </button>
             </div>
 
             <form onSubmit={handleSaveCategory} className="edit-profile-form">
@@ -595,23 +602,21 @@ export default function AdminCategoriesPage() {
                     Selected: <span className="category-form-selected-emoji">{catIcon}</span>
                   </span>
                 </label>
-                
-                <EmojiPickerMenu 
-                  selectedEmoji={catIcon} 
-                  onSelectEmoji={(emoji) => setCatIcon(emoji)} 
+
+                <EmojiPickerMenu
+                  selectedEmoji={catIcon}
+                  onSelectEmoji={(emoji) => setCatIcon(emoji)}
                 />
               </div>
 
               {/* Category Name */}
               <div className="form-group category-form-group">
-                <label className="category-form-label-text">
-                  Category Name *
-                </label>
-                <input 
-                  className="form-input category-form-full-input" 
-                  type="text" 
-                  value={catName} 
-                  onChange={(e) => setCatName(e.target.value)} 
+                <label className="category-form-label-text">Category Name *</label>
+                <input
+                  className="form-input category-form-full-input"
+                  type="text"
+                  value={catName}
+                  onChange={(e) => setCatName(e.target.value)}
                   placeholder="e.g. Web Development, Design & Creative, AI & ML"
                   required
                 />
@@ -619,14 +624,12 @@ export default function AdminCategoriesPage() {
 
               {/* Category Description */}
               <div className="form-group category-form-group">
-                <label className="category-form-label-text">
-                  Description
-                </label>
-                <input 
-                  className="form-input category-form-full-input" 
-                  type="text" 
-                  value={catDesc} 
-                  onChange={(e) => setCatDesc(e.target.value)} 
+                <label className="category-form-label-text">Description</label>
+                <input
+                  className="form-input category-form-full-input"
+                  type="text"
+                  value={catDesc}
+                  onChange={(e) => setCatDesc(e.target.value)}
                   placeholder="e.g. Learn frontend, backend, APIs, and modern frameworks"
                 />
               </div>
@@ -643,11 +646,10 @@ export default function AdminCategoriesPage() {
                     className="form-input category-manager-input"
                     type="text"
                     value={skillInput}
-<<<<<<< HEAD
-                    onChange={(e) => { setSkillInput(e.target.value); setSkillError(''); }}
-=======
-                    onChange={(e) => setSkillInput(e.target.value)}
->>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
+                    onChange={(e) => {
+                      setSkillInput(e.target.value);
+                      setSkillError('');
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
@@ -664,23 +666,24 @@ export default function AdminCategoriesPage() {
                     + Add Skill
                   </button>
                 </div>
-<<<<<<< HEAD
                 {skillError && (
-                  <div style={{ color: '#dc2626', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+                  <div
+                    style={{
+                      color: '#dc2626',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      marginBottom: '0.5rem'
+                    }}
+                  >
                     ⚠️ {skillError}
                   </div>
                 )}
-=======
->>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
 
                 {/* Skill Tag Chips */}
                 <div className="category-chips-display-box">
                   {skillsList.length > 0 ? (
                     skillsList.map((skill, idx) => (
-                      <span
-                        key={idx}
-                        className="category-edit-chip"
-                      >
+                      <span key={idx} className="category-edit-chip">
                         <span>⚡</span>
                         <span>{skill}</span>
                         <button
@@ -695,7 +698,7 @@ export default function AdminCategoriesPage() {
                     ))
                   ) : (
                     <span className="category-chips-empty">
-                      No skills added yet. Type above and click "+ Add Skill".
+                      No skills added yet. Type above and click &ldquo;+ Add Skill&rdquo;.
                     </span>
                   )}
                 </div>
@@ -706,7 +709,11 @@ export default function AdminCategoriesPage() {
                   Cancel
                 </button>
                 <button type="submit" className="btn btn-primary" disabled={submitting}>
-                  {submitting ? 'Saving...' : modalMode === 'edit' ? `Save Category & Skills 💾` : `Create Category & Skills ${catIcon} →`}
+                  {submitting
+                    ? 'Saving...'
+                    : modalMode === 'edit'
+                    ? `Save Category & Skills 💾`
+                    : `Create Category & Skills ${catIcon} →`}
                 </button>
               </div>
             </form>
@@ -717,7 +724,7 @@ export default function AdminCategoriesPage() {
       {/* Center Screen Confirmation & Details Modal */}
       <AdminActionModal
         isOpen={modalConfig.isOpen}
-        onClose={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
+        onClose={() => setModalConfig((prev) => ({ ...prev, isOpen: false }))}
         onConfirm={modalConfig.onConfirm}
         title={modalConfig.title}
         icon={modalConfig.icon}

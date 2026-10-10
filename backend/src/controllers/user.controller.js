@@ -3,7 +3,6 @@ import Session from "../models/session.js";
 import SwapRequest from "../models/swapRequest.js";
 import Review from "../models/review.js";
 import Otp from "../models/otp.js";
-<<<<<<< HEAD
 import Skill from "../models/skill.js";
 import { generateOtp, sendOtpEmail } from "../utils/emailService.js";
 import { hashPassword, comparePassword } from "../utils/password.js";
@@ -12,10 +11,6 @@ import {
   escapeRegex,
   validateAndNormalizeSkills
 } from "../utils/skillCatalog.js";
-=======
-import { generateOtp, sendOtpEmail } from "../utils/emailService.js";
-import { hashPassword, comparePassword } from "../utils/password.js";
->>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
 
 /**
  * GET /api/users/me
@@ -92,7 +87,6 @@ export const completeOnboarding = async (req, res, next) => {
       });
     }
 
-<<<<<<< HEAD
     // Validate all teach & learn skills against the live database
     const [teachValidation, learnValidation] = await Promise.all([
       validateAndNormalizeSkills(skillsCanTeach),
@@ -120,10 +114,6 @@ export const completeOnboarding = async (req, res, next) => {
         message: "Select at least one valid skill from the database that you want to learn"
       });
     }
-=======
-    const cleanTeachSkills = [...new Set(skillsCanTeach.map((s) => String(s).trim()).filter(Boolean))];
-    const cleanLearnSkills = [...new Set(skillsWantToLearn.map((s) => String(s).trim()).filter(Boolean))];
->>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
 
     const user = await User.findByIdAndUpdate(
       req.user._id,
@@ -132,13 +122,8 @@ export const completeOnboarding = async (req, res, next) => {
         profilePhotoUrl: profilePhotoUrl?.trim() || "",
         bio: bio?.trim() || "",
         headline: headline?.trim() || "",
-<<<<<<< HEAD
         skillsCanTeach: teachValidation.validSkills,
         skillsWantToLearn: learnValidation.validSkills,
-=======
-        skillsCanTeach: cleanTeachSkills,
-        skillsWantToLearn: cleanLearnSkills,
->>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
         skillLevel: skillLevel || "beginner",
         onboardingCompleted: true
       },
@@ -192,7 +177,6 @@ export const updateMyProfile = async (req, res, next) => {
       updates.skillsWantToLearn = req.body.learnSkills;
     }
 
-<<<<<<< HEAD
     // Validate skillsCanTeach against MongoDB database if provided
     if (updates.skillsCanTeach !== undefined) {
       const teachValidation = await validateAndNormalizeSkills(updates.skillsCanTeach);
@@ -217,8 +201,6 @@ export const updateMyProfile = async (req, res, next) => {
       updates.skillsWantToLearn = learnValidation.validSkills;
     }
 
-=======
->>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
     // Name splitting into firstName & lastName
     if (updates.name) {
       const parts = updates.name.trim().split(/\s+/);
@@ -285,7 +267,6 @@ export const getUsers = async (req, res, next) => {
     }
 
     if (skill?.trim()) {
-<<<<<<< HEAD
       filter.skillsCanTeach = { $regex: escapeRegex(skill.trim()), $options: "i" };
     }
 
@@ -304,21 +285,12 @@ export const getUsers = async (req, res, next) => {
       const canonicalNames = matchingDbSkills.map((s) => s.name);
 
       const orConditions = [
-=======
-      filter.skillsCanTeach = { $regex: skill.trim(), $options: "i" };
-    }
-
-    if (search?.trim()) {
-      const searchRegex = { $regex: search.trim(), $options: "i" };
-      filter.$or = [
->>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
         { name: searchRegex },
         { firstName: searchRegex },
         { lastName: searchRegex },
         { username: searchRegex },
         { headline: searchRegex },
         { bio: searchRegex },
-<<<<<<< HEAD
         { skillsCanTeach: searchRegex },
         { skillsWantToLearn: searchRegex }
       ];
@@ -328,10 +300,6 @@ export const getUsers = async (req, res, next) => {
       }
 
       filter.$or = orConditions;
-=======
-        { skillsCanTeach: searchRegex }
-      ];
->>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
     }
 
     const skip = (pageNumber - 1) * limitNumber;

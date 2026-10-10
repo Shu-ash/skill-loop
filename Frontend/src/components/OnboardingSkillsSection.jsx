@@ -75,8 +75,11 @@ export default function OnboardingSkillsSection({
       if (!seen.has(key)) {
         const entry = {
           name,
-          category: sk.category?.name || sk.categoryName || 'General',
-          icon: sk.category?.icon || sk.icon || '⚡',
+          category:
+            typeof sk.category === 'string' && sk.category.trim()
+              ? sk.category.trim()
+              : sk.category?.name || sk.categoryName || 'General',
+          icon: sk.category?.icon || sk.categoryObj?.icon || sk.icon || '⚡',
           aliases: Array.isArray(sk.aliases) ? sk.aliases.map((a) => String(a).toLowerCase()) : [],
           isPopular: Boolean(sk.isPopular)
         };
@@ -155,8 +158,11 @@ export default function OnboardingSkillsSection({
           setLiveTeachSuggestions(
             data.data.skills.map((sk) => ({
               name: sk.name,
-              category: sk.category?.name || sk.categoryName || 'General',
-              icon: sk.category?.icon || sk.icon || '⚡',
+              category:
+                typeof sk.category === 'string' && sk.category.trim()
+                  ? sk.category.trim()
+                  : sk.category?.name || sk.categoryName || 'General',
+              icon: sk.category?.icon || sk.categoryObj?.icon || sk.icon || '⚡',
               aliases: Array.isArray(sk.aliases) ? sk.aliases.map((a) => String(a).toLowerCase()) : []
             }))
           );
@@ -183,8 +189,11 @@ export default function OnboardingSkillsSection({
           setLiveLearnSuggestions(
             data.data.skills.map((sk) => ({
               name: sk.name,
-              category: sk.category?.name || sk.categoryName || 'General',
-              icon: sk.category?.icon || sk.icon || '⚡',
+              category:
+                typeof sk.category === 'string' && sk.category.trim()
+                  ? sk.category.trim()
+                  : sk.category?.name || sk.categoryName || 'General',
+              icon: sk.category?.icon || sk.categoryObj?.icon || sk.icon || '⚡',
               aliases: Array.isArray(sk.aliases) ? sk.aliases.map((a) => String(a).toLowerCase()) : []
             }))
           );

@@ -121,8 +121,11 @@ export default function EditProfileModal({
       if (!seen.has(key)) {
         const entry = {
           name,
-          category: sk.category?.name || sk.categoryName || 'General',
-          icon: sk.category?.icon || sk.icon || '⚡',
+          category:
+            typeof sk.category === 'string' && sk.category.trim()
+              ? sk.category.trim()
+              : sk.category?.name || sk.categoryName || 'General',
+          icon: sk.category?.icon || sk.categoryObj?.icon || sk.icon || '⚡',
           aliases: Array.isArray(sk.aliases)
             ? sk.aliases.map((a) => String(a).toLowerCase())
             : []
@@ -184,8 +187,11 @@ export default function EditProfileModal({
           setLiveTeachBackend(
             data.data.skills.map((sk) => ({
               name: sk.name,
-              category: sk.category?.name || sk.categoryName || 'General',
-              icon: sk.category?.icon || sk.icon || '⚡',
+              category:
+                typeof sk.category === 'string' && sk.category.trim()
+                  ? sk.category.trim()
+                  : sk.category?.name || sk.categoryName || 'General',
+              icon: sk.category?.icon || sk.categoryObj?.icon || sk.icon || '⚡',
               aliases: Array.isArray(sk.aliases)
                 ? sk.aliases.map((a) => String(a).toLowerCase())
                 : []
@@ -214,8 +220,11 @@ export default function EditProfileModal({
           setLiveLearnBackend(
             data.data.skills.map((sk) => ({
               name: sk.name,
-              category: sk.category?.name || sk.categoryName || 'General',
-              icon: sk.category?.icon || sk.icon || '⚡',
+              category:
+                typeof sk.category === 'string' && sk.category.trim()
+                  ? sk.category.trim()
+                  : sk.category?.name || sk.categoryName || 'General',
+              icon: sk.category?.icon || sk.categoryObj?.icon || sk.icon || '⚡',
               aliases: Array.isArray(sk.aliases)
                 ? sk.aliases.map((a) => String(a).toLowerCase())
                 : []
