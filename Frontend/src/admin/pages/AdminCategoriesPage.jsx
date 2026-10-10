@@ -142,6 +142,7 @@ export default function AdminCategoriesPage() {
     handleOpenManageSkills(cat);
   };
 
+<<<<<<< HEAD
   const [skillError, setSkillError] = useState('');
 
   const isValidSkillNameForCatalog = (s) => {
@@ -152,12 +153,15 @@ export default function AdminCategoriesPage() {
     return true;
   };
 
+=======
+>>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
   // Add a skill tag in full create/edit category form
   const handleAddSkillTag = (e) => {
     if (e) e.preventDefault();
     const trimmed = skillInput.trim();
     if (!trimmed) return;
 
+<<<<<<< HEAD
     const rawSkills = trimmed.includes(',')
       ? trimmed.split(',').map(s => s.trim()).filter(Boolean)
       : [trimmed];
@@ -170,6 +174,13 @@ export default function AdminCategoriesPage() {
 
     setSkillError('');
     setSkillsList(prev => [...new Set([...prev, ...validSkills])]);
+=======
+    const newSkills = trimmed.includes(',')
+      ? trimmed.split(',').map(s => s.trim()).filter(Boolean)
+      : [trimmed];
+
+    setSkillsList(prev => [...new Set([...prev, ...newSkills])]);
+>>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
     setSkillInput('');
   };
 
@@ -220,6 +231,7 @@ export default function AdminCategoriesPage() {
     const input = skillsModal.newSkillInput.trim();
     if (!input) return;
 
+<<<<<<< HEAD
     const rawSkills = input.includes(',')
       ? input.split(',').map(s => s.trim()).filter(Boolean)
       : [input];
@@ -237,6 +249,17 @@ export default function AdminCategoriesPage() {
     const updatedSkills = [...new Set([...currentSkills, ...addedSkills])];
 
     setSkillsModal(prev => ({ ...prev, loading: true, success: '', error: '' }));
+=======
+    const addedSkills = input.includes(',')
+      ? input.split(',').map(s => s.trim()).filter(Boolean)
+      : [input];
+
+    const currentSkills = Array.isArray(cat.skills) ? cat.skills : [];
+    const updatedSkills = [...new Set([...currentSkills, ...addedSkills])];
+
+    setSkillsModal(prev => ({ ...prev, loading: true, success: '' }));
+    const token = localStorage.getItem('accessToken');
+>>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
     const catId = cat.id || cat._id;
 
     try {
@@ -253,7 +276,10 @@ export default function AdminCategoriesPage() {
           category: { ...prev.category, skills: updatedSkills },
           newSkillInput: '',
           loading: false,
+<<<<<<< HEAD
           error: '',
+=======
+>>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
           success: `Added ${addedSkills.join(', ')} to ${cat.name}!`
         }));
         fetchCategories();
@@ -452,11 +478,14 @@ export default function AdminCategoriesPage() {
                 ✓ {skillsModal.success}
               </div>
             )}
+<<<<<<< HEAD
             {skillsModal.error && (
               <div style={{ color: '#dc2626', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.65rem' }}>
                 ⚠️ {skillsModal.error}
               </div>
             )}
+=======
+>>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
 
             {/* Quick Add Skill to This Category Form */}
             <form onSubmit={handleAddSkillInManager} className="category-manager-form">
@@ -468,7 +497,11 @@ export default function AdminCategoriesPage() {
                   className="form-input category-manager-input"
                   type="text"
                   value={skillsModal.newSkillInput}
+<<<<<<< HEAD
                   onChange={(e) => setSkillsModal(prev => ({ ...prev, newSkillInput: e.target.value, error: '' }))}
+=======
+                  onChange={(e) => setSkillsModal(prev => ({ ...prev, newSkillInput: e.target.value }))}
+>>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
                   placeholder="e.g. Next.js, Flutter, Docker (or comma-separated)"
                   disabled={skillsModal.loading}
                   autoFocus
@@ -610,7 +643,11 @@ export default function AdminCategoriesPage() {
                     className="form-input category-manager-input"
                     type="text"
                     value={skillInput}
+<<<<<<< HEAD
                     onChange={(e) => { setSkillInput(e.target.value); setSkillError(''); }}
+=======
+                    onChange={(e) => setSkillInput(e.target.value)}
+>>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
@@ -627,11 +664,14 @@ export default function AdminCategoriesPage() {
                     + Add Skill
                   </button>
                 </div>
+<<<<<<< HEAD
                 {skillError && (
                   <div style={{ color: '#dc2626', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.5rem' }}>
                     ⚠️ {skillError}
                   </div>
                 )}
+=======
+>>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
 
                 {/* Skill Tag Chips */}
                 <div className="category-chips-display-box">

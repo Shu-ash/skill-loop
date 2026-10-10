@@ -1,6 +1,7 @@
 // src/controllers/skill.controller.js
 import Skill from "../models/skill.js";
 import Category from "../models/category.js";
+<<<<<<< HEAD
 import {
   ensureSkillsCatalogSynced,
   escapeRegex,
@@ -30,6 +31,26 @@ export const getSkills = async (req, res, next) => {
         filter.category = cat._id;
       } else {
         filter.categoryName = { $regex: escapeRegex(category.trim()), $options: "i" };
+=======
+
+/**
+ * GET /api/skills
+ * List active skills with optional category filter or search query
+ */
+export const getSkills = async (req, res, next) => {
+  try {
+    const { category, search, popular, page = 1, limit = 100 } = req.query;
+
+    const filter = { status: "Active" };
+
+    if (category) {
+      // Can be category ID or category name
+      const cat = await Category.findOne({
+        $or: [{ _id: category.match(/^[0-9a-fA-F]{24}$/) ? category : null }, { name: category }]
+      });
+      if (cat) {
+        filter.category = cat._id;
+>>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
       }
     }
 
@@ -37,10 +58,15 @@ export const getSkills = async (req, res, next) => {
       filter.isPopular = true;
     }
 
+<<<<<<< HEAD
     const rawQuery = search?.trim() || "";
     if (rawQuery) {
       const safePattern = escapeRegex(rawQuery);
       const searchRegex = { $regex: safePattern, $options: "i" };
+=======
+    if (search?.trim()) {
+      const searchRegex = { $regex: search.trim(), $options: "i" };
+>>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
       filter.$or = [
         { name: searchRegex },
         { aliases: searchRegex },
@@ -49,10 +75,17 @@ export const getSkills = async (req, res, next) => {
     }
 
     const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+<<<<<<< HEAD
     const limitNum = Math.min(Math.max(parseInt(limit, 10) || 100, 1), 250);
     const skip = (pageNum - 1) * limitNum;
 
     const [skillsRaw, total] = await Promise.all([
+=======
+    const limitNum = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 100);
+    const skip = (pageNum - 1) * limitNum;
+
+    const [skills, total] = await Promise.all([
+>>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
       Skill.find(filter)
         .populate("category", "name icon")
         .sort({ isPopular: -1, name: 1 })
@@ -62,6 +95,7 @@ export const getSkills = async (req, res, next) => {
       Skill.countDocuments(filter)
     ]);
 
+<<<<<<< HEAD
     let skills = skillsRaw.map((sk) => {
       const catName =
         sk.category?.name ||
@@ -102,6 +136,8 @@ export const getSkills = async (req, res, next) => {
       });
     }
 
+=======
+>>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
     return res.status(200).json({
       success: true,
       data: {
@@ -125,8 +161,11 @@ export const getSkills = async (req, res, next) => {
  */
 export const getPopularSkills = async (req, res, next) => {
   try {
+<<<<<<< HEAD
     await ensureSkillsCatalogSynced();
 
+=======
+>>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
     const popularSkills = await Skill.find({ status: "Active", isPopular: true })
       .populate("category", "name icon")
       .limit(15)
@@ -144,6 +183,7 @@ export const getPopularSkills = async (req, res, next) => {
 };
 
 /**
+<<<<<<< HEAD
  * POST /api/skills/validate
  * Validate one or more skill names against the live MongoDB database
  */
@@ -189,9 +229,65 @@ export const suggestSkill = async (req, res, next) => {
     return res.status(400).json({
       success: false,
       message: "Only verified skills from the database can be added. Please choose from the live suggestions."
+=======
+ * POST /api/skills/suggest
+ * Suggest a new skill (Protected)
+ */
+export const suggestSkill = async (req, res, next) => {
+  try {
+    const { name, categoryId, description } = req.body;
+
+    if (!name?.trim() || !categoryId) {
+      return res.status(400).json({
+        success: false,
+        message: "Skill name and category are required"
+      });
+    }
+
+    const category = await Category.findById(categoryId);
+    if (!category) {
+      return res.status(404).json({
+        success: false,
+        message: "Category not found"
+      });
+    }
+
+    const cleanName = name.trim();
+    const existing = await Skill.findOne({ name: { $regex: `^${cleanName}$`, $options: "i" } });
+    if (existing) {
+      return res.status(409).json({
+        success: false,
+        message: "This skill already exists in our database"
+      });
+    }
+
+    const newSkill = await Skill.create({
+      name: cleanName,
+      category: category._id,
+      categoryName: category.name,
+      icon: category.icon || "⚡",
+      description: description?.trim() || "",
+      requestedBy: req.user._id,
+      status: "Active" // Automatically available
+    });
+
+    // Also add into Category's skills array if not present
+    if (!category.skills.includes(cleanName)) {
+      category.skills.push(cleanName);
+      await category.save();
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: "Skill added successfully!",
+      data: { skill: newSkill }
+>>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
     });
   } catch (error) {
     next(error);
   }
 };
+<<<<<<< HEAD
 
+=======
+>>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555

@@ -653,7 +653,10 @@ export default function BrowseSearch({
             return (
               <button
                 key={cat}
+<<<<<<< HEAD
                 ref={isSelected ? activeChipRef : null}
+=======
+>>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
                 type="button"
                 className={`category-filter-chip ${isSelected ? 'active' : ''}`}
                 onClick={() => onCategorySelect(cat)}

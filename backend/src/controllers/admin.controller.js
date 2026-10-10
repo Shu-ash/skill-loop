@@ -1,15 +1,21 @@
 import User from "../models/user.js";
 import Session from "../models/session.js";
 import Category from "../models/category.js";
+<<<<<<< HEAD
 import Skill from "../models/skill.js";
+=======
+>>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
 import Report from "../models/report.js";
 import CreditLedger from "../models/creditLedger.js";
 import Notification from "../models/notification.js";
 import { hashPassword } from "../utils/password.js";
+<<<<<<< HEAD
 import {
   syncCategorySkillsToCollection,
   invalidateSkillCatalogCache
 } from "../utils/skillCatalog.js";
+=======
+>>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
 
 // GET /api/admin/metrics - Real-time KPI Statistics
 export const getAdminMetrics = async (req, res) => {
@@ -390,8 +396,11 @@ export const createCategory = async (req, res) => {
       skills: cleanSkills
     });
 
+<<<<<<< HEAD
     await syncCategorySkillsToCollection(category);
 
+=======
+>>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
     res.status(201).json({
       success: true,
       message: "Skill category created successfully",
@@ -427,8 +436,11 @@ export const updateCategory = async (req, res) => {
       return res.status(404).json({ success: false, message: "Category not found" });
     }
 
+<<<<<<< HEAD
     await syncCategorySkillsToCollection(category);
 
+=======
+>>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
     res.status(200).json({
       success: true,
       message: "Category updated successfully",
@@ -444,8 +456,11 @@ export const deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;
     await Category.findByIdAndDelete(id);
+<<<<<<< HEAD
     await Skill.deleteMany({ category: id });
     invalidateSkillCatalogCache();
+=======
+>>>>>>> fe68e6f7d4a41cc49d73e53208844384fce29555
     res.status(200).json({
       success: true,
       message: "Category deleted successfully"
