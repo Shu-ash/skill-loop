@@ -7,12 +7,18 @@
 }
 
 .oss-block {
+  position: relative;
+  z-index: 1;
   background: rgba(255, 255, 255, 0.65);
   border: 1px solid rgba(226, 232, 240, 0.85);
   border-radius: 20px;
   padding: 1.5rem;
   box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03);
   transition: all 0.25s ease;
+}
+
+.oss-block:focus-within {
+  z-index: 50;
 }
 
 html[data-theme="dark"] .oss-block,
@@ -162,6 +168,7 @@ html[data-theme="dark"] .oss-selected-tray.learn {
 /* Search Dropdown Component */
 .oss-search-wrapper {
   position: relative;
+  z-index: 30;
   margin-bottom: 1rem;
 }
 
@@ -236,7 +243,7 @@ html[data-theme="dark"] .oss-search-input:focus {
   box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.04);
   max-height: 280px;
   overflow-y: auto;
-  z-index: 1000;
+  z-index: 9999;
   padding: 0.4rem;
   animation: ossFadeIn 0.15s ease;
 }

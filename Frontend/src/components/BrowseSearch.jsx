@@ -383,7 +383,7 @@ export default function BrowseSearch({
   const totalMatchesCount = matchingSkills.length + matchingCategories.length + matchingMembers.length;
 
   return (
-    <div className="glass-panel card-padding browse-search-box">
+    <div className={`glass-panel card-padding browse-search-box ${isDropdownOpen ? 'dropdown-open' : ''}`}>
       {/* Top Search & Action Bar */}
       <div className="browse-search-bar" ref={searchWrapperRef}>
         <div className="search-input-wrapper">
