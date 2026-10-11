@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { fetchWithAuth, getAuthStatus } from '../utils/auth';
+import MentorProfileModal from './MentorProfileModal';
+import ChatDrawerModal from './ChatDrawerModal';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -51,6 +53,8 @@ export default function MemberCard({ member }) {
   const [selectedSkill, setSelectedSkill] = useState(skills[0] || '');
   const [message, setMessage] = useState('');
   const [showRequestModal, setShowRequestModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showChatModal, setShowChatModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
@@ -74,6 +78,14 @@ export default function MemberCard({ member }) {
 
     setSelectedSkill(selectedSkill || skills[0]);
     setShowRequestModal(true);
+  };
+
+  const handleOpenChat = () => {
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
+    setShowChatModal(true);
   };
 
   const handleSendRequest = async () => {
@@ -133,7 +145,12 @@ export default function MemberCard({ member }) {
       <div className="glass-panel member-card">
         <div>
           <div className="member-avatar-row">
-            <div className="user-avatar member-avatar-circle">
+            <div
+              className="user-avatar member-avatar-circle"
+              style={{ cursor: 'pointer' }}
+              onClick={() => setShowProfileModal(true)}
+              title={`View ${name}'s full profile`}
+            >
               {renderMemberAvatar(member)}
             </div>
 
@@ -142,7 +159,13 @@ export default function MemberCard({ member }) {
             </span>
           </div>
 
-          <h4>{name}</h4>
+          <h4
+            style={{ cursor: 'pointer' }}
+            onClick={() => setShowProfileModal(true)}
+            title={`View ${name}'s full profile`}
+          >
+            {name}
+          </h4>
           <p className="text-subtle margin-bottom-xs member-headline">
             {title}
           </p>
@@ -171,21 +194,47 @@ export default function MemberCard({ member }) {
             🔄 Request Skill Swap
           </button>
 
-          <button
-            type="button"
-            className="btn btn-secondary btn-pill-sm btn-full"
-            onClick={() => {
-              if (isAuthenticated) {
-                navigate(`/requests`);
-              } else {
-                setShowAuthModal(true);
-              }
-            }}
-          >
-            View requests
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
+            <button
+              type="button"
+              className="btn btn-secondary btn-pill-sm"
+              style={{ flex: 1 }}
+              onClick={() => setShowProfileModal(true)}
+            >
+              👤 Profile
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary btn-pill-sm"
+              style={{ flex: 1 }}
+              onClick={handleOpenChat}
+            >
+              💬 Chat
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Public Mentor Profile Modal */}
+      <MentorProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        member={member}
+        onRequestSwap={handleOpenRequest}
+        onOpenChat={handleOpenChat}
+      />
+
+      {/* Real-Time Direct Chat Drawer */}
+      <ChatDrawerModal
+        isOpen={showChatModal}
+        onClose={() => setShowChatModal(false)}
+        partner={{
+          id,
+          name,
+          profilePhotoUrl: member.profilePhotoUrl || ''
+        }}
+        skillContext={skills[0] || ''}
+      />
 
       {/* Guest Auth Modal rendered directly to body via Portal */}
       {showAuthModal && createPortal(

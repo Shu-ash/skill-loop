@@ -1,5 +1,6 @@
 // src/components/SessionCard.jsx
 import React, { useState, useEffect } from 'react';
+import ChatDrawerModal from './ChatDrawerModal';
 
 export default function SessionCard({
   session,
@@ -16,8 +17,10 @@ export default function SessionCard({
 
   const {
     title,
+    partnerId,
     partnerName,
     partnerAvatar,
+    partnerPhotoUrl,
     date,
     time,
     mode,
@@ -30,10 +33,12 @@ export default function SessionCard({
     teacherJoined,
     scheduledAt,
     duration,
+    skill,
     message
   } = session;
 
   const [currentTime, setCurrentTime] = useState(Date.now());
+  const [showChatModal, setShowChatModal] = useState(false);
 
   // Tick current time every 3 seconds for precise duration window lock/unlock
   useEffect(() => {
@@ -393,6 +398,40 @@ export default function SessionCard({
               </button>
             )}
 
+            {/* Add to Google Calendar */}
+            {validSessionStartTime && sessionEndTime && !isAfterSession && (
+              <a
+                href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
+                  `SkillLoop: ${title} with ${partnerName}`
+                )}&dates=${sessionStartTime
+                  .toISOString()
+                  .replace(/[-:]/g, '')
+                  .replace(/\.\d{3}/, '')}/${sessionEndTime
+                  .toISOString()
+                  .replace(/[-:]/g, '')
+                  .replace(/\.\d{3}/, '')}&details=${encodeURIComponent(
+                  `Skill Swap Session on SkillLoop (${durationMins} mins).\nVideo Call Link: ${meetLink || 'In-Person'}`
+                )}&location=${encodeURIComponent(meetLink || mode)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-secondary"
+                style={{ textDecoration: 'none' }}
+                title="Add this class to your Google Calendar"
+              >
+                📅 Add to Calendar
+              </a>
+            )}
+
+            {partnerId && (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowChatModal(true)}
+              >
+                💬 Session Chat
+              </button>
+            )}
+
             {onCancelSession && status === 'scheduled' && !isAfterSession && (
               <button
                 type="button"
@@ -411,6 +450,15 @@ export default function SessionCard({
             <div className="glass-panel session-completed-banner">
               ✓ Session completed
             </div>
+            {partnerId && (
+              <button
+                type="button"
+                className="btn btn-secondary btn-pill-sm"
+                onClick={() => setShowChatModal(true)}
+              >
+                💬 Chat
+              </button>
+            )}
             {onOpenReview && (
               <button
                 type="button"
@@ -451,6 +499,17 @@ export default function SessionCard({
           </div>
         )}
       </div>
+
+      <ChatDrawerModal
+        isOpen={showChatModal}
+        onClose={() => setShowChatModal(false)}
+        partner={{
+          id: partnerId,
+          name: partnerName,
+          profilePhotoUrl: partnerPhotoUrl || ''
+        }}
+        skillContext={skill || title}
+      />
     </div>
   );
 }

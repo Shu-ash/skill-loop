@@ -11,6 +11,7 @@ import {
   escapeRegex,
   validateAndNormalizeSkills
 } from "../utils/skillCatalog.js";
+import { evaluateAndSyncUserBadges } from "./badge.controller.js";
 
 /**
  * GET /api/users/me
@@ -322,7 +323,10 @@ export const getUsers = async (req, res, next) => {
       bio: u.bio || '',
       skillsCanTeach: u.skillsCanTeach || [],
       skillsWantToLearn: u.skillsWantToLearn || [],
+      skillLevel: u.skillLevel || 'intermediate',
+      availability: u.availability || { weekdayEvenings: true, weekendMornings: false, mode: 'Online Only' },
       rating: u.rating !== undefined ? u.rating : 5.0,
+      ratingCount: u.ratingCount || 0,
       credits: u.credits !== undefined ? u.credits : 0,
       profilePhotoUrl: u.profilePhotoUrl || ""
     }));
@@ -598,6 +602,79 @@ export const changePassword = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       message: "Password updated successfully! 🔒"
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/users/:userId/public
+ * Fetch complete public mentor profile (bio, skills, reviews, badges, session stats, availability)
+ */
+export const getPublicUserProfile = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId)
+      .select("name firstName lastName username profilePhotoUrl coverPhotoUrl bio headline skillsCanTeach skillsWantToLearn skillLevel availability rating ratingCount createdAt")
+      .lean();
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "Member not found"
+      });
+    }
+
+    const [sessionsTaught, sessionsLearned, reviews, badges] = await Promise.all([
+      Session.countDocuments({ teacher: userId, status: "completed" }),
+      Session.countDocuments({ learner: userId, status: "completed" }),
+      Review.find({ reviewee: userId })
+        .populate("reviewer", "name firstName lastName username profilePhotoUrl")
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .lean(),
+      evaluateAndSyncUserBadges(userId)
+    ]);
+
+    const fullName = user.name || `${user.firstName || ""} ${user.lastName || ""}`.trim() || "SkillLoop Member";
+    const totalReviews = reviews.length;
+    const avgRating =
+      totalReviews > 0
+        ? Number((reviews.reduce((sum, r) => sum + (Number(r.rating) || 5), 0) / totalReviews).toFixed(1))
+        : user.rating || 5.0;
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        user: {
+          id: user._id.toString(),
+          name: fullName,
+          username: user.username ? `@${user.username.replace(/^@/, "")}` : "@member",
+          profilePhotoUrl: user.profilePhotoUrl || "",
+          coverPhotoUrl: user.coverPhotoUrl || "",
+          headline: user.headline || "SkillLoop Community Member 🚀",
+          bio: user.bio || "",
+          skillsCanTeach: user.skillsCanTeach || [],
+          skillsWantToLearn: user.skillsWantToLearn || [],
+          skillLevel: user.skillLevel || "intermediate",
+          availability: user.availability || {
+            weekdayEvenings: true,
+            weekendMornings: false,
+            mode: "Online Only"
+          },
+          rating: avgRating,
+          ratingCount: totalReviews || user.ratingCount || 0,
+          joinedAt: user.createdAt
+        },
+        stats: {
+          sessionsTaught,
+          sessionsLearned,
+          totalReviews
+        },
+        reviews,
+        badges
+      }
     });
   } catch (error) {
     next(error);

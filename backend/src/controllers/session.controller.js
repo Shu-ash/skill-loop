@@ -51,7 +51,7 @@ export const autoCompleteExpiredSessions = async () => {
                 if (teacherId && learnerId) {
                     // Update user credits: Teacher +1, Learner -1 (protect against negative balance)
                     await Promise.all([
-                        User.findByIdAndUpdate(teacherId, { $inc: { credits: 1, ratingCount: 1 } }),
+                        User.findByIdAndUpdate(teacherId, { $inc: { credits: 1 } }),
                         User.findOneAndUpdate(
                             { _id: learnerId, credits: { $gte: 1 } },
                             { $inc: { credits: -1 } }
@@ -695,7 +695,7 @@ export const completeSession =
 
             // 1. Credit Economy: Teacher earns +1, Learner spends -1 (protect against negative balance)
             await Promise.all([
-                User.findByIdAndUpdate(updatedSession.teacher._id, { $inc: { credits: 1, ratingCount: 1 } }),
+                User.findByIdAndUpdate(updatedSession.teacher._id, { $inc: { credits: 1 } }),
                 User.findOneAndUpdate(
                     { _id: updatedSession.learner._id, credits: { $gte: 1 } },
                     { $inc: { credits: -1 } }

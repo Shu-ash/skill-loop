@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { fetchWithAuth, getAuthStatus } from '../utils/auth';
+import MentorProfileModal from './MentorProfileModal';
+import ChatDrawerModal from './ChatDrawerModal';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -62,6 +64,8 @@ export default function MatchCard({ match, onRequestSwap }) {
   const targetId = id || _id;
 
   const [showModal, setShowModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showChatModal, setShowChatModal] = useState(false);
   const [selectedSkill, setSelectedSkill] = useState(canTeachMe[0] || actualTeach[0] || '');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -161,12 +165,22 @@ export default function MatchCard({ match, onRequestSwap }) {
     <>
       <div className="glass-panel match-card clay-card-3d">
         <div className="match-card-top">
-          <div className="match-avatar">
+          <div
+            className="match-avatar"
+            style={{ cursor: 'pointer' }}
+            onClick={() => setShowProfileModal(true)}
+            title={`View ${name}'s profile`}
+          >
             {renderMatchAvatar(match)}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '2px' }}>
-              <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>{name}</h4>
+              <h4
+                style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', cursor: 'pointer' }}
+                onClick={() => setShowProfileModal(true)}
+              >
+                {name}
+              </h4>
               <span className={`pill-badge ${badge.cls}`} style={{ fontSize: '0.7rem', padding: '0.15rem 0.5rem' }}>
                 {badge.text}
               </span>
@@ -215,16 +229,56 @@ export default function MatchCard({ match, onRequestSwap }) {
           </div>
         </div>
 
-        {/* Request Swap Button */}
-        <button 
-          type="button"
-          className="btn btn-primary btn-full btn-pill-sm"
-          onClick={handleOpenSwap}
-          style={{ marginTop: '0.75rem' }}
-        >
-          🔄 Request Skill Swap
-        </button>
+        {/* Action Buttons */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', marginTop: '0.75rem' }}>
+          <button 
+            type="button"
+            className="btn btn-primary btn-full btn-pill-sm"
+            onClick={handleOpenSwap}
+          >
+            🔄 Request Skill Swap
+          </button>
+          <div style={{ display: 'flex', gap: '0.45rem' }}>
+            <button
+              type="button"
+              className="btn btn-secondary btn-pill-sm"
+              style={{ flex: 1 }}
+              onClick={() => setShowProfileModal(true)}
+            >
+              👤 Profile
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary btn-pill-sm"
+              style={{ flex: 1 }}
+              onClick={() => setShowChatModal(true)}
+            >
+              💬 Chat
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* Mentor Profile Modal */}
+      <MentorProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        member={{ ...match, id: targetId, skillsCanTeach: actualTeach, skillsWantToLearn: actualLearn }}
+        onRequestSwap={handleOpenSwap}
+        onOpenChat={() => setShowChatModal(true)}
+      />
+
+      {/* Direct Chat Drawer */}
+      <ChatDrawerModal
+        isOpen={showChatModal}
+        onClose={() => setShowChatModal(false)}
+        partner={{
+          id: targetId,
+          name,
+          profilePhotoUrl: match.profilePhotoUrl || ''
+        }}
+        skillContext={canTeachMe[0] || actualTeach[0] || ''}
+      />
 
       {/* Swap Request Modal */}
       {showModal && typeof document !== 'undefined' && createPortal(

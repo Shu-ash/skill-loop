@@ -214,7 +214,7 @@ export const acceptSwapRequest = async (
         const selectedDate = scheduledAt ? new Date(scheduledAt) : new Date(Date.now() + 86400000);
         const selectedMode = mode || "online";
         const selectedDuration = Number(duration) || 45;
-        const selectedMeetLink = meetLink ? meetLink.trim() : `https://meet.google.com/skillloop-${request._id.toString().slice(-6)}`;
+        const selectedMeetLink = meetLink ? meetLink.trim() : `https://meet.jit.si/SkillLoop-Swap-${request._id.toString().slice(-8)}`;
 
         // Create or update associated Session in MongoDB with Teacher's schedule & meet link
         let session = await Session.findOne({ swapRequest: request._id });

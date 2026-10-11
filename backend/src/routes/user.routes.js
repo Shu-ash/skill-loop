@@ -8,7 +8,8 @@ import {
   sendPasswordOtp,
   getLeaderboard,
   getDashboardStats,
-  getCommunityStats
+  getCommunityStats,
+  getPublicUserProfile
 } from "../controllers/user.controller.js";
 import { protect, optionalAuth } from "../middleware/auth.middleware.js";
 
@@ -41,5 +42,8 @@ router.post("/send-password-otp", protect, sendPasswordOtp);
 
 // Change logged-in user password (via current password or via OTP)
 router.patch("/change-password", protect, changePassword);
+
+// Public Mentor Profile Details
+router.get("/:userId/public", getPublicUserProfile);
 
 export default router;

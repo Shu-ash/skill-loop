@@ -44,15 +44,14 @@ export default function ScheduleSessionModal({
     return getTomorrowDateTime();
   };
 
+  const defaultRoomLink = `https://meet.jit.si/SkillLoop-Swap-${(session?.id || request?.id || '').toString().slice(-8) || 'session'}`;
+
   const [scheduledAt, setScheduledAt] = useState(getInitialDateTime);
   const [duration, setDuration] = useState(session?.duration ? Number(session.duration) : 45);
   const [mode, setMode] = useState(
     session?.mode === 'In Person' || session?.mode === 'in_person' ? 'in_person' : 'online'
   );
-  const [meetLink, setMeetLink] = useState(
-    session?.meetLink ||
-    `https://meet.google.com/skillloop-${(session?.id || request?.id || '').toString().slice(-6) || 'session'}`
-  );
+  const [meetLink, setMeetLink] = useState(session?.meetLink || defaultRoomLink);
   const [message, setMessage] = useState(session?.message || request?.message || '');
   const [error, setError] = useState('');
 
@@ -62,10 +61,7 @@ export default function ScheduleSessionModal({
       setScheduledAt(getInitialDateTime());
       setDuration(session?.duration ? Number(session.duration) : 45);
       setMode(session?.mode === 'In Person' || session?.mode === 'in_person' ? 'in_person' : 'online');
-      setMeetLink(
-        session?.meetLink ||
-        `https://meet.google.com/skillloop-${(session?.id || request?.id || '').toString().slice(-6) || 'session'}`
-      );
+      setMeetLink(session?.meetLink || defaultRoomLink);
       setMessage(session?.message || request?.message || '');
       setError('');
     }
@@ -241,17 +237,36 @@ export default function ScheduleSessionModal({
           {mode === 'online' && (
             <div className="form-group user-modal-form-group">
               <label className="form-label user-modal-label">
-                🎥 Google Meet / Zoom Link *
+                🎥 Video Call Link (Jitsi / Google Meet / Zoom) *
               </label>
               <input
                 className="form-input user-modal-input"
                 type="url"
                 value={meetLink}
                 onChange={(e) => setMeetLink(e.target.value)}
-                placeholder="https://meet.google.com/abc-defg-hij"
+                placeholder="https://meet.jit.si/SkillLoop-Swap-..."
                 required
                 disabled={loading}
               />
+              <div style={{ display: 'flex', gap: '8px', marginTop: '6px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-pill-sm"
+                  style={{ fontSize: '0.75rem', padding: '3px 10px' }}
+                  onClick={() => setMeetLink(defaultRoomLink)}
+                >
+                  ⚡ Use Instant SkillLoop Video Room
+                </button>
+                <a
+                  href="https://meet.google.com/new"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-secondary btn-pill-sm"
+                  style={{ fontSize: '0.75rem', padding: '3px 10px', textDecoration: 'none' }}
+                >
+                  🔗 Create New Google Meet ↗
+                </a>
+              </div>
               <span className="user-modal-hint" style={{ fontSize: '0.76rem', color: 'var(--slate-500)', marginTop: '4px', display: 'block' }}>
                 🔒 <em>The meeting link is shared securely with {partnerName} and automatically unlocks when class time arrives.</em>
               </span>

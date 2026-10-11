@@ -66,6 +66,7 @@ export default function RequestsPage() {
         .toUpperCase() || 'SL';
 
     return {
+      id: user._id || user.id,
       name,
       avatar,
       avatarBg: 'var(--violet-primary)',

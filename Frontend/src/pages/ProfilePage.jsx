@@ -89,6 +89,9 @@ export default function ProfilePage() {
     return Math.min(score, 100);
   }, [user]);
 
+  const [allBadges, setAllBadges] = useState([]);
+  const [earnedBadges, setEarnedBadges] = useState([]);
+
   const fetchUserProfile = async () => {
     try {
       const res = await fetchWithAuth(`${API_BASE_URL}/users/me`);
@@ -104,7 +107,8 @@ export default function ProfilePage() {
           bio: u.bio || '',
           profilePhotoUrl: u.profilePhotoUrl || '',
           coverPhotoUrl: u.coverPhotoUrl || '',
-          rating: u.rating ? u.rating.toString() : '5.0',
+          rating: (u.rating || 0).toString(),
+          ratingCount: u.ratingCount || 0,
           credits: u.credits ?? 3,
           teachSkills: Array.isArray(u.skillsCanTeach) ? u.skillsCanTeach : [],
           learnSkills: Array.isArray(u.skillsWantToLearn) ? u.skillsWantToLearn : [],
@@ -122,6 +126,25 @@ export default function ProfilePage() {
     }
   };
 
+  const fetchUserBadges = async () => {
+    try {
+      const [allRes, myRes] = await Promise.all([
+        fetchWithAuth(`${API_BASE_URL}/badges`),
+        fetchWithAuth(`${API_BASE_URL}/badges/me`)
+      ]);
+      const allData = await allRes.json();
+      const myData = await myRes.json();
+      if (allData.success && Array.isArray(allData.data?.badges)) {
+        setAllBadges(allData.data.badges);
+      }
+      if (myData.success && Array.isArray(myData.data?.userBadges)) {
+        setEarnedBadges(myData.data.userBadges);
+      }
+    } catch (err) {
+      console.error('Failed to load achievement badges:', err);
+    }
+  };
+
   useEffect(() => {
     const adminSession = localStorage.getItem('skillloop_admin');
     const userSession = localStorage.getItem('skillloop_user');
@@ -132,6 +155,7 @@ export default function ProfilePage() {
     }
 
     fetchUserProfile();
+    fetchUserBadges();
   }, [navigate]);
 
   // Open file cropper
@@ -195,6 +219,7 @@ export default function ProfilePage() {
       localStorage.setItem('skillloop_user', JSON.stringify({ ...updatedLiveUser, availability: u.availability || availability }));
       setSavedSuccess('Profile updated successfully!');
       setTimeout(() => setSavedSuccess(''), 2500);
+      fetchUserBadges();
     }
   };
 
@@ -221,6 +246,17 @@ export default function ProfilePage() {
     }
     setIsEditModalOpen(false);
   };
+
+  const earnedBadgeMap = useMemo(() => {
+    const map = new Map();
+    earnedBadges.forEach((ub) => {
+      const b = ub.badgeId;
+      if (b && b.criteriaKey) {
+        map.set(b.criteriaKey, ub.awardedAt);
+      }
+    });
+    return map;
+  }, [earnedBadges]);
 
   return (
     <>
@@ -281,6 +317,101 @@ export default function ProfilePage() {
                 />
               </div>
             </div>
+
+            {/* Achievement Badges Showcase */}
+            {allBadges.length > 0 && (
+              <div
+                className="glass-card"
+                style={{
+                  marginTop: '1.5rem',
+                  padding: '1.5rem',
+                  borderRadius: '20px'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>🏅 Achievement Badges</h3>
+                    <p style={{ margin: '4px 0 0', fontSize: '0.84rem', color: 'var(--text-muted)' }}>
+                      Automatically unlocked as you complete skill swaps, mentor peers, and build your reputation.
+                    </p>
+                  </div>
+                  <span
+                    style={{
+                      padding: '5px 12px',
+                      borderRadius: '999px',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      background: 'rgba(99, 102, 241, 0.12)',
+                      color: 'var(--primary)',
+                      border: '1px solid rgba(99, 102, 241, 0.25)'
+                    }}
+                  >
+                    {earnedBadges.length} / {allBadges.length} Unlocked
+                  </span>
+                </div>
+
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))',
+                    gap: '12px'
+                  }}
+                >
+                  {allBadges.map((b) => {
+                    const isEarned = earnedBadgeMap.has(b.criteriaKey);
+                    const awardedAt = earnedBadgeMap.get(b.criteriaKey);
+                    return (
+                      <div
+                        key={b._id || b.criteriaKey}
+                        style={{
+                          padding: '14px',
+                          borderRadius: '14px',
+                          background: isEarned
+                            ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(99, 102, 241, 0.08))'
+                            : 'rgba(148, 163, 184, 0.06)',
+                          border: isEarned
+                            ? '1px solid rgba(245, 158, 11, 0.35)'
+                            : '1px dashed var(--glass-border, rgba(148, 163, 184, 0.25))',
+                          opacity: isEarned ? 1 : 0.65,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '6px'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: '1.6rem', filter: isEarned ? 'none' : 'grayscale(100%)' }}>
+                            {b.icon || '🏅'}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: '0.68rem',
+                              fontWeight: 700,
+                              padding: '2px 8px',
+                              borderRadius: '999px',
+                              background: isEarned ? 'rgba(16, 185, 129, 0.15)' : 'rgba(148, 163, 184, 0.15)',
+                              color: isEarned ? '#10b981' : 'var(--text-muted)'
+                            }}
+                          >
+                            {isEarned ? '✓ Unlocked' : '🔒 Locked'}
+                          </span>
+                        </div>
+                        <div style={{ fontWeight: 700, fontSize: '0.92rem', color: 'var(--text-main)' }}>
+                          {b.name}
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                          {b.description}
+                        </div>
+                        {isEarned && awardedAt && (
+                          <div style={{ fontSize: '0.7rem', color: '#f59e0b', fontWeight: 600, marginTop: 'auto' }}>
+                            Earned {new Date(awardedAt).toLocaleDateString()}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </main>
         </div>
 
