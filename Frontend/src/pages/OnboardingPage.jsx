@@ -24,8 +24,6 @@ export default function OnboardingPage() {
   const [learnSkills, setLearnSkills] = useState([]);
   const [customLearn, setCustomLearn] = useState('');
 
-  const [skillLevel, setSkillLevel] = useState('intermediate');
-
   // Dynamic Live Categories from MongoDB
   const [categoriesList, setCategoriesList] = useState([]);
 
@@ -155,7 +153,6 @@ export default function OnboardingPage() {
       headline: `${teachSkills.slice(0, 2).join(' & ')} Mentor`,
       skillsCanTeach: teachSkills,
       skillsWantToLearn: learnSkills,
-      skillLevel,
       onboardingCompleted: true
     };
 
@@ -256,8 +253,6 @@ export default function OnboardingPage() {
                 customLearn={customLearn}
                 setCustomLearn={setCustomLearn}
                 addCustomLearn={addCustomLearn}
-                skillLevel={skillLevel}
-                setSkillLevel={setSkillLevel}
                 categoriesList={categoriesList}
               />
 

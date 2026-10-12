@@ -312,7 +312,6 @@ export default function ProfilePage() {
                 <ProfileSkillsTagsCard
                   teachSkills={user.teachSkills}
                   learnSkills={user.learnSkills}
-                  skillLevel={user.skillLevel}
                   onOpenEdit={() => { setEditModalTab('skills'); setIsEditModalOpen(true); }}
                 />
               </div>

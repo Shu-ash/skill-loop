@@ -152,9 +152,6 @@ export default function MentorProfileModal({
                     {user.username}
                   </span>
                 )}
-                <span className="pill-badge pill-violet" style={{ fontSize: '0.7rem', textTransform: 'capitalize' }}>
-                  ⚡ {user.skillLevel || 'Intermediate'}
-                </span>
               </div>
               <p style={{ margin: '0.25rem 0 0', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
                 {user.headline}

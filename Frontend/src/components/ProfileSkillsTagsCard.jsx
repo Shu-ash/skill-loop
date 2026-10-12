@@ -5,7 +5,6 @@ import React from 'react';
 export default function ProfileSkillsTagsCard({
   teachSkills = [],
   learnSkills = [],
-  skillLevel = 'intermediate',
   onOpenEdit
 }) {
   return (
@@ -30,9 +29,6 @@ export default function ProfileSkillsTagsCard({
         <div className="profile-skill-subhead-row">
           <span className="profile-section-badge violet">
             🎓 Skills I Can Teach
-          </span>
-          <span className="pill pill-admin profile-level-badge">
-            Level: {skillLevel}
           </span>
         </div>
 

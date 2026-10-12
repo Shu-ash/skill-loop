@@ -771,18 +771,6 @@ export default function EditProfileModal({
                   <label className="skill-editor-label-teach">
                     🎓 Skills I Can Teach ({formData.skillsCanTeach.length})
                   </label>
-
-                  {/* Skill Level Selection */}
-                  <select
-                    name="skillLevel"
-                    value={formData.skillLevel}
-                    onChange={handleChange}
-                    className="skill-cat-select"
-                  >
-                    <option value="beginner">Beginner</option>
-                    <option value="intermediate">Intermediate</option>
-                    <option value="advanced">Advanced</option>
-                  </select>
                 </div>
 
                 {/* Active Teach Skills Chips */}

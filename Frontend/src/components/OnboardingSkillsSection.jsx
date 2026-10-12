@@ -11,8 +11,6 @@ export default function OnboardingSkillsSection({
   toggleTeachSkill,
   learnSkills = [],
   toggleLearnSkill,
-  skillLevel,
-  setSkillLevel,
   categoriesList = []
 }) {
   const [dbSkills, setDbSkills] = useState([]);
@@ -757,32 +755,6 @@ export default function OnboardingSkillsSection({
                 </button>
               );
             })}
-          </div>
-        </div>
-
-        {/* SECTION 3: YOUR EXPERIENCE LEVEL */}
-        <div className="form-group form-group-padded">
-          <label className="form-label onboarding-level-label">
-            Your Experience Level
-          </label>
-          <div className="level-btn-grid">
-            {['beginner', 'intermediate', 'advanced'].map((lvl) => (
-              <button
-                key={lvl}
-                type="button"
-                className={`level-card-btn ${skillLevel === lvl ? 'active' : ''}`}
-                onClick={() => setSkillLevel(lvl)}
-              >
-                <span className="level-title">
-                  {lvl.charAt(0).toUpperCase() + lvl.slice(1)}
-                </span>
-                <span className="level-desc">
-                  {lvl === 'beginner' && 'Just starting out, eager to learn'}
-                  {lvl === 'intermediate' && 'Comfortable, looking to refine & swap'}
-                  {lvl === 'advanced' && 'Highly experienced mentor'}
-                </span>
-              </button>
-            ))}
           </div>
         </div>
       </div>
