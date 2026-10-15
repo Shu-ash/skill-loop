@@ -23,7 +23,7 @@ services:
       - key: JWT_REFRESH_EXPIRES
         value: 90d
       - key: CLIENT_URL
-        value: https://skill-loop.onrender.com
+        value: https://skill-loop2-0.onrender.com
       - key: COOKIE_SECURE
         value: "true"
       - key: BREVO_API_KEY

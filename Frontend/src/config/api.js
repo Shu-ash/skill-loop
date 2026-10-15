@@ -5,9 +5,14 @@ const getApiBaseUrl = () => {
   if (envUrl) {
     return envUrl.endsWith('/api') ? envUrl : `${envUrl.replace(/\/$/, '')}/api`;
   }
-  // When running in production (e.g. deployed on Render as unified web service or static site)
+  // When running in production (deployed on Render)
   if (typeof window !== 'undefined' && import.meta.env.PROD) {
-    return '/api';
+    // If hosted on the same domain as backend, use relative /api
+    if (window.location.origin.includes('skill-loop-krps.onrender.com')) {
+      return '/api';
+    }
+    // Default to Render backend
+    return 'https://skill-loop-krps.onrender.com/api';
   }
   // Local development default
   return 'http://localhost:5000/api';
