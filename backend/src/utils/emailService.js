@@ -115,7 +115,8 @@ export const sendOtpEmail = async (param1, param2) => {
   console.log(`======================================================\n`);
 
   try {
-    const fromAddress = process.env.EMAIL_FROM || process.env.EMAIL_USER ? `"SkillLoop" <${process.env.EMAIL_USER}>` : '"SkillLoop" <no-reply@skillloop.com>';
+    const senderEmail = process.env.EMAIL_FROM || (process.env.EMAIL_USER && !process.env.EMAIL_USER.includes("brevo.com") ? process.env.EMAIL_USER : "harshviswakarma9749247288@gmail.com");
+    const fromAddress = `"SkillLoop" <${senderEmail}>`;
     await transporter.sendMail({
       from: fromAddress,
       to,

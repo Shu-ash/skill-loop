@@ -9,7 +9,7 @@ import EmojiPickerMenu from '../../components/EmojiPickerMenu';
 import { fetchWithAuth } from '../../utils/auth';
 import '../admin.css';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+import { API_BASE_URL } from '../../config/api';
 
 export default function AdminCategoriesPage() {
   const [activeTab, setActiveTab] = useState('categories');

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+import { API_BASE_URL } from '../config/api';
 
 export default function ForgotPasswordModal({ isOpen, onClose, onPasswordResetSuccess }) {
   const [step, setStep] = useState('request'); // 'request' | 'verify' | 'success'

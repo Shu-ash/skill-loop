@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { MASTER_CATEGORIES } from '../data/categoriesData';
 import './OnboardingSkillsSection.css';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+import { API_BASE_URL } from '../config/api';
 const DEFAULT_CATEGORIES = MASTER_CATEGORIES;
 
 export default function OnboardingSkillsSection({

@@ -7,7 +7,7 @@ import LeaderboardPodium from '../components/LeaderboardPodium';
 import LeaderboardTable from '../components/LeaderboardTable';
 import SkillLoopLoader from '../components/SkillLoopLoader';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+import { API_BASE_URL } from '../config/api';
 
 export default function LeaderboardPage() {
   const [filterMode, setFilterMode] = useState('month'); // 'month' | 'all'

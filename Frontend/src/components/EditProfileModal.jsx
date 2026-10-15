@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { MASTER_CATEGORIES } from '../data/categoriesData';
 import './OnboardingSkillsSection.css';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+import { API_BASE_URL } from '../config/api';
 
 export default function EditProfileModal({
   isOpen,

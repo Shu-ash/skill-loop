@@ -4,7 +4,7 @@ import { useTheme } from '../context/ThemeContext';
 import { fetchWithAuth, getAuthStatus } from '../utils/auth';
 import './Navbar.css';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+import { API_BASE_URL } from '../config/api';
 
 export default function Navbar() {
   const location = useLocation();

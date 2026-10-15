@@ -7,7 +7,7 @@ import { fetchWithAuth, getAuthStatus } from '../utils/auth';
 import MentorProfileModal from './MentorProfileModal';
 import ChatDrawerModal from './ChatDrawerModal';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+import { API_BASE_URL } from '../config/api';
 
 const renderMemberAvatar = (member) => {
   if (!member) return 'SL';

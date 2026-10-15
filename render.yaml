@@ -1,0 +1,42 @@
+services:
+  # SkillLoop Full-Stack Web Service on Render
+  - type: web
+    name: skill-loop
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_EXPIRES
+        value: 30d
+      - key: JWT_REFRESH_EXPIRES
+        value: 90d
+      - key: CLIENT_URL
+        value: https://skill-loop.onrender.com
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: BREVO_API_KEY
+        sync: false
+      - key: SMTP_HOST
+        value: smtp-relay.brevo.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_SECURE
+        value: "false"
+      - key: EMAIL_FROM
+        value: harshviswakarma9749247288@gmail.com

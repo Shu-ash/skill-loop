@@ -8,7 +8,7 @@ import TransactionLedgerTable from '../components/TransactionLedgerTable';
 import CreditsHowItWorksCard from '../components/CreditsHowItWorksCard';
 import { fetchWithAuth } from '../utils/auth';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+import { API_BASE_URL } from '../config/api';
 
 export default function CreditsPage() {
   const [balance, setBalance] = useState(10);

@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { fetchWithAuth } from '../utils/auth';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+import { API_BASE_URL } from '../config/api';
 
 const QUICK_PROMPTS = [
   "Hi! When are you free for our skill swap session? 👋",

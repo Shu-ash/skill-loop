@@ -7,7 +7,8 @@ import OnboardingHeader from '../components/OnboardingHeader';
 import OnboardingProfileSection from '../components/OnboardingProfileSection';
 import OnboardingSkillsSection from '../components/OnboardingSkillsSection';
 
-const API_URL = 'http://localhost:5000';
+import { API_BASE_URL } from '../config/api';
+const API_URL = API_BASE_URL.replace(/\/api$/, '');
 
 export default function OnboardingPage() {
   const navigate = useNavigate();

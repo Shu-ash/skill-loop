@@ -8,7 +8,7 @@ import SkillLoopLoader from '../components/SkillLoopLoader';
 import { fetchWithAuth } from '../utils/auth';
 import './ReviewsPage.css';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+import { API_BASE_URL } from '../config/api';
 
 export default function ReviewsPage() {
   const navigate = useNavigate();

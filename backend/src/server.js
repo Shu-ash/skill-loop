@@ -1,4 +1,7 @@
 import http from "node:http";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import fs from "node:fs";
 import express from "express";
 import helmet from "helmet";
 import cors from "cors";
@@ -28,6 +31,9 @@ import availabilityRoutes from "./routes/availability.routes.js";
 import badgeRoutes from "./routes/badge.routes.js";
 import reportRoutes from "./routes/report.routes.js";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 app.disable("x-powered-by");
 app.set("trust proxy", 1);
@@ -35,6 +41,7 @@ app.set("trust proxy", 1);
 // SECURITY & CORS
 app.use(
   helmet({
+    contentSecurityPolicy: false,
     crossOriginResourcePolicy: { policy: "cross-origin" }
   })
 );
@@ -64,7 +71,8 @@ app.use(
         const isAllowed =
           allowedOrigins.includes(origin) ||
           originUrl.hostname === "localhost" ||
-          originUrl.hostname === "127.0.0.1";
+          originUrl.hostname === "127.0.0.1" ||
+          originUrl.hostname.endsWith(".onrender.com");
 
         if (isAllowed) {
           return callback(null, true);
@@ -118,7 +126,28 @@ app.use("/api/availability", availabilityRoutes);
 app.use("/api/badges", badgeRoutes);
 app.use("/api/reports", reportRoutes);
 
-// 404 & ERROR HANDLERS
+// SERVE FRONTEND STATIC FILES IN PRODUCTION / UNIFIED HOSTING
+const candidateDistPaths = [
+  path.resolve(__dirname, "../../Frontend/dist"),
+  path.resolve(process.cwd(), "Frontend/dist"),
+  path.resolve(process.cwd(), "../Frontend/dist"),
+  path.resolve(process.cwd(), "dist")
+];
+const frontendDistPath = candidateDistPaths.find(
+  (candidate) => fs.existsSync(path.join(candidate, "index.html"))
+);
+
+if (frontendDistPath) {
+  console.log(`📦 Serving static frontend build from: ${frontendDistPath}`);
+  app.use(express.static(frontendDistPath));
+
+  // SPA fallback for all non-API GET routes
+  app.get(/^(?!\/api).*/, (req, res) => {
+    res.sendFile(path.join(frontendDistPath, "index.html"));
+  });
+}
+
+// 404 & ERROR HANDLERS (for unhandled API routes)
 app.use(notFound);
 app.use(errorHandler);
 
@@ -128,9 +157,12 @@ const startServer = async () => {
   await verifyTransporter();
   const server = http.createServer(app);
 
-  server.listen(env.PORT, () => {
-    console.log(`Skill Loop API running on port ${env.PORT}`);
+  server.listen(env.PORT, "0.0.0.0", () => {
+    console.log(`🚀 Skill Loop server running on http://0.0.0.0:${env.PORT}`);
     console.log(`Environment: ${env.NODE_ENV}`);
+    if (frontendDistPath) {
+      console.log(`🌐 Website frontend is live and served from express!`);
+    }
   });
 
   const shutdown = async (signal) => {

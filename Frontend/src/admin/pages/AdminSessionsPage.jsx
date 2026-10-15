@@ -8,7 +8,7 @@ import AdminActionModal from '../components/AdminActionModal';
 import { fetchWithAuth } from '../../utils/auth';
 import '../admin.css';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+import { API_BASE_URL } from '../../config/api';
 
 export default function AdminSessionsPage() {
   const [activeTab, setActiveTab] = useState('sessions');

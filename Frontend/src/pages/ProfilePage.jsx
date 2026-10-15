@@ -12,7 +12,7 @@ import ImageCropperModal from '../components/ImageCropperModal';
 import ChangePasswordModal from '../components/ChangePasswordModal';
 import { fetchWithAuth, getAuthStatus } from '../utils/auth';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+import { API_BASE_URL } from '../config/api';
 
 // ProfilePage: Clean Read-Only profile showcase with live MongoDB sync & 2-column layout
 export default function ProfilePage() {

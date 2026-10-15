@@ -1,10 +1,28 @@
 {
-  "dependencies": {
-    "bcrypt": "^6.0.0",
-    "dotenv": "^18.0.1",
-    "express": "^5.2.1",
-    "mongoose": "^9.10.1",
-    "nodemailer": "^10.0.10",
-    "otp-generator": "^4.0.1"
+  "name": "skill-loop",
+  "version": "1.0.0",
+  "description": "SkillLoop - Peer-to-Peer Skill Exchange Platform",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "install:all": "npm install --prefix backend && npm install --prefix Frontend",
+    "build:frontend": "npm install --prefix Frontend && npm run build --prefix Frontend",
+    "build:backend": "npm install --prefix backend",
+    "build": "npm install --prefix backend && npm install --prefix Frontend && npm run build --prefix Frontend",
+    "start": "node backend/src/server.js",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix Frontend",
+    "dev": "node backend/src/server.js"
+  },
+  "keywords": [
+    "skillloop",
+    "peer-to-peer",
+    "skills",
+    "render",
+    "react",
+    "express"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

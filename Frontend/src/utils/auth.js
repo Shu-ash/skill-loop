@@ -1,6 +1,6 @@
 // src/utils/auth.js
 
-const API_URL = 'http://localhost:5000/api';
+import { API_URL } from '../config/api';
 
 export const getAuthStatus = () => {
   const adminStr = localStorage.getItem('skillloop_admin');

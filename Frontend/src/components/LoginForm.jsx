@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ForgotPasswordModal from './ForgotPasswordModal';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+import { API_BASE_URL } from '../config/api';
 
 export default function LoginForm({ onSwitchToSignup }) {
   const navigate = useNavigate();

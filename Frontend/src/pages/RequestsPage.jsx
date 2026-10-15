@@ -11,7 +11,7 @@ import ScheduleSessionModal from '../components/ScheduleSessionModal';
 import SkillLoopLoader from '../components/SkillLoopLoader';
 import { fetchWithAuth, getAuthStatus } from '../utils/auth';
 
-const API_URL = 'http://localhost:5000/api';
+import { API_URL } from '../config/api';
 
 const EMPTY_REQUESTS = {
   received: [],

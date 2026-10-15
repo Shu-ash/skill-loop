@@ -3,7 +3,7 @@ import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react'
 import { DEFAULT_CATEGORY_NAMES, MASTER_CATEGORIES } from '../data/categoriesData';
 import './BrowseSearch.css';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+import { API_BASE_URL } from '../config/api';
 
 const getCategoryIcon = (category = '') => {
   const cat = String(typeof category === 'object' ? (category?.name || '') : (category || '')).toLowerCase();

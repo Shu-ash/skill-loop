@@ -11,7 +11,7 @@ import DisputeModal from '../components/DisputeModal';
 import SkillLoopLoader from '../components/SkillLoopLoader';
 import { fetchWithAuth, getAuthStatus } from '../utils/auth';
 
-const API_URL = 'http://localhost:5000/api';
+import { API_URL } from '../config/api';
 const ALLOWED_DURATIONS = [15, 30, 45, 60, 90, 120];
 
 export default function SessionsPage() {
