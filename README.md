@@ -1,21 +1,22 @@
-# 🔄 SkillLoop — Peer-to-Peer Skill Exchange Platform
-
 <div align="center">
 
-![SkillLoop Banner](https://img.shields.io/badge/SkillLoop-Collaborative%20Learning-4F46E5?style=for-the-badge&logo=codewars&logoColor=white)
+# 🔄 SkillLoop — Peer-to-Peer Skill Exchange Platform
 
-**Teach what you know. Learn what you love.**  
-A modern, credit-based peer-to-peer skill swap community where knowledge is the only currency.
+<p align="center">
+  <strong>Teach what you know. Learn what you love. Knowledge is the only currency.</strong>
+</p>
 
-[![React](https://img.shields.io/badge/React-19.x-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-8.x-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
-[![Node.js](https://img.shields.io/badge/Node.js-24.x-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
-[![Express](https://img.shields.io/badge/Express-5.x-000000?style=flat-square&logo=express&logoColor=white)](https://expressjs.com/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=flat-square&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
-[![Security](https://img.shields.io/badge/Security-Hardened%20%26%20Audited-10B981?style=flat-square&logo=shield&logoColor=white)](#-security--data-integrity)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
+[![React](https://img.shields.io/badge/React-19.x-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-8.x-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Node.js](https://img.shields.io/badge/Node.js-24.x-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Express](https://img.shields.io/badge/Express-5.x-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![Security](https://img.shields.io/badge/Security-Audited%20%26%20Hardened-10B981?style=for-the-badge&logo=shield&logoColor=white)](#-security--data-integrity)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
-[Explore Features](#-features) • [Quickstart](#-getting-started) • [Architecture](#-system-architecture) • [API Reference](#-api-endpoints) • [Admin Portal](#-admin-portal--moderation)
+<br/>
+
+[✨ Key Features](#-key-features) • [🔄 How It Works](#-how-the-skillloop-economy-works) • [🛠️ Tech Stack](#-tech-stack) • [🏗️ System Architecture](#-system-architecture) • [🚀 Quickstart Guide](#-quickstart-guide) • [👑 Admin Portal](#-admin-control-center) • [📡 API Reference](#-api-reference)
 
 ---
 
@@ -23,87 +24,96 @@ A modern, credit-based peer-to-peer skill swap community where knowledge is the 
 
 ## 📖 Overview
 
-**SkillLoop** solves the high-cost barrier of personalized tutoring and skill learning. Instead of paying expensive hourly subscription fees, members exchange expertise directly with one another.
+In today's digital economy, learning a new high-value skill—whether it's React, UI/UX Design, Guitar, or Spanish—often requires expensive subscriptions, paywalled bootcamps, or high hourly tutor fees.
 
-### 💡 The Core Philosophy: **Learn → Teach → Practice → Improve**
-- **Teach to Earn:** Mentor a peer in a skill you excel in (e.g., React, Spanish, Graphic Design, Guitar) to earn **+1 Skill Credit**.
-- **Spend to Learn:** Use your earned credits to book personalized 1-on-1 learning sessions with expert mentors across the globe.
-- **Zero Financial Friction:** Every new member receives **10 Starter Credits** upon email verification to kickstart their learning journey.
+**SkillLoop** breaks down financial barriers through **reciprocal, credit-based peer learning**. Instead of paying cash, users trade their own skills directly with other motivated community members.
 
----
-
-## ✨ Features
-
-### 🔄 1. Smart Skill Swap Matchmaking
-- **Bi-Directional Matching:** Discovers mutual matches where User A teaches what User B wants to learn, and vice versa.
-- **Direct Skill Discovery:** Search mentors by category, skill name, expertise level (*Beginner, Intermediate, Advanced*), and availability.
-- **Member Cards:** Inspect mentor ratings, review history, teaching badges, and availability before sending a request.
-
-### 📅 2. 1-on-1 Interactive Scheduling & Sessions
-- **Seamless Booking Flow:** Learners propose swap requests; teachers accept and configure session date, time, and custom meet links.
-- **Auto-Generated Video Rooms:** Instant Google Meet / Zoom meeting room integration.
-- **Live Session Controls:** Track student attendance (*Learner Joined* verification) and live meeting status.
-- **Automated Settlement:** When a session concludes, the background daemon automatically marks completion and settles credits (+1 Teacher, -1 Learner).
-
-### 💳 3. Fair Credit Economy & Audit Ledger
-- **Atomic Balance Guarantees:** Concurrency-locked credit updates prevent duplicate rewards and negative credit balances.
-- **Immutable Transaction History:** Every single credit transaction generates a tamper-evident audit ledger entry (`#TX-XXXXXX`) visible on the user's Credits dashboard.
-- **Anti-Exploit Protection:** Users cannot schedule sessions or create swap requests without maintaining at least 1 available credit.
-
-### 🏆 4. Gamified Leaderboard & Verified Badges
-- **Live Rankings:** Real-time leaderboard highlighting Top Teachers and Top Learners based on completed sessions and community rating.
-- **Reputation & Reviews:** Transparent 5-star rating system with verified session reviews.
-- **Achievement Badges:** Badges for milestones (*First Session, Master Mentor, Community Pillar*).
-
-### 💬 5. Real-Time Chat & In-App Notifications
-- **Direct Messaging:** Built-in chat channel between matched swap partners to coordinate agendas and learning material.
-- **Smart Notification Hub:** Real-time alerts for swap proposals, acceptances, credit updates, and meeting reminders.
-
-### 🛡️ 5. Role-Based Admin Portal & Moderation
-- **Real-Time KPI Metrics:** Live platform statistics including active users, circulating credits, active sessions, and disputed sessions.
-- **User Management:** Search and filter members, inspect transaction logs, change roles (*User / Admin*), and ban bad actors.
-- **Dispute Resolution & Reports:** Community moderation queue to inspect flagged sessions, resolve disputes, and maintain platform trust.
-- **Category Manager:** Add, edit, or archive skill categories in real time.
-
-### 🌓 6. Aesthetic Modern UI / UX
-- **Theme Engine:** Instant Dark Mode and Light Mode switching with persistent local state.
-- **Responsive Layout:** Tailored for mobile, tablet, and desktop viewing.
+```
+       ┌────────────────┐                  ┌────────────────┐
+       │     User 1     │                  │     User 2     │
+       │ (Teaches Web)  │                  │ (Teaches UI)   │
+       └───────┬────────┘                  └────────┬───────┘
+               │                                    │
+               │  1. Teaches Web (+1 Credit)        │
+               ├───────────────────────────────────►│
+               │                                    │
+               │  2. Learns UI (-1 Credit)          │
+               │◄───────────────────────────────────┤
+               │                                    │
+               └───────────────┬────────────────────┘
+                               │
+                3. Atomic Audit Ledger Logs
+                   Tamper-Evident #TX Record
+                               ▼
+               ┌────────────────────────────────────┐
+               │         SkillLoop Engine           │
+               │   • Google Meet Video Classroom    │
+               │   • Real-Time In-App Chat          │
+               │   • Verified 5-Star Reviews        │
+               │   • Admin Dispute Resolution       │
+               └────────────────────────────────────┘
+```
 
 ---
 
-## 🔒 Security & Data Integrity
+## 🔄 How The SkillLoop Economy Works
 
-SkillLoop features an enterprise-grade security posture verified through comprehensive static and dynamic security audits:
+1. **Earn by Teaching:** Mentor a community member in a skill you excel in to earn **+1 Skill Credit**.
+2. **Spend to Learn:** Use your earned credits to book 1-on-1 virtual sessions with mentors worldwide.
+3. **Kickstart with Starter Credits:** Every newly registered and verified member receives **10 Starter Credits** upon onboarding.
+4. **Guaranteed Reciprocity:** You cannot take sessions without contributing value back into the network, keeping the community active and engaged.
 
-| Security Layer | Implementation Detail |
-| :--- | :--- |
-| **Authentication** | Dual-token JWT architecture (Short-lived Access Token in Memory/Header + Long-lived Refresh Token in HttpOnly Secure Cookie). |
-| **Token Rotation** | Cryptographic SHA-256 refresh token hashing in MongoDB with token reuse detection and instant session revocation. |
-| **Admin Authorization** | Strict `protectAdmin` middleware verifying cryptographic signatures and database roles. Zero backdoors or unauthenticated fallbacks. |
-| **OTP Verification** | 6-digit verification codes stored as SHA-256 hashes with an automatic 5-attempt brute-force rate limiter and 10-minute TTL expiry. |
-| **Concurrency & Race Conditions** | Atomic MongoDB transactions (`findOneAndUpdate` with status filter) preventing double credit redemption during concurrent completions. |
-| **Financial Safeguards** | Negative balance prevention ensuring credits can never drop below 0 (`{ credits: { $gte: 1 } }`). |
-| **Network & CORS** | Strict origin matching (prevents substring exploits), `helmet` security headers, and `trust proxy` enabled for Cloudflare / Nginx reverse proxies. |
-| **Rate Limiting** | Tiered rate limiting via `express-rate-limit` protecting auth endpoints (20 attempts / 15 mins) and global API routes (1,000 reqs / 15 mins). |
+---
+
+## ✨ Key Features
+
+### 🎯 1. Smart Skill Discovery & Matchmaking
+- **Bi-Directional Match Engine:** Automatically matches members who teach what you want to learn and vice versa.
+- **Categorized Directory:** Search mentors across verified categories: *Code & Data, Design & Creative, Business, Languages, Music, Fitness*, and more.
+- **Rich Mentor Profiles:** Inspect detailed bios, rating averages, verified reviews, availability slots, and unlocked badges before reaching out.
+
+### 🤝 2. Swap Proposals & Live Collaboration
+- **1-Click Swap Proposals:** Send direct requests specifying what skill you can teach in exchange.
+- **Integrated Scheduling:** Accept proposals and pick a convenient date and time.
+- **Automated Google Meet Rooms:** Confirmed sessions automatically generate virtual classroom links for seamless 1-on-1 learning.
+- **In-App Real-Time Chat:** Coordinate agendas, exchange learning materials, and follow up directly inside the app.
+
+### 🪙 3. Atomic Credit Ledger & Anti-Exploit System
+- **Tamper-Evident History:** Every credit movement produces an immutable ledger receipt (`#TX-XXXXXX`) visible on the user's Credit Dashboard.
+- **Concurrency Locks:** Prevents double-spend and race condition exploits during simultaneous session completions.
+- **Negative Balance Prevention:** Strict database filters prevent booking if a user's credit balance drops to zero.
+
+### 🏆 4. Gamification & Community Reputation
+- **Achievement Badges:** Automatically unlocks milestone badges (*First Swap, Top Mentor, Community Pillar*).
+- **Verified Reviews:** Only students who attended a confirmed session can leave 5-star ratings and written feedback.
+- **Live Leaderboard:** Real-time ranking showcasing top teachers and learners across the platform.
+
+### 👑 5. Enterprise Admin Control Center
+- **Live Ecosystem KPIs:** Real-time tracking of Total Users, Active Sessions, Verified Skills, and Circulating Credits.
+- **Dispute Resolution:** Built-in moderation queue allowing admins to audit disputed sessions and issue credit settlements.
+- **Dynamic Category Manager:** Add, edit, or archive skill categories directly from the admin panel with zero code changes.
+- **User Role & Moderation:** Search members, toggle account access (*Active / Banned*), and manage moderator permissions.
+
+### 🌓 6. Modern Glassmorphic UI/UX
+- **Theme Engine:** Instant switching between Dark Mode and Light Mode with persistent local state.
+- **Liquid Glass Design:** Floating liquid blobs, modern backdrop blurs, and micro-interactions.
+- **Fully Responsive:** Optimized for desktop, tablet, and mobile browsers.
 
 ---
 
 ## 🛠️ Tech Stack
 
-### Frontend
-- **Framework:** React 19 (Hooks, Context API, Portals)
-- **Bundler & Tooling:** Vite 8, PostCSS
-- **Routing:** React Router 7
-- **Icons & Styling:** Custom SVG System & Modular Vanilla CSS Engine
-- **State & Storage:** LocalStorage session persistence with silent 401 JWT refresh interceptor
+<div align="center">
 
-### Backend
-- **Runtime:** Node.js v24 (Native ESM)
-- **Framework:** Express 5.x
-- **Database:** MongoDB Atlas with Mongoose 9.x ODM
-- **Security:** Helmet, CORS, Express-Rate-Limit, BCryptJS, Crypto
-- **Validation:** Zod Schema Validation
-- **Mailing:** Nodemailer (SMTP / Dev Logger Mode)
+| Layer | Technologies |
+| :--- | :--- |
+| **Frontend** | ![React](https://img.shields.io/badge/React_19-20232A?style=flat-square&logo=react&logoColor=61DAFB) ![Vite](https://img.shields.io/badge/Vite_8-646CFF?style=flat-square&logo=vite&logoColor=white) ![React Router](https://img.shields.io/badge/React_Router_7-CA4245?style=flat-square&logo=react-router&logoColor=white) ![CSS3](https://img.shields.io/badge/Modern_CSS3-1572B6?style=flat-square&logo=css3&logoColor=white) |
+| **Backend** | ![Node.js](https://img.shields.io/badge/Node.js_24-339933?style=flat-square&logo=node.js&logoColor=white) ![Express](https://img.shields.io/badge/Express_5-000000?style=flat-square&logo=express&logoColor=white) ![ESM](https://img.shields.io/badge/Native_ESM-F7DF1E?style=flat-square&logo=javascript&logoColor=black) |
+| **Database** | ![MongoDB](https://img.shields.io/badge/MongoDB_Atlas-47A248?style=flat-square&logo=mongodb&logoColor=white) ![Mongoose](https://img.shields.io/badge/Mongoose_9-880000?style=flat-square&logo=mongoose&logoColor=white) |
+| **Security** | ![JWT](https://img.shields.io/badge/Dual--Token_JWT-000000?style=flat-square&logo=json-web-tokens&logoColor=white) ![Bcrypt](https://img.shields.io/badge/BcryptJS-338833?style=flat-square) ![Helmet](https://img.shields.io/badge/Helmet-000000?style=flat-square) ![RateLimit](https://img.shields.io/badge/Rate_Limiter-FF4500?style=flat-square) |
+| **Mailing** | ![Nodemailer](https://img.shields.io/badge/Nodemailer_Gmail_SMTP-0A85EA?style=flat-square) |
+
+</div>
 
 ---
 
@@ -111,90 +121,89 @@ SkillLoop features an enterprise-grade security posture verified through compreh
 
 ```mermaid
 flowchart TD
-    subgraph Client ["Client (React 19 + Vite)"]
-        UI["Modern UI / UX (Dark & Light)"]
-        AUTH_INT["Auth Interceptor (Silent JWT Refresh)"]
-        ROUTER["Protected App Routes"]
+    subgraph Client ["Client Layer (React 19 + Vite)"]
+        UI["Glassmorphic UI (Dark / Light)"]
+        AUTH_INT["Silent JWT Refresh Interceptor"]
+        ROUTER["Protected App & Admin Routes"]
     end
 
-    subgraph Security ["Security & Middleware Gateway"]
-        CORS["Strict CORS & Helmet"]
-        PROXY["Trust Proxy (Cloudflare/Nginx)"]
-        LIMITER["Rate Limiter (express-rate-limit)"]
-        JWT_VAL["JWT Verification & Role Guard"]
+    subgraph Gateway ["Security & Middleware Gateway"]
+        HELMET["Helmet Security Headers"]
+        CORS["Strict Origin Matching"]
+        RATE["Tiered express-rate-limit"]
+        AUTH_GUARD["Dual-Token JWT & Admin Guards"]
     end
 
-    subgraph Backend ["Node.js / Express 5 API"]
-        AUTH_CTRL["Auth & OTP Controller"]
-        MATCH_CTRL["Skill Matchmaking Engine"]
+    subgraph API ["Backend Controllers (Express 5 REST API)"]
+        AUTH_CTRL["Auth & Passwordless OTP"]
+        MATCH_CTRL["Skill Match Engine"]
         SWAP_CTRL["Swap Request Controller"]
-        SESS_CTRL["Atomic Session & Credit Engine"]
+        SESS_CTRL["Atomic Session Lifecycle"]
+        CREDIT_CTRL["Credit Ledger (#TX Audit)"]
         ADMIN_CTRL["Admin Moderation & KPIs"]
     end
 
-    subgraph Database ["MongoDB Atlas"]
-        U_COL[("Users (Credits, Skills, Status)")]
-        S_COL[("Sessions (Atomic Status)")]
-        R_COL[("Swap Requests")]
-        L_COL[("Credit Ledger (#TX Audit)")]
-        O_COL[("Hashed OTPs (10m TTL)")]
+    subgraph Data ["Database Layer (MongoDB Atlas)"]
+        U_DB[("Users Collection (10 Starter Credits)")]
+        S_DB[("Sessions Collection (Google Meet Links)")]
+        R_DB[("Swap Requests Collection")]
+        L_DB[("Credit Ledger (Immutable Audit Logs)")]
+        C_DB[("Categories Collection (Dynamic Skills)")]
     end
 
     UI --> AUTH_INT --> ROUTER
-    ROUTER --> CORS --> PROXY --> LIMITER --> JWT_VAL
-    JWT_VAL --> AUTH_CTRL & MATCH_CTRL & SWAP_CTRL & SESS_CTRL & ADMIN_CTRL
-    AUTH_CTRL --> U_COL & O_COL
-    SWAP_CTRL --> R_COL & U_COL
-    SESS_CTRL --> S_COL & L_COL & U_COL
-    ADMIN_CTRL --> U_COL & S_COL & L_COL
+    ROUTER --> HELMET --> CORS --> RATE --> AUTH_GUARD
+    AUTH_GUARD --> AUTH_CTRL & MATCH_CTRL & SWAP_CTRL & SESS_CTRL & CREDIT_CTRL & ADMIN_CTRL
+    AUTH_CTRL --> U_DB
+    MATCH_CTRL --> U_DB & C_DB
+    SWAP_CTRL --> R_DB & U_DB
+    SESS_CTRL --> S_DB & L_DB & U_DB
+    CREDIT_CTRL --> L_DB & U_DB
+    ADMIN_CTRL --> U_DB & S_DB & L_DB & C_DB
 ```
 
 ---
 
-## 📂 Project Structure
+## 🔒 Security & Data Integrity
+
+| Layer | Implementation & Safeguards |
+| :--- | :--- |
+| **Dual-Token Auth** | Short-lived Access Token in Memory + Long-lived Refresh Token in secure `HttpOnly` cookie. |
+| **Cryptographic Rotation** | SHA-256 refresh token hashing stored in MongoDB with token-reuse detection. |
+| **Admin Route Protection** | Strict cryptographic signature verification and database role validation (`protectAdmin`). Zero client-side bypasses. |
+| **Hashed OTP Delivery** | 6-digit verification codes saved as SHA-256 hashes with 10-minute TTL expiry and 5-attempt brute-force lockouts. |
+| **Atomic Financial Safety** | Atomic MongoDB transactions (`findOneAndUpdate`) ensure balance updates are race-condition proof. |
+| **Strict Network Isolation** | Precise CORS origin checking, `helmet` security headers, and reverse proxy trust configuration. |
+
+---
+
+## 📂 Project Directory Structure
 
 ```text
 skill-loop/
 ├── backend/
 │   ├── src/
-│   │   ├── config/              # MongoDB connection, env loader (Zod), email transporter
-│   │   ├── controllers/         # Core business logic
-│   │   │   ├── admin.controller.js        # KPI metrics, user moderation, disputes
-│   │   │   ├── auth.controller.js         # JWT auth, passwordless login, token refresh, logout
-│   │   │   ├── credit.controller.js       # User credit ledger and balances
-│   │   │   ├── message.controller.js      # Direct in-app messaging
-│   │   │   ├── otp.controller.js          # SHA-256 hashed OTPs & social auth
-│   │   │   ├── session.controller.js      # Atomic session lifecycle & credit settlement
-│   │   │   ├── swapRequest.controller.js  # Swap request workflows
-│   │   │   └── user.controller.js         # User profiles & onboarding
-│   │   ├── middleware/          # Security, auth, admin guard, error handling, rate limiting
-│   │   ├── models/              # Mongoose schemas (User, Session, CreditLedger, Otp, etc.)
-│   │   ├── routes/              # Express REST API routes
-│   │   ├── seeders/             # Database seed scripts (Admin, Categories, Dummy Data)
-│   │   ├── utils/               # JWT token creation, password hashing, email templates
-│   │   └── server.js            # Express app entry point
+│   │   ├── config/              # MongoDB connection, Zod env loader, Nodemailer setup
+│   │   ├── controllers/         # Business logic (Auth, Users, Swaps, Sessions, Admin, Credits)
+│   │   ├── middleware/          # Security, Auth Guards, Admin Role Checks, Rate Limiting
+│   │   ├── models/              # Mongoose Schemas (User, Session, CreditLedger, Otp, Category)
+│   │   ├── routes/              # Express 5 REST API routes
+│   │   ├── seeders/             # Database seed scripts for Admin and Curated Categories
+│   │   ├── utils/               # JWT helpers, OTP generators, email templates
+│   │   └── server.js            # Express app entrypoint & middleware orchestrator
 │   ├── .env                     # Backend environment configuration
 │   └── package.json
 │
 ├── Frontend/
 │   ├── src/
-│   │   ├── admin/               # Admin portal pages and management components
-│   │   ├── components/          # Reusable UI components (Navbar, Sidebar, Modals, Cards)
-│   │   ├── context/             # ThemeContext (Dark / Light mode)
-│   │   ├── pages/               # Main application views
-│   │   │   ├── BrowsePage.jsx             # Skill exploration & filter
-│   │   │   ├── DashboardPage.jsx          # User overview, matches, active swaps
-│   │   │   ├── LeaderboardPage.jsx        # Community rankings & badges
-│   │   │   ├── LoginPage.jsx              # Member & Admin login tabs
-│   │   │   ├── OnboardingPage.jsx         # 3-step skill & availability setup
-│   │   │   ├── ProfilePage.jsx            # User profile, skills, bio
-│   │   │   ├── RequestsPage.jsx           # Sent & received swap requests
-│   │   │   ├── SessionsPage.jsx           # Scheduled, upcoming & completed classes
-│   │   │   └── VerifyEmailPage.jsx        # OTP entry & verification
-│   │   ├── utils/               # Auth helpers, fetchWithAuth interceptor
-│   │   ├── app.jsx              # Route definitions & layout wrappers
-│   │   ├── main.jsx             # React DOM entry point
-│   │   └── index.css            # Core design system stylesheet
+│   │   ├── admin/               # Admin portal pages, metrics grids, moderation tables
+│   │   ├── components/          # UI modules (Navbar, Modals, Mentor Cards, Chat Drawer)
+│   │   ├── context/             # ThemeContext (Dark/Light Mode)
+│   │   ├── pages/               # Views (Home, Browse, Dashboard, Sessions, Requests, Profile)
+│   │   ├── utils/               # Fetch interceptor, Auth helpers
+│   │   ├── app.jsx              # Application router
+│   │   ├── main.jsx             # React 19 root
+│   │   └── index.css            # Master styling engine
 │   ├── vite.config.js
 │   └── package.json
 │
@@ -203,14 +212,14 @@ skill-loop/
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Quickstart Guide
 
-Follow these steps to set up and run SkillLoop locally on your machine.
+Follow these steps to run SkillLoop locally on your machine.
 
 ### 📋 Prerequisites
 - **Node.js** (v18.0.0 or higher recommended, tested on v24)
 - **npm** (v9.0.0 or higher)
-- **MongoDB** (A free MongoDB Atlas cluster or a local MongoDB instance running on `mongodb://localhost:27017`)
+- **MongoDB Atlas** cluster URI or local MongoDB (`mongodb://localhost:27017/skillloop`)
 
 ---
 
@@ -223,146 +232,137 @@ cd skill-loop
 ---
 
 ### 2️⃣ Configure Backend Environment
-Navigate to the `backend` directory and create or inspect the `.env` file:
+Navigate to `backend` and create a `.env` file:
 ```bash
 cd backend
 ```
 
-Create a `.env` file with the following variables:
+Create `.env` with the following variables:
 ```env
-# Application
 NODE_ENV=development
 PORT=5000
 CLIENT_URL=http://localhost:5173
-
-# Database Connection
-MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/skillloop?retryWrites=true&w=majority
-
-# JWT Secrets (Generate secure random 64-character strings for production)
-JWT_ACCESS_SECRET=SkillLoop_SuperSecret_Access_Token_Key_2026
-JWT_REFRESH_SECRET=SkillLoop_SuperSecret_Refresh_Token_Key_2026
-JWT_ACCESS_EXPIRES=15m
-JWT_REFRESH_EXPIRES=7d
-
-# Cookies & Security
 COOKIE_SECURE=false
 
-# Optional: SMTP Email Credentials (If omitted, OTPs log to console in dev mode)
-# SMTP_HOST=smtp.gmail.com
-# SMTP_PORT=587
-# SMTP_USER=your-email@gmail.com
-# SMTP_PASS=your-app-password
+# Database Connection
+MONGO_URI=mongodb+srv://<username>:<password>@cluster0.nkxmspg.mongodb.net/skillloop?retryWrites=true&w=majority
+
+# JWT Secrets (Use secure 64-character random strings)
+JWT_ACCESS_SECRET=your_jwt_access_secret_min_32_characters_long
+JWT_REFRESH_SECRET=your_jwt_refresh_secret_min_32_characters_long
+JWT_ACCESS_EXPIRES=30d
+JWT_REFRESH_EXPIRES=90d
+
+# Email Transporter (For Gmail OTPs)
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASS=your-google-app-password
 ```
 
 ---
 
-### 3️⃣ Install Backend Dependencies & Seed Database
+### 3️⃣ Install Dependencies & Start Backend
 ```bash
-# Install dependencies
+# Install backend packages
 npm install
 
-# Seed Admin Account and Default Skill Categories
+# (Optional) Seed Admin and Initial Categories if starting with an empty database
 npm run db:seed
-```
 
----
-
-### 4️⃣ Start the Backend Server
-```bash
+# Start backend development server
 npm run dev
 ```
-> The API server will boot on `http://localhost:5000`.  
-> Look for the message: `🟢 MongoDB connected successfully to database: skillloop`.
+> The API will start on **`http://localhost:5000`**.  
+> Console will display: `🟢 MongoDB connected successfully`.
 
 ---
 
-### 5️⃣ Set Up and Run the Frontend
-Open a new terminal window, navigate to the `Frontend` folder, install packages, and start Vite:
+### 4️⃣ Install Dependencies & Start Frontend
+Open a new terminal tab or window:
 ```bash
 cd ../Frontend
 
-# Install dependencies
+# Install frontend packages
 npm install
 
 # Start Vite development server
 npm run dev
 ```
-> Open your browser and navigate to **`http://localhost:5173`**.
+> Open your browser at **`http://localhost:5173`**.
 
 ---
 
 ## 🔑 Default Credentials
 
-The database seeder automatically initializes the following verified accounts:
-
-### 👑 Super Administrator Account
-- **Portal URL:** `http://localhost:5173/login` (Select the **Admin Portal** toggle tab)
-- **Email:** `admin@skillloop.com`
-- **Password:** `admin123`
-- **Permissions:** Full access to KPI metrics, user management, banning/unbanning, category editor, and dispute resolution (`/admin`).
+### 👑 Super Admin Account
+* **Portal Link:** `http://localhost:5173/login` (Toggle the **Admin Portal** tab)
+* **Email:** `admin@skillloop.com`
+* **Password:** `admin123`
+* **Privileges:** Direct access to `/admin`, KPI Analytics, Audit Logs, and Dispute Settlements.
 
 ### 🎓 Regular Member Account
-- You can register any new account using **Sign Up** on `http://localhost:5173/login`.
-- New users receive **10 starter credits** automatically.
-- In development mode, the 6-digit verification OTP will appear directly in your backend terminal console!
+* Click **Sign Up** on `http://localhost:5173/login`.
+* Every new member automatically receives **10 Starter Credits** upon email verification.
 
 ---
 
-## 📡 Key API Endpoints
+## 📡 API Reference
 
 ### 🔐 Authentication (`/api/auth`)
-| Method | Endpoint | Description | Auth Required |
+| Method | Endpoint | Description | Auth Guard |
 | :--- | :--- | :--- | :--- |
-| `POST` | `/api/auth/register` | Register a new user and dispatch 6-digit OTP | No |
-| `POST` | `/api/auth/verify-email` | Verify email OTP and activate account | No |
-| `POST` | `/api/auth/login` | Email + Password authentication | No |
-| `POST` | `/api/auth/request-login-otp` | Request passwordless login OTP | No |
-| `POST` | `/api/auth/verify-login-otp` | Authenticate using passwordless OTP | No |
-| `POST` | `/api/auth/refresh` | Refresh access token using secure HttpOnly cookie | Refresh Token |
-| `POST` | `/api/auth/logout` | Invalidate refresh token and clear cookie | Yes |
-| `GET` | `/api/auth/me` | Fetch authenticated user context | Bearer JWT |
+| `POST` | `/api/auth/register` | Register new member & dispatch 6-digit OTP | Public |
+| `POST` | `/api/auth/verify-email` | Verify email OTP & activate 10 starter credits | Public |
+| `POST` | `/api/auth/login` | Email + Password authentication | Public |
+| `POST` | `/api/auth/forgot-password` | Dispatch password reset OTP | Public |
+| `POST` | `/api/auth/reset-password` | Verify OTP & set new password | Public |
+| `POST` | `/api/auth/refresh` | Refresh access token using HttpOnly cookie | Refresh Token |
+| `POST` | `/api/auth/logout` | Revoke session & clear auth cookies | Bearer JWT |
 
-### 🤝 Skill Swaps & Sessions (`/api/requests`, `/api/sessions`)
-| Method | Endpoint | Description | Auth Required |
+### 🤝 Swaps & Sessions (`/api/requests`, `/api/sessions`)
+| Method | Endpoint | Description | Auth Guard |
 | :--- | :--- | :--- | :--- |
-| `POST` | `/api/requests` | Propose a skill swap to another member | Bearer JWT |
-| `GET` | `/api/requests/received` | List incoming swap requests | Bearer JWT |
-| `GET` | `/api/requests/sent` | List outgoing swap requests | Bearer JWT |
-| `PATCH` | `/api/requests/:id/accept` | Accept request and schedule session date & meet link | Bearer JWT |
-| `GET` | `/api/sessions/my-sessions` | Get all scheduled, active, and completed classes | Bearer JWT |
-| `PATCH` | `/api/sessions/:id/complete` | Complete session and atomically trigger credit reward (+1/-1) | Bearer JWT |
-| `PATCH` | `/api/sessions/:id/reschedule` | Reschedule session date and meeting link | Bearer JWT |
+| `POST` | `/api/requests` | Propose a skill swap to a mentor | Bearer JWT |
+| `GET` | `/api/requests/received` | List incoming swap proposals | Bearer JWT |
+| `GET` | `/api/requests/sent` | List outgoing swap proposals | Bearer JWT |
+| `PATCH` | `/api/requests/:id/accept` | Accept swap & schedule session with Meet link | Bearer JWT |
+| `PATCH` | `/api/requests/:id/reject` | Decline swap proposal | Bearer JWT |
+| `GET` | `/api/sessions/my-sessions` | List scheduled, active, and completed sessions | Bearer JWT |
+| `PATCH` | `/api/sessions/:id/complete` | Complete session & atomically transfer credit (+1/-1) | Bearer JWT |
 
-### 💳 Credits & Gamification (`/api/credits`, `/api/reviews`)
-| Method | Endpoint | Description | Auth Required |
+### 🪙 Credits & Reviews (`/api/credits`, `/api/reviews`)
+| Method | Endpoint | Description | Auth Guard |
 | :--- | :--- | :--- | :--- |
-| `GET` | `/api/credits/my-ledger` | Fetch current credit balance and `#TX` audit history | Bearer JWT |
-| `POST` | `/api/reviews` | Submit verified review & star rating for completed session | Bearer JWT |
+| `GET` | `/api/credits/my-ledger` | Fetch balance & immutable `#TX` transaction audit | Bearer JWT |
+| `POST` | `/api/reviews` | Submit verified 5-star rating & review | Bearer JWT |
+| `GET` | `/api/reviews/my-reviews` | Fetch reviews received from students | Bearer JWT |
 
-### 🛡️ Admin Moderation (`/api/admin`)
-| Method | Endpoint | Description | Auth Required |
+### 🛡️ Admin Management (`/api/admin`)
+| Method | Endpoint | Description | Auth Guard |
 | :--- | :--- | :--- | :--- |
-| `GET` | `/api/admin/metrics` | Platform overview: active users, total sessions, circulating credits | Admin JWT |
-| `GET` | `/api/admin/users` | List, search, and paginate registered members | Admin JWT |
-| `PATCH` | `/api/admin/users/:id/status` | Ban or reactivate user account | Admin JWT |
-| `PATCH` | `/api/admin/users/:id/role` | Promote/demote user between User and Admin | Admin JWT |
-| `GET` | `/api/admin/categories` | Fetch and manage platform skill categories | Admin JWT |
+| `GET` | `/api/admin/metrics` | Platform overview: Users, Sessions, Skills, Credits | Admin JWT |
+| `GET` | `/api/admin/sessions` | Audit complete platform session logs & Meet links | Admin JWT |
 | `PATCH` | `/api/admin/sessions/:id/dispute` | Settle disputed session credits | Admin JWT |
+| `GET` | `/api/admin/users` | Search, filter, and paginate all members | Admin JWT |
+| `PATCH` | `/api/admin/users/:id/status` | Toggle user status (*Active / Banned*) | Admin JWT |
+| `GET` | `/api/admin/categories` | Manage dynamic skill categories and tags | Admin JWT |
 
 ---
 
-## 📜 Available Scripts
+## 📜 Available NPM Scripts
 
 ### Backend (`/backend`)
-- `npm run dev` — Starts the Express API server with `nodemon` live-reload.
-- `npm start` — Starts production Node.js server.
-- `npm run db:seed` — Runs database seed script for admin and initial categories.
-- `npm run db:clean` — Safely resets test database.
+```bash
+npm run dev      # Launch API with nodemon hot-reload
+npm start        # Launch production Node.js server
+npm run db:seed  # Initialize verified admin & curated categories
+```
 
 ### Frontend (`/Frontend`)
-- `npm run dev` — Starts Vite dev server with instant HMR (`http://localhost:5173`).
-- `npm run build` — Compiles and minifies production assets into `/dist`.
-- `npm run preview` — Locally preview the production build.
+```bash
+npm run dev      # Launch Vite dev server with instant HMR
+npm run build    # Build production-ready bundle into /dist
+npm run preview  # Preview production build locally
+```
 
 ---
 
@@ -372,7 +372,7 @@ Contributions make the open-source community an incredible place to learn, inspi
 
 1. Fork the Project
 2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+3. Commit your Changes (`git commit -m 'feat: Add some AmazingFeature'`)
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
@@ -386,9 +386,11 @@ Distributed under the **MIT License**. See `LICENSE` for more information.
 
 <div align="center">
 
-Made with ❤️ for collaborative, accessible learning by the **SkillLoop Community**.
+Made with ❤️ by the **SkillLoop Community**.
 
 [![GitHub Stars](https://img.shields.io/github/stars/Shu-ash/skill-loop?style=social)](https://github.com/Shu-ash/skill-loop)
 [![GitHub Forks](https://img.shields.io/github/forks/Shu-ash/skill-loop?style=social)](https://github.com/Shu-ash/skill-loop)
+
+**[⬆ Back to Top](#-skillloop--peer-to-peer-skill-exchange-platform)**
 
 </div>
