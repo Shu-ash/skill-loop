@@ -11,12 +11,12 @@
 [![Node.js](https://img.shields.io/badge/Node.js-24.x-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![Express](https://img.shields.io/badge/Express-5.x-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
-[![Security](https://img.shields.io/badge/Security-Audited%20%26%20Hardened-10B981?style=for-the-badge&logo=shield&logoColor=white)](#-security--data-integrity)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-skill--loop2--0.onrender.com-7C3AED?style=for-the-badge&logo=render&logoColor=white)](https://skill-loop2-0.onrender.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
 <br/>
 
-[✨ Key Features](#-key-features) • [🔄 How It Works](#-how-the-skillloop-economy-works) • [🛠️ Tech Stack](#-tech-stack) • [🏗️ System Architecture](#-system-architecture) • [🚀 Quickstart Guide](#-quickstart-guide) • [👑 Admin Portal](#-admin-control-center) • [📡 API Reference](#-api-reference)
+[🌐 Live Demo](https://skill-loop2-0.onrender.com) • [✨ Key Features](#-key-features) • [🔄 How It Works](#-how-the-skillloop-economy-works) • [🛠️ Tech Stack](#-tech-stack) • [🏗️ System Architecture](#-system-architecture) • [🚀 Quickstart Guide](#-quickstart-guide) • [👑 Admin Portal](#-admin-control-center) • [📡 API Reference](#-api-reference)
 
 ---
 
