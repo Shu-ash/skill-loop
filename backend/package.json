@@ -27,7 +27,7 @@
     "start": "node src/server.js",
     "db:seed": "node src/seeders/seedAllDatabase.js",
     "db:clean": "node src/seeders/cleanDatabase.js",
-    "test": "node --test"
+    "test": "node --test test/security-regression.test.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
