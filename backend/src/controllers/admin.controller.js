@@ -111,6 +111,13 @@ export const updateUserRole = async (req, res) => {
       return res.status(400).json({ success: false, message: "Role is required" });
     }
 
+    if (req.user?.role !== "superadmin") {
+      return res.status(403).json({
+        success: false,
+        message: "Only a superadmin can change user roles."
+      });
+    }
+
     const targetUser = await User.findById(userId);
     if (!targetUser) {
       return res.status(404).json({ success: false, message: "User not found" });
