@@ -57,3 +57,18 @@ test("dispute settlement can only transition a disputed session", async () => {
   assert.match(handler, /status: "disputed"/);
   assert.match(handler, /status\(409\)/);
 });
+
+test("refresh-cookie endpoints enforce trusted Origin", async () => {
+  const csrf = await source("middleware/csrf.middleware.js");
+  assert.match(csrf, /if \(!req\.cookies\?\.refreshToken\) return next\(\)/);
+  assert.match(csrf, /!origin \|\| !trustedOrigins\.has\(origin\)/);
+  assert.match(csrf, /status\(403\)/);
+});
+
+test("destructive seeders require explicit non-production opt-in", async () => {
+  for (const file of ["seeders/cleanDatabase.js", "seeders/seedAllDatabase.js", "seeders/cleanDummyData.js"]) {
+    const seeder = await source(file);
+    assert.match(seeder, /env\.NODE_ENV === "production"/);
+    assert.match(seeder, /ALLOW_DESTRUCTIVE_SEED !== "true"/);
+  }
+});
