@@ -257,17 +257,31 @@ export const resolveSessionDispute = async (req, res) => {
     const { sessionId } = req.params;
     const { resolution, awardTo } = req.body;
 
-    const session = await Session.findById(sessionId);
-    if (!session) {
-      return res.status(404).json({ success: false, message: "Session not found" });
+    if (!["teacher", "learner", "none"].includes(awardTo)) {
+      return res.status(400).json({ success: false, message: "A valid awardTo value is required." });
     }
 
-    session.status = "completed";
-    session.disputeDetails = {
-      resolution: resolution || "Resolved by Admin",
-      resolvedAt: new Date()
-    };
-    await session.save();
+    const session = await Session.findOneAndUpdate(
+      { _id: sessionId, status: "disputed" },
+      {
+        $set: {
+          status: "completed",
+          disputeDetails: {
+            resolution: resolution || "Resolved by Admin",
+            resolvedBy: req.user._id,
+            resolvedAt: new Date()
+          }
+        }
+      },
+      { new: true }
+    );
+
+    if (!session) {
+      return res.status(409).json({
+        success: false,
+        message: "Only an unresolved disputed session can be settled."
+      });
+    }
 
     if (awardTo === "teacher" && session.teacher) {
       await User.findByIdAndUpdate(session.teacher, { $inc: { credits: 1 } });
@@ -277,7 +291,7 @@ export const resolveSessionDispute = async (req, res) => {
         session: session._id,
         amount: 1,
         transactionType: "dispute_refund",
-        description: `Dispute resolved in favor of teacher: ${resolution || 'Resolved'}`
+        description: `Dispute resolved in favor of teacher: ${resolution || "Resolved"}`
       });
     } else if (awardTo === "learner" && session.learner) {
       await User.findByIdAndUpdate(session.learner, { $inc: { credits: 1 } });
@@ -287,17 +301,17 @@ export const resolveSessionDispute = async (req, res) => {
         session: session._id,
         amount: 1,
         transactionType: "dispute_refund",
-        description: `Dispute resolved in favor of learner: ${resolution || 'Resolved'}`
+        description: `Dispute resolved in favor of learner: ${resolution || "Resolved"}`
       });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      message: `Dispute resolved: ${resolution || 'Settled'}`,
+      message: `Dispute resolved: ${resolution || "Settled"}`,
       data: { session }
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
