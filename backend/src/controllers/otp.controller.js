@@ -333,7 +333,7 @@ export const resetPasswordWithOtp = async (req, res, next) => {
       purpose: 'forgot_password'
     });
 
-    if (!validOtpRecord) {
+    if (!validOtpRecord || !validOtpRecord.expiresAt || validOtpRecord.expiresAt <= new Date()) {
       return res.status(400).json({ success: false, message: 'Invalid or expired reset code. Please request a new one.' });
     }
 
