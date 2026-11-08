@@ -386,82 +386,11 @@ export const resetPasswordWithOtp = async (req, res, next) => {
  * POST /api/auth/social-login
  * Seamless Google and Microsoft Authentication
  */
-export const socialLogin = async (req, res, next) => {
-  try {
-    const { provider, email, name, avatar } = req.body;
-    if (!email) {
-      return res.status(400).json({ success: false, message: 'Social account email is required' });
-    }
-
-    const normalizedEmail = email.toLowerCase().trim();
-    let user = await User.findOne({ email: normalizedEmail });
-
-    // Block social login takeover of administrative accounts
-    if (user && (user.role === 'admin' || user.role === 'superadmin' || user.email === 'admin@skillloop.com')) {
-      return res.status(403).json({
-        success: false,
-        message: 'Administrative accounts cannot use one-click social login. Please sign in via the admin portal with your credentials.'
-      });
-    }
-
-    if (!user) {
-      // Auto-register new social user
-      const fName = name ? name.split(' ')[0] : (provider === 'microsoft' ? 'Microsoft' : 'Google');
-      const lName = name ? name.split(' ').slice(1).join(' ') : 'User';
-      const dummyPassword = await hashPassword(`social_${Date.now()}_${crypto.randomBytes(16).toString('hex')}`);
-
-      user = await User.create({
-        firstName: fName,
-        lastName: lName,
-        name: name || `${fName} ${lName}`.trim(),
-        username: `${fName.toLowerCase()}_${Date.now().toString().slice(-4)}`,
-        email: normalizedEmail,
-        password: dummyPassword,
-        profilePhotoUrl: avatar || '',
-        role: 'user',
-        credits: 10,
-        emailVerified: true,
-        onboardingCompleted: true
-      });
-
-      await Notification.create({
-        user: user._id,
-        title: `🎉 Welcome via ${provider === 'microsoft' ? 'Microsoft' : 'Google'}!`,
-        text: 'Your social account is linked! You have received 10 starter credits.',
-        type: 'system',
-        link: '/profile'
-      });
-    }
-
-    if (user.status === 'banned') {
-      return res.status(403).json({ success: false, message: 'Your account has been suspended by an administrator.' });
-    }
-
-    const accessToken = createAccessToken(user._id.toString());
-    const refreshToken = createRefreshToken(user._id.toString());
-    user.refreshTokenHash = hashRefreshToken(refreshToken);
-    await user.save();
-
-    res.cookie('refreshToken', refreshToken, refreshCookieOptions);
-
-    return res.status(200).json({
-      success: true,
-      message: `Signed in with ${provider === 'microsoft' ? 'Microsoft' : 'Google'} successfully!`,
-      data: {
-        accessToken,
-        user: {
-          id: user._id,
-          name: user.name,
-          username: user.username,
-          email: user.email,
-          role: user.role,
-          credits: user.credits,
-          rating: user.rating,
-          profilePhotoUrl: user.profilePhotoUrl
-        }
-      }
-    });
-  } catch (error) {
-    next(error);
-  }
+export const socialLogin = async (req, res) => {
+  // Client-supplied profile fields are not proof of identity. Until provider
+  // ID-token verification is configured, fail closed rather than minting a session.
+  return res.status(501).json({
+    success: false,
+    message: "Social sign-in is temporarily unavailable. Use email verification or password sign-in."
+  });
 };
