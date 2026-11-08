@@ -2,7 +2,11 @@ import { env } from "../config/env.js";
 
 const trustedOrigins = new Set(["https://skill-loop2-0.onrender.com"]);
 try {
-  if (env.CLIENT_URL) trustedOrigins.add(new URL(env.CLIENT_URL).origin);
+  if (env.CLIENT_URL) {
+    const configuredOrigin = new URL(env.CLIENT_URL).origin;
+    const isLocal = ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000", "http://127.0.0.1:3000"].includes(configuredOrigin);
+    if (env.NODE_ENV !== "production" || !isLocal) trustedOrigins.add(configuredOrigin);
+  }
 } catch (_) {}
 
 export const protectRefreshCookie = (req, res, next) => {
