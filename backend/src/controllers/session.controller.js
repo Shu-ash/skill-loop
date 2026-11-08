@@ -53,18 +53,20 @@ export const autoCompleteExpiredSessions = async () => {
                 const learnerName = session.learner?.name || 'Learner';
 
                 if (teacherId && learnerId) {
-                    // Update user credits: Teacher +1, Learner -1 (protect against negative balance)
-                    await Promise.all([
-                        User.findByIdAndUpdate(teacherId, { $inc: { credits: 1 } }),
-                        User.findOneAndUpdate(
-                            { _id: learnerId, credits: { $gte: 1 } },
-                            { $inc: { credits: -1 } }
-                        ).then(async (doc) => {
-                            if (!doc) {
-                                await User.findByIdAndUpdate(learnerId, { $set: { credits: 0 } });
-                            }
-                        })
-                    ]);
+                    // Debit first; never award a teacher when the learner cannot pay.
+                    const learnerDebit = await User.findOneAndUpdate(
+                        { _id: learnerId, credits: { $gte: 1 } },
+                        { $inc: { credits: -1 } },
+                        { new: true }
+                    );
+                    if (!learnerDebit) {
+                        await Session.findOneAndUpdate(
+                            { _id: session._id, status: "completed" },
+                            { $set: { status: "in_progress", completedAt: null } }
+                        );
+                        continue;
+                    }
+                    await User.findByIdAndUpdate(teacherId, { $inc: { credits: 1 } });
 
                     // Audit ledger entry (Single transfer from learner to teacher)
                     await CreditLedger.create({
@@ -675,14 +677,6 @@ export const completeSession =
                 });
             }
 
-            // Legacy learner-only attendance check retained for clarity.
-            if (!session.learnerJoined && session.status !== "in_progress") {
-                return res.status(400).json({
-                    success: false,
-                    message: "Student has not joined the meeting yet. You can mark the class complete once the student joins."
-                });
-            }
-
             // ATOMIC LOCK: Only transition if status is still scheduled or in_progress
             const updatedSession = await Session.findOneAndUpdate(
                 {
@@ -719,18 +713,23 @@ export const completeSession =
             const teacherName = updatedSession.teacher?.name || `${updatedSession.teacher?.firstName || ''} ${updatedSession.teacher?.lastName || ''}`.trim() || 'Teacher';
             const learnerName = updatedSession.learner?.name || `${updatedSession.learner?.firstName || ''} ${updatedSession.learner?.lastName || ''}`.trim() || 'Learner';
 
-            // 1. Credit Economy: Teacher earns +1, Learner spends -1 (protect against negative balance)
-            await Promise.all([
-                User.findByIdAndUpdate(updatedSession.teacher._id, { $inc: { credits: 1 } }),
-                User.findOneAndUpdate(
-                    { _id: updatedSession.learner._id, credits: { $gte: 1 } },
-                    { $inc: { credits: -1 } }
-                ).then(async (doc) => {
-                    if (!doc) {
-                        await User.findByIdAndUpdate(updatedSession.learner._id, { $set: { credits: 0 } });
-                    }
-                })
-            ]);
+            // Debit first; never award a teacher when the learner cannot pay.
+            const learnerDebit = await User.findOneAndUpdate(
+                { _id: updatedSession.learner._id, credits: { $gte: 1 } },
+                { $inc: { credits: -1 } },
+                { new: true }
+            );
+            if (!learnerDebit) {
+                await Session.findOneAndUpdate(
+                    { _id: updatedSession._id, status: "completed" },
+                    { $set: { status: "in_progress", completedAt: null } }
+                );
+                return res.status(409).json({
+                    success: false,
+                    message: "The learner no longer has enough credits to settle this session."
+                });
+            }
+            await User.findByIdAndUpdate(updatedSession.teacher._id, { $inc: { credits: 1 } });
 
             // 2. Audit Trail: Create single CreditLedger record (Transfer from learner to teacher)
             await CreditLedger.create({
