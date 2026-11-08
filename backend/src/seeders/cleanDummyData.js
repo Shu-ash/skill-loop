@@ -1,3 +1,9 @@
+import { env } from "../config/env.js";
+
+if (env.NODE_ENV === "production" || process.env.ALLOW_DESTRUCTIVE_SEED !== "true") {
+  throw new Error("Destructive seeder blocked. Use a non-production database and set ALLOW_DESTRUCTIVE_SEED=true explicitly.");
+}
+
 import mongoose from "mongoose";
 import { env } from "../config/env.js";
 import User from "../models/user.js";
