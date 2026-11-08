@@ -25,6 +25,10 @@ export const autoCompleteExpiredSessions = async () => {
             const sessionEnd = new Date(new Date(session.scheduledAt).getTime() + durationMs);
 
             if (now >= sessionEnd) {
+                const teacherId = session.teacher?._id || session.teacher;
+                const learnerId = session.learner?._id || session.learner;
+                if (!teacherId || !learnerId || Number(session.learner?.credits) < 1) continue;
+
                 // ATOMIC LOCK: Only transition if status is still scheduled or in_progress
                 const updatedSession = await Session.findOneAndUpdate(
                     {
@@ -45,12 +49,10 @@ export const autoCompleteExpiredSessions = async () => {
                     continue;
                 }
 
-                const teacherId = session.teacher?._id || session.teacher;
-                const learnerId = session.learner?._id || session.learner;
                 const teacherName = session.teacher?.name || 'Teacher';
                 const learnerName = session.learner?.name || 'Learner';
 
-                if (teacherId && learnerId && Number(session.learner?.credits) >= 1) {
+                if (teacherId && learnerId) {
                     // Update user credits: Teacher +1, Learner -1 (protect against negative balance)
                     await Promise.all([
                         User.findByIdAndUpdate(teacherId, { $inc: { credits: 1 } }),
