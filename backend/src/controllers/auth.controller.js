@@ -156,31 +156,9 @@ export const verifyEmail = async (req, res, next) => {
         }
 
         if (user.emailVerified) {
-            // User already verified
-            const accessToken = createAccessToken(user._id.toString());
-            const refreshToken = createRefreshToken(user._id.toString());
-            user.refreshTokenHash = hashRefreshToken(refreshToken);
-            await user.save();
-
-            res.cookie("refreshToken", refreshToken, refreshCookieOptions);
-
-            return res.status(200).json({
-                success: true,
-                message: "Email is already verified! Logged in successfully.",
-                data: {
-                    accessToken,
-                    user: {
-                        id: user._id,
-                        name: user.name,
-                        username: user.username,
-                        email: user.email,
-                        role: user.role,
-                        credits: user.credits,
-                        rating: user.rating,
-                        emailVerified: user.emailVerified,
-                        onboardingCompleted: user.onboardingCompleted
-                    }
-                }
+            return res.status(409).json({
+                success: false,
+                message: "Email is already verified. Please sign in with your password."
             });
         }
 
@@ -361,6 +339,13 @@ export const login = async (req, res, next) => {
             return res.status(403).json({
                 success: false,
                 message: "Your account has been suspended by an administrator."
+            });
+        }
+
+        if (!user.emailVerified) {
+            return res.status(403).json({
+                success: false,
+                message: "Please verify your email address before signing in."
             });
         }
 
