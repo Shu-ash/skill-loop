@@ -15,7 +15,9 @@ export const autoCompleteExpiredSessions = async () => {
         const now = new Date();
         const activeSessions = await Session.find({
             status: { $in: ["scheduled", "in_progress"] },
-            scheduledAt: { $ne: null }
+            scheduledAt: { $ne: null },
+            learnerJoined: true,
+            teacherJoined: true
         }).populate("teacher learner");
 
         for (const session of activeSessions) {
@@ -48,7 +50,7 @@ export const autoCompleteExpiredSessions = async () => {
                 const teacherName = session.teacher?.name || 'Teacher';
                 const learnerName = session.learner?.name || 'Learner';
 
-                if (teacherId && learnerId) {
+                if (teacherId && learnerId && Number(session.learner?.credits) >= 1) {
                     // Update user credits: Teacher +1, Learner -1 (protect against negative balance)
                     await Promise.all([
                         User.findByIdAndUpdate(teacherId, { $inc: { credits: 1 } }),
@@ -649,7 +651,29 @@ export const completeSession =
                 });
             }
 
-            // Only allow completion once the learner has joined the meeting
+            // A completed paid session requires both participants to have joined.
+            if (!session.learnerJoined || !session.teacherJoined) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Both teacher and learner must join before the session can be completed."
+                });
+            }
+
+            if (session.scheduledAt && Date.now() < new Date(session.scheduledAt).getTime()) {
+                return res.status(400).json({
+                    success: false,
+                    message: "A session cannot be completed before its scheduled start time."
+                });
+            }
+
+            if (Number((await User.findById(session.learner).select("credits"))?.credits || 0) < 1) {
+                return res.status(409).json({
+                    success: false,
+                    message: "The learner does not have enough credits to settle this session."
+                });
+            }
+
+            // Legacy learner-only attendance check retained for clarity.
             if (!session.learnerJoined && session.status !== "in_progress") {
                 return res.status(400).json({
                     success: false,
