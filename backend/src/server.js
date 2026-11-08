@@ -68,14 +68,16 @@ app.use(
       if (!origin) return callback(null, true);
 
       try {
-        const originUrl = new URL(origin);
-        const isAllowed =
-          allowedOrigins.includes(origin) ||
-          originUrl.hostname === "localhost" ||
-          originUrl.hostname === "127.0.0.1" ||
-          originUrl.hostname.endsWith(".onrender.com");
+        // Credentialed requests must come only from explicitly trusted origins.
+        // Local development origins are allowed only outside production.
+        const isLocalDevelopment =
+          env.NODE_ENV !== "production" &&
+          (origin === "http://localhost:5173" ||
+            origin === "http://127.0.0.1:5173" ||
+            origin === "http://localhost:3000" ||
+            origin === "http://127.0.0.1:3000");
 
-        if (isAllowed) {
+        if (allowedOrigins.includes(origin) || isLocalDevelopment) {
           return callback(null, true);
         }
       } catch (_) {}
