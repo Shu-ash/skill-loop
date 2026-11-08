@@ -4,7 +4,7 @@ import SwapRequest from "../models/swapRequest.js";
 import Review from "../models/review.js";
 import Otp from "../models/otp.js";
 import Skill from "../models/skill.js";
-import { generateOtp, sendOtpEmail } from "../utils/emailService.js";
+import { generateOtp, hashOtp, sendOtpEmail } from "../utils/emailService.js";
 import { hashPassword, comparePassword } from "../utils/password.js";
 import { verifyAccessToken } from "../utils/jwt.js";
 import {
@@ -507,7 +507,8 @@ export const sendPasswordOtp = async (req, res, next) => {
 
     await Otp.create({
       email: user.email,
-      otp: otpCode,
+      otp: hashOtp(otpCode),
+      attempts: 0,
       purpose: "forgot_password",
       expiresAt
     });
@@ -566,15 +567,25 @@ export const changePassword = async (req, res, next) => {
       // 2nd Way: Verify via 6-digit Email OTP
       const validOtpRecord = await Otp.findOne({
         email: user.email,
-        otp: String(otp).trim(),
         purpose: "forgot_password"
       });
 
-      if (!validOtpRecord) {
+      if (!validOtpRecord || !validOtpRecord.expiresAt || validOtpRecord.expiresAt <= new Date()) {
         return res.status(400).json({
           success: false,
           message: "Invalid or expired 6-digit verification code. Please check your email or click Resend."
         });
+      }
+
+      if (validOtpRecord.attempts >= 5) {
+        await Otp.deleteMany({ email: user.email, purpose: "forgot_password" });
+        return res.status(429).json({ success: false, message: "Too many incorrect attempts. Request a new code." });
+      }
+
+      if (validOtpRecord.otp !== hashOtp(otp)) {
+        validOtpRecord.attempts = (validOtpRecord.attempts || 0) + 1;
+        await validOtpRecord.save();
+        return res.status(400).json({ success: false, message: "Invalid verification code." });
       }
 
       await Otp.deleteMany({ email: user.email, purpose: "forgot_password" });
@@ -597,6 +608,7 @@ export const changePassword = async (req, res, next) => {
     }
 
     user.password = await hashPassword(newPassword);
+    user.refreshTokenHash = null;
     await user.save();
 
     return res.status(200).json({
