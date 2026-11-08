@@ -107,12 +107,7 @@ export const sendOtpEmail = async (param1, param2) => {
     </html>
   `;
 
-  console.log(`\n======================================================`);
-  console.log(`📧 [EMAIL SERVICE] OTP SENT TO: ${to}`);
-  console.log(`🎯 PURPOSE: ${purpose.toUpperCase()}`);
-  console.log(`🔑 OTP CODE: [ ${otp} ]`);
-  console.log(`⏱️ EXPIRES IN: 10 MINUTES`);
-  console.log(`======================================================\n`);
+  // Never log OTP values or other authentication secrets.
 
   try {
     const senderEmail = process.env.EMAIL_FROM || (process.env.EMAIL_USER && !process.env.EMAIL_USER.includes("brevo.com") ? process.env.EMAIL_USER : "harshviswakarma9749247288@gmail.com");
