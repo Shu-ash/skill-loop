@@ -21,6 +21,7 @@ import { protect } from "../middleware/auth.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
 import { registerSchema, loginSchema } from "../validators/auth.validator.js";
 import { authLimiter } from "../middleware/rateLimit.middleware.js";
+import { protectRefreshCookie } from "../middleware/csrf.middleware.js";
 
 const router = Router();
 
@@ -34,8 +35,8 @@ router.post("/resend-otp", authLimiter, resendOtp);
 router.post("/login", authLimiter, validate(loginSchema), login);
 router.post("/request-login-otp", authLimiter, requestLoginOtp);
 router.post("/verify-login-otp", authLimiter, verifyLoginOtp);
-router.post("/refresh", refresh);
-router.post("/logout", logout);
+router.post("/refresh", protectRefreshCookie, refresh);
+router.post("/logout", protectRefreshCookie, logout);
 router.get("/me", protect, me);
 
 // Password Reset & Legacy OTP Helpers
