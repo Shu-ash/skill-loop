@@ -118,6 +118,11 @@ export const updateUserRole = async (req, res) => {
       });
     }
 
+    const normalizedRole = String(role).toLowerCase();
+    if (!["user", "admin"].includes(normalizedRole)) {
+      return res.status(400).json({ success: false, message: "Role must be user or admin." });
+    }
+
     const targetUser = await User.findById(userId);
     if (!targetUser) {
       return res.status(404).json({ success: false, message: "User not found" });
@@ -130,7 +135,7 @@ export const updateUserRole = async (req, res) => {
       });
     }
 
-    targetUser.role = role.toLowerCase();
+    targetUser.role = normalizedRole;
     await targetUser.save();
 
     res.status(200).json({
