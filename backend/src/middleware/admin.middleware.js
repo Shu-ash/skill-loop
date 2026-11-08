@@ -24,6 +24,13 @@ export const protectAdmin = async (req, res, next) => {
       });
     }
 
+    if (decoded.type !== "access") {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid admin access token."
+      });
+    }
+
     const userId = decoded.userId || decoded.sub;
     if (!userId) {
       return res.status(401).json({
