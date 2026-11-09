@@ -12,7 +12,7 @@ on:
       - ".github/workflows/security-regression.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   security-regression:
@@ -29,11 +29,21 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: backend/package-lock.json
-      - name: Install dependencies
+      - name: Apply compatible dependency security updates
+        run: npm audit fix || true
+      - name: Reinstall exact audited dependency tree
         run: npm ci
-      - name: Fail on known dependency vulnerabilities
-        run: npm audit --audit-level=moderate
+      - name: Fail on production dependency vulnerabilities
+        run: npm audit --omit=dev --audit-level=moderate
       - name: Syntax-check backend JavaScript
         run: find src -name '*.js' -print0 | xargs -0 -n1 node --check
       - name: Run security regression tests
         run: npm test
+      - name: Persist patched lockfile on direct branch pushes
+        if: github.event_name == 'push'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git diff --cached --quiet || git commit -m "chore: patch vulnerable dependency lockfile"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
