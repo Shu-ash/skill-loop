@@ -569,29 +569,19 @@ export const refresh = async (req, res, next) => {
     try {
         const token = req.cookies?.refreshToken || req.body?.refreshToken;
         if (!token) {
-            return res.status(401).json({
-                success: false,
-                message: "Refresh token is required"
-            });
+            return res.status(401).json({ success: false, message: "Refresh token is required" });
         }
 
         const decoded = verifyRefreshToken(token);
         if (!decoded?.sub || decoded.type !== "refresh") {
-            return res.status(401).json({
-                success: false,
-                message: "Invalid refresh token"
-            });
+            return res.status(401).json({ success: false, message: "Invalid refresh token" });
         }
 
-        const user = await User.findById(decoded.sub).select("+refreshTokenHash");
-        if (!user) {
-            return res.status(401).json({
-                success: false,
-                message: "User not found"
-            });
+        const existingUser = await User.findById(decoded.sub).select("+refreshTokenHash");
+        if (!existingUser) {
+            return res.status(401).json({ success: false, message: "Invalid or revoked refresh token" });
         }
-
-        if (user.status === "banned") {
+        if (existingUser.status === "banned") {
             return res.status(403).json({
                 success: false,
                 message: "Your account has been suspended by an administrator."
@@ -599,22 +589,23 @@ export const refresh = async (req, res, next) => {
         }
 
         const incomingTokenHash = hashRefreshToken(token);
-        if (!user.refreshTokenHash || user.refreshTokenHash !== incomingTokenHash) {
-            // Token reuse / revoked token detected: invalidate session
-            user.refreshTokenHash = null;
-            await user.save();
+        const newRefreshToken = createRefreshToken(existingUser._id.toString());
+        const updatedUser = await User.findOneAndUpdate(
+            { _id: existingUser._id, refreshTokenHash: incomingTokenHash, status: { $ne: "banned" } },
+            { $set: { refreshTokenHash: hashRefreshToken(newRefreshToken) } },
+            { new: true }
+        );
+
+        // Compare-and-swap rotation: concurrent refreshes cannot overwrite a newer
+        // token or revoke it as a side effect of a stale request.
+        if (!updatedUser) {
             return res.status(401).json({
                 success: false,
-                message: "Invalid or revoked refresh token. Please sign in again."
+                message: "Invalid or already rotated refresh token. Please sign in again."
             });
         }
 
-        const newAccessToken = createAccessToken(user._id.toString());
-        const newRefreshToken = createRefreshToken(user._id.toString());
-
-        user.refreshTokenHash = hashRefreshToken(newRefreshToken);
-        await user.save();
-
+        const newAccessToken = createAccessToken(updatedUser._id.toString());
         res.cookie("refreshToken", newRefreshToken, refreshCookieOptions);
 
         return res.status(200).json({
@@ -623,14 +614,14 @@ export const refresh = async (req, res, next) => {
             data: {
                 accessToken: newAccessToken,
                 user: {
-                    id: user._id,
-                    name: user.name,
-                    username: user.username,
-                    email: user.email,
-                    role: user.role,
-                    credits: user.credits,
-                    rating: user.rating,
-                    onboardingCompleted: user.onboardingCompleted
+                    id: updatedUser._id,
+                    name: updatedUser.name,
+                    username: updatedUser.username,
+                    email: updatedUser.email,
+                    role: updatedUser.role,
+                    credits: updatedUser.credits,
+                    rating: updatedUser.rating,
+                    onboardingCompleted: updatedUser.onboardingCompleted
                 }
             }
         });
