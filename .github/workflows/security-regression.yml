@@ -5,6 +5,7 @@ on:
     branches:
       - security-fixes-2026-11-08
   pull_request:
+    types: [opened, synchronize, reopened, edited]
     branches:
       - main
     paths:
