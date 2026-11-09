@@ -115,7 +115,7 @@ export const sendOtpEmail = async (param1, param2) => {
     await transporter.sendMail({
       from: fromAddress,
       to,
-      subject: `Your SkillLoop Verification Code - ${otp}`,
+      subject: `Your SkillLoop Verification Code`,
       html: htmlContent
     });
     console.log(`🟢 [EMAIL SERVICE] Email delivered to ${to}`);
