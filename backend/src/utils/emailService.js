@@ -123,6 +123,6 @@ export const sendOtpEmail = async (param1, param2) => {
     return { success: true };
   } catch (error) {
     console.error("⚠️ [EMAIL SERVICE] Email delivery warning:", error.message);
-    return { success: true, otp };
+    return { success: true };
   }
 };
