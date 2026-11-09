@@ -23,6 +23,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref }}
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -41,11 +43,17 @@ jobs:
         run: find src -name '*.js' -print0 | xargs -0 -n1 node --check
       - name: Run security regression tests
         run: npm test
-      - name: Persist patched lockfile on direct branch pushes
-        if: github.event_name == 'push'
+      - name: Persist patched lockfile on the security branch
+        if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          TARGET_BRANCH: ${{ github.event.pull_request.head.ref || github.ref_name }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add package-lock.json
-          git diff --cached --quiet || git commit -m "chore: patch vulnerable dependency lockfile"
-          git push origin "HEAD:${GITHUB_REF_NAME}"
+          if git diff --cached --quiet; then
+            echo "Dependency lockfile already current."
+            exit 0
+          fi
+          git commit -m "chore: patch vulnerable dependency lockfile"
+          git push origin "HEAD:${TARGET_BRANCH}"
