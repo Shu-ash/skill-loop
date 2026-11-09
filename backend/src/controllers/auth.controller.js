@@ -16,6 +16,18 @@ import {
     sendOtpEmail
 } from "../utils/emailService.js";
 
+const hashOtpValue = (otp) => crypto
+    .createHmac("sha256", env.JWT_ACCESS_SECRET)
+    .update(String(otp).trim())
+    .digest("hex");
+
+const otpHashMatches = (candidate, stored) => {
+    if (!stored) return false;
+    const left = Buffer.from(candidate, "hex");
+    const right = Buffer.from(stored, "hex");
+    return left.length === right.length && crypto.timingSafeEqual(left, right);
+};
+
 const hashRefreshToken = (token) => {
     return crypto
         .createHash("sha256")
@@ -179,8 +191,8 @@ export const verifyEmail = async (req, res, next) => {
         }
 
         // Validate hash
-        const providedHash = hashOtp(otp);
-        if (providedHash !== user.emailOtpHash) {
+        const providedHash = hashOtpValue(otp);
+        if (!otpHashMatches(providedHash, user.emailOtpHash)) {
             user.emailOtpAttempts = (user.emailOtpAttempts || 0) + 1;
             await user.save();
 
@@ -505,7 +517,7 @@ export const verifyLoginOtp = async (req, res, next) => {
             });
         }
 
-        const providedHash = hashOtp(otp);
+        const providedHash = hashOtpValue(otp);
         if (providedHash !== user.emailOtpHash) {
             user.emailOtpAttempts = (user.emailOtpAttempts || 0) + 1;
             await user.save();
