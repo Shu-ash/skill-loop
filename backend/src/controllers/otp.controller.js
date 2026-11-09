@@ -72,8 +72,11 @@ const refreshCookieOptions = {
 export const sendAuthOtp = async (req, res, next) => {
   try {
     const { email, purpose = 'register', name } = req.body;
-    if (!email) {
+    if (typeof email !== 'string' || !email.trim()) {
       return res.status(400).json({ success: false, message: 'Valid email address is required' });
+    }
+    if (!['register', 'login'].includes(purpose)) {
+      return res.status(400).json({ success: false, message: 'Invalid OTP purpose' });
     }
 
     const normalizedEmail = email.toLowerCase().trim();
@@ -133,8 +136,11 @@ export const sendAuthOtp = async (req, res, next) => {
 export const verifyRegisterOtp = async (req, res, next) => {
   try {
     const { firstName, lastName, email, password, otp } = req.body;
-    if (!email || !otp || !password) {
+    if (typeof email !== 'string' || !email.trim() || typeof otp !== 'string' || typeof password !== 'string') {
       return res.status(400).json({ success: false, message: 'Email, password, and OTP are required' });
+    }
+    if (password.length < 6 || password.length > 128) {
+      return res.status(400).json({ success: false, message: 'Password must be between 6 and 128 characters long' });
     }
 
     const normalizedEmail = email.toLowerCase().trim();
@@ -213,7 +219,7 @@ export const verifyRegisterOtp = async (req, res, next) => {
 export const verifyLoginOtp = async (req, res, next) => {
   try {
     const { email, otp } = req.body;
-    if (!email || !otp) {
+    if (typeof email !== 'string' || !email.trim() || typeof otp !== 'string') {
       return res.status(400).json({ success: false, message: 'Email and OTP are required' });
     }
 
