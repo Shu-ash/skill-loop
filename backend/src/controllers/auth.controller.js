@@ -84,7 +84,7 @@ export const register = async (req, res, next) => {
         const finalUsername = username || `${fName.toLowerCase()}_${Date.now().toString().slice(-4)}`;
 
         const otpCode = generate6DigitOtp();
-        const otpHash = hashOtp(otpCode);
+        const otpHash = hashOtpValue(otpCode);
         const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
         let user;
@@ -298,7 +298,7 @@ export const resendOtp = async (req, res, next) => {
         }
 
         const otpCode = generate6DigitOtp();
-        user.emailOtpHash = hashOtp(otpCode);
+        user.emailOtpHash = hashOtpValue(otpCode);
         user.emailOtpExpires = new Date(now + 10 * 60 * 1000); // 10 minutes
         user.emailOtpAttempts = 0;
         user.emailOtpLastSentAt = new Date();
@@ -447,7 +447,7 @@ export const requestLoginOtp = async (req, res, next) => {
         }
 
         const otpCode = generate6DigitOtp();
-        user.emailOtpHash = hashOtp(otpCode);
+        user.emailOtpHash = hashOtpValue(otpCode);
         user.emailOtpExpires = new Date(now + 10 * 60 * 1000);
         user.emailOtpAttempts = 0;
         user.emailOtpLastSentAt = new Date();
