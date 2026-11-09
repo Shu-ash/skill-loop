@@ -1,6 +1,7 @@
 // src/utils/emailService.js
 import crypto from "crypto";
 import transporter from "../config/email.js";
+import { env } from "../config/env.js";
 
 /**
  * Generate 6-Digit Cryptographically Secure OTP
@@ -16,7 +17,7 @@ export const generate6DigitOtp = generateOtp;
  */
 export const hashOtp = (otp) => {
   return crypto
-    .createHash("sha256")
+    .createHmac("sha256", env.JWT_ACCESS_SECRET)
     .update(String(otp).trim())
     .digest("hex");
 };
