@@ -120,7 +120,7 @@ export const sendOtpEmail = async (param1, param2) => {
       html: htmlContent
     });
     console.log(`🟢 [EMAIL SERVICE] Email delivered to ${to}`);
-    return { success: true, otp };
+    return { success: true };
   } catch (error) {
     console.error("⚠️ [EMAIL SERVICE] Email delivery warning:", error.message);
     return { success: true, otp };
