@@ -11,9 +11,7 @@ import {
     verifyRefreshToken
 } from "../utils/jwt.js";
 import {
-    generate6DigitOtp,
-    hashOtp,
-    sendOtpEmail
+    generate6DigitOtp,    sendOtpEmail
 } from "../utils/emailService.js";
 import { env } from "../config/env.js";
 
