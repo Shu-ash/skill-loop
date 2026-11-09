@@ -1,0 +1,64 @@
+name: Security regression tests
+
+on:
+  push:
+    branches:
+      - security-fixes-2026-11-08
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+    branches:
+      - main
+    paths:
+      - "backend/**"
+      - ".github/workflows/security-regression.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  security-regression:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref }}
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - name: Refresh lockfile for declared dependency ranges
+        run: npm install --package-lock-only --ignore-scripts
+      - name: Apply dependency security updates
+        run: npm audit fix
+      - name: Reinstall exact audited dependency tree
+        run: npm ci
+      - name: Fail on known dependency vulnerabilities
+        run: npm audit --audit-level=moderate
+      - name: Syntax-check backend JavaScript
+        run: find src -name '*.js' -print0 | xargs -0 -n1 node --check
+      - name: Run security regression tests
+        run: npm test
+      - name: Persist patched lockfile on the security branch
+        if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          TARGET_BRANCH: ${{ github.event.pull_request.head.ref || github.ref_name }}
+        run: |
+          cp package-lock.json /tmp/skill-loop-package-lock.json
+          git fetch origin "${TARGET_BRANCH}"
+          git checkout -B "${TARGET_BRANCH}" "origin/${TARGET_BRANCH}"
+          cp /tmp/skill-loop-package-lock.json package-lock.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          if git diff --cached --quiet; then
+            echo "Dependency lockfile already current."
+            exit 0
+          fi
+          git commit -m "chore: patch vulnerable dependency lockfile"
+          git push origin "HEAD:${TARGET_BRANCH}"

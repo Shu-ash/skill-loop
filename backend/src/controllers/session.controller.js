@@ -8,6 +8,85 @@ import Notification from "../models/notification.js";
  * Automatically complete active sessions whose scheduled duration has passed
  * and automatically settle the credits (+1 Teacher, -1 Learner).
  */
+/**
+ * Settle a completed session as one MongoDB transaction. The session state,
+ * learner debit, teacher credit and ledger entry either all commit or all roll back.
+ */
+const settleSessionCredits = async (sessionId, completedAt) => {
+    const dbSession = await mongoose.startSession();
+    let settledSession = null;
+    try {
+        await dbSession.withTransaction(async () => {
+            settledSession = await Session.findOneAndUpdate(
+                {
+                    _id: sessionId,
+                    status: { $in: ["scheduled", "in_progress"] },
+                    learnerJoined: true,
+                    teacherJoined: true
+                },
+                { $set: { status: "completed", completedAt } },
+                { new: true, session: dbSession }
+            );
+            if (!settledSession) return;
+
+            const learnerDebit = await User.findOneAndUpdate(
+                { _id: settledSession.learner, credits: { $gte: 1 } },
+                { $inc: { credits: -1 } },
+                { new: true, session: dbSession }
+            );
+            if (!learnerDebit) {
+                const error = new Error("The learner no longer has enough credits to settle this session.");
+                error.code = "INSUFFICIENT_CREDITS";
+                throw error;
+            }
+
+            const teacherCredit = await User.findByIdAndUpdate(
+                settledSession.teacher,
+                { $inc: { credits: 1 } },
+                { new: true, session: dbSession }
+            );
+            if (!teacherCredit) throw new Error("Session teacher account was not found.");
+
+            await CreditLedger.create([{
+                sender: settledSession.learner,
+                receiver: settledSession.teacher,
+                session: settledSession._id,
+                amount: 1,
+                transactionType: "session_reward",
+                description: `Skill Swap: ${settledSession.skill}`
+            }], { session: dbSession });
+        });
+        return settledSession;
+    } finally {
+        await dbSession.endSession();
+    }
+};
+
+const notifySessionSettlement = async (session) => {
+    const teacherName = session.teacher?.name || "Teacher";
+    const learnerName = session.learner?.name || "Learner";
+    await Notification.insertMany([
+        {
+            user: session.teacher?._id || session.teacher,
+            title: "🎉 +1 Skill Credit Earned!",
+            text: `Session completed! You earned +1 credit for teaching ${session.skill} to ${learnerName}.`,
+            type: "credit_earned",
+            link: "/credits"
+        },
+        {
+            user: session.learner?._id || session.learner,
+            title: "🎓 Class Completed (-1 Credit)",
+            text: `Completed ${session.skill} class with ${teacherName}. 1 credit deducted.`,
+            type: "credit_spent",
+            link: "/credits"
+        }
+    ]);
+};
+
+/**
+ * Automatically complete active sessions whose scheduled duration has passed.
+ * Credit settlement is transactional and safe against concurrent workers.
+ */
 export const autoCompleteExpiredSessions = async () => {
     try {
         if (mongoose.connection.readyState !== 1) return;
@@ -15,80 +94,23 @@ export const autoCompleteExpiredSessions = async () => {
         const now = new Date();
         const activeSessions = await Session.find({
             status: { $in: ["scheduled", "in_progress"] },
-            scheduledAt: { $ne: null }
+            scheduledAt: { $ne: null },
+            learnerJoined: true,
+            teacherJoined: true
         }).populate("teacher learner");
 
         for (const session of activeSessions) {
             const durationMs = (Number(session.duration) || 45) * 60 * 1000;
             const sessionEnd = new Date(new Date(session.scheduledAt).getTime() + durationMs);
+            if (now < sessionEnd) continue;
 
-            if (now >= sessionEnd) {
-                // ATOMIC LOCK: Only transition if status is still scheduled or in_progress
-                const updatedSession = await Session.findOneAndUpdate(
-                    {
-                        _id: session._id,
-                        status: { $in: ["scheduled", "in_progress"] }
-                    },
-                    {
-                        $set: {
-                            status: "completed",
-                            completedAt: sessionEnd
-                        }
-                    },
-                    { new: true }
-                );
-
-                if (!updatedSession) {
-                    // Another request/worker already completed this session
-                    continue;
-                }
-
-                const teacherId = session.teacher?._id || session.teacher;
-                const learnerId = session.learner?._id || session.learner;
-                const teacherName = session.teacher?.name || 'Teacher';
-                const learnerName = session.learner?.name || 'Learner';
-
-                if (teacherId && learnerId) {
-                    // Update user credits: Teacher +1, Learner -1 (protect against negative balance)
-                    await Promise.all([
-                        User.findByIdAndUpdate(teacherId, { $inc: { credits: 1 } }),
-                        User.findOneAndUpdate(
-                            { _id: learnerId, credits: { $gte: 1 } },
-                            { $inc: { credits: -1 } }
-                        ).then(async (doc) => {
-                            if (!doc) {
-                                await User.findByIdAndUpdate(learnerId, { $set: { credits: 0 } });
-                            }
-                        })
-                    ]);
-
-                    // Audit ledger entry (Single transfer from learner to teacher)
-                    await CreditLedger.create({
-                        sender: learnerId,
-                        receiver: teacherId,
-                        session: session._id,
-                        amount: 1,
-                        transactionType: "session_reward",
-                        description: `Skill Swap: ${session.skill}`
-                    });
-
-                    // Notifications
-                    await Notification.insertMany([
-                        {
-                            user: teacherId,
-                            title: "🎉 +1 Skill Credit Earned!",
-                            text: `Session completed! You earned +1 credit for teaching ${session.skill} to ${learnerName}.`,
-                            type: "credit_earned",
-                            link: "/credits"
-                        },
-                        {
-                            user: learnerId,
-                            title: "🎓 Class Completed (-1 Credit)",
-                            text: `Completed ${session.skill} class with ${teacherName}. 1 credit deducted.`,
-                            type: "credit_spent",
-                            link: "/credits"
-                        }
-                    ]);
+            try {
+                const settled = await settleSessionCredits(session._id, sessionEnd);
+                if (!settled) continue;
+                await notifySessionSettlement(session);
+            } catch (error) {
+                if (error.code !== "INSUFFICIENT_CREDITS") {
+                    console.error("Failed to settle expired session:", session._id, error);
                 }
             }
         }
@@ -585,166 +607,59 @@ export const startSession = async (
  * PATCH /api/sessions/:sessionId/complete
  * Complete a session
  */
-export const completeSession =
-    async (
-        req,
-        res,
-        next
-    ) => {
-        try {
-            const session =
-                await Session.findOne({
-                    _id:
-                        req.params.sessionId,
+export const completeSession = async (req, res, next) => {
+    try {
+        const session = await Session.findOne({
+            _id: req.params.sessionId,
+            $or: [{ teacher: req.user._id }, { learner: req.user._id }]
+        }).populate("teacher learner");
 
-                    $or: [
-                        {
-                            teacher:
-                                req.user._id
-                        },
-                        {
-                            learner:
-                                req.user._id
-                        }
-                    ]
-                });
-
-            if (!session) {
-                return res.status(404).json({
-                    success: false,
-                    message:
-                        "Session not found"
-                });
-            }
-
-            if (
-                session.status ===
-                "completed"
-            ) {
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Session is already completed"
-                });
-            }
-
-            if (
-                session.status ===
-                "cancelled"
-            ) {
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Cancelled session cannot be completed"
-                });
-            }
-
-            if (
-                session.status !== "in_progress" &&
-                session.status !== "scheduled"
-            ) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Session must be active before it can be completed"
-                });
-            }
-
-            // Only allow completion once the learner has joined the meeting
-            if (!session.learnerJoined && session.status !== "in_progress") {
-                return res.status(400).json({
-                    success: false,
-                    message: "Student has not joined the meeting yet. You can mark the class complete once the student joins."
-                });
-            }
-
-            // ATOMIC LOCK: Only transition if status is still scheduled or in_progress
-            const updatedSession = await Session.findOneAndUpdate(
-                {
-                    _id: session._id,
-                    status: { $in: ["scheduled", "in_progress"] }
-                },
-                {
-                    $set: {
-                        status: "completed",
-                        completedAt: new Date()
-                    }
-                },
-                { new: true }
-            );
-
-            if (!updatedSession) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Session is already completed or cancelled"
-                });
-            }
-
-            await updatedSession.populate([
-                {
-                    path: "teacher",
-                    select: "firstName lastName name username profilePhotoUrl headline rating credits"
-                },
-                {
-                    path: "learner",
-                    select: "firstName lastName name username profilePhotoUrl headline rating credits"
-                }
-            ]);
-
-            const teacherName = updatedSession.teacher?.name || `${updatedSession.teacher?.firstName || ''} ${updatedSession.teacher?.lastName || ''}`.trim() || 'Teacher';
-            const learnerName = updatedSession.learner?.name || `${updatedSession.learner?.firstName || ''} ${updatedSession.learner?.lastName || ''}`.trim() || 'Learner';
-
-            // 1. Credit Economy: Teacher earns +1, Learner spends -1 (protect against negative balance)
-            await Promise.all([
-                User.findByIdAndUpdate(updatedSession.teacher._id, { $inc: { credits: 1 } }),
-                User.findOneAndUpdate(
-                    { _id: updatedSession.learner._id, credits: { $gte: 1 } },
-                    { $inc: { credits: -1 } }
-                ).then(async (doc) => {
-                    if (!doc) {
-                        await User.findByIdAndUpdate(updatedSession.learner._id, { $set: { credits: 0 } });
-                    }
-                })
-            ]);
-
-            // 2. Audit Trail: Create single CreditLedger record (Transfer from learner to teacher)
-            await CreditLedger.create({
-                sender: session.learner._id,
-                receiver: session.teacher._id,
-                session: session._id,
-                amount: 1,
-                transactionType: "session_reward",
-                description: `Skill Swap: ${session.skill}`
-            });
-
-            // 3. In-App Notifications: Live notifications for both parties
-            await Notification.insertMany([
-                {
-                    user: session.teacher._id,
-                    title: "🎉 +1 Skill Credit Earned!",
-                    text: `Session completed! You earned +1 credit for teaching ${session.skill} to ${learnerName}.`,
-                    type: "credit_earned",
-                    link: "/credits"
-                },
-                {
-                    user: session.learner._id,
-                    title: "🎓 Class Completed (-1 Credit)",
-                    text: `Completed ${session.skill} class with ${teacherName}. 1 credit deducted.`,
-                    type: "credit_spent",
-                    link: "/credits"
-                }
-            ]);
-
-            return res.status(200).json({
-                success: true,
-                message: "Session completed successfully! Credits and ledger updated.",
-                data: {
-                    session
-                }
-            });
-        } catch (error) {
-            next(error);
+        if (!session) {
+            return res.status(404).json({ success: false, message: "Session not found" });
         }
-    };
+        if (session.status === "completed") {
+            return res.status(400).json({ success: false, message: "Session is already completed" });
+        }
+        if (session.status === "cancelled") {
+            return res.status(400).json({ success: false, message: "Cancelled session cannot be completed" });
+        }
+        if (!["scheduled", "in_progress"].includes(session.status)) {
+            return res.status(400).json({ success: false, message: "Session must be active before it can be completed" });
+        }
+        if (!session.learnerJoined || !session.teacherJoined) {
+            return res.status(400).json({
+                success: false,
+                message: "Both teacher and learner must join before the session can be completed."
+            });
+        }
+        if (session.scheduledAt && Date.now() < new Date(session.scheduledAt).getTime()) {
+            return res.status(400).json({
+                success: false,
+                message: "A session cannot be completed before its scheduled start time."
+            });
+        }
+
+        const settled = await settleSessionCredits(session._id, new Date());
+        if (!settled) {
+            return res.status(409).json({
+                success: false,
+                message: "Session was already completed or is no longer eligible for settlement."
+            });
+        }
+
+        await notifySessionSettlement(session);
+        return res.status(200).json({
+            success: true,
+            message: "Session completed successfully! Credits and ledger updated.",
+            data: { session: settled }
+        });
+    } catch (error) {
+        if (error.code === "INSUFFICIENT_CREDITS") {
+            return res.status(409).json({ success: false, message: error.message });
+        }
+        next(error);
+    }
+};
 
 
 /**

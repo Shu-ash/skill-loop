@@ -1,6 +1,7 @@
 // src/utils/emailService.js
 import crypto from "crypto";
 import transporter from "../config/email.js";
+import { env } from "../config/env.js";
 
 /**
  * Generate 6-Digit Cryptographically Secure OTP
@@ -16,7 +17,7 @@ export const generate6DigitOtp = generateOtp;
  */
 export const hashOtp = (otp) => {
   return crypto
-    .createHash("sha256")
+    .createHmac("sha256", env.JWT_ACCESS_SECRET)
     .update(String(otp).trim())
     .digest("hex");
 };
@@ -107,12 +108,7 @@ export const sendOtpEmail = async (param1, param2) => {
     </html>
   `;
 
-  console.log(`\n======================================================`);
-  console.log(`📧 [EMAIL SERVICE] OTP SENT TO: ${to}`);
-  console.log(`🎯 PURPOSE: ${purpose.toUpperCase()}`);
-  console.log(`🔑 OTP CODE: [ ${otp} ]`);
-  console.log(`⏱️ EXPIRES IN: 10 MINUTES`);
-  console.log(`======================================================\n`);
+  // Never log OTP values or other authentication secrets.
 
   try {
     const senderEmail = process.env.EMAIL_FROM || (process.env.EMAIL_USER && !process.env.EMAIL_USER.includes("brevo.com") ? process.env.EMAIL_USER : "harshviswakarma9749247288@gmail.com");
@@ -120,13 +116,13 @@ export const sendOtpEmail = async (param1, param2) => {
     await transporter.sendMail({
       from: fromAddress,
       to,
-      subject: `Your SkillLoop Verification Code - ${otp}`,
+      subject: `Your SkillLoop Verification Code`,
       html: htmlContent
     });
     console.log(`🟢 [EMAIL SERVICE] Email delivered to ${to}`);
-    return { success: true, otp };
+    return { success: true };
   } catch (error) {
     console.error("⚠️ [EMAIL SERVICE] Email delivery warning:", error.message);
-    return { success: true, otp };
+    return { success: true };
   }
 };

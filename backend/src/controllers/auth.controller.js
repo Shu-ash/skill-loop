@@ -11,10 +11,21 @@ import {
     verifyRefreshToken
 } from "../utils/jwt.js";
 import {
-    generate6DigitOtp,
-    hashOtp,
-    sendOtpEmail
+    generate6DigitOtp,    sendOtpEmail
 } from "../utils/emailService.js";
+import { env } from "../config/env.js";
+
+const hashOtpValue = (otp) => crypto
+    .createHmac("sha256", env.JWT_ACCESS_SECRET)
+    .update(String(otp).trim())
+    .digest("hex");
+
+const otpHashMatches = (candidate, stored) => {
+    if (!stored) return false;
+    const left = Buffer.from(candidate, "hex");
+    const right = Buffer.from(stored, "hex");
+    return left.length === right.length && crypto.timingSafeEqual(left, right);
+};
 
 const hashRefreshToken = (token) => {
     return crypto
@@ -71,7 +82,7 @@ export const register = async (req, res, next) => {
         const finalUsername = username || `${fName.toLowerCase()}_${Date.now().toString().slice(-4)}`;
 
         const otpCode = generate6DigitOtp();
-        const otpHash = hashOtp(otpCode);
+        const otpHash = hashOtpValue(otpCode);
         const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
         let user;
@@ -156,31 +167,9 @@ export const verifyEmail = async (req, res, next) => {
         }
 
         if (user.emailVerified) {
-            // User already verified
-            const accessToken = createAccessToken(user._id.toString());
-            const refreshToken = createRefreshToken(user._id.toString());
-            user.refreshTokenHash = hashRefreshToken(refreshToken);
-            await user.save();
-
-            res.cookie("refreshToken", refreshToken, refreshCookieOptions);
-
-            return res.status(200).json({
-                success: true,
-                message: "Email is already verified! Logged in successfully.",
-                data: {
-                    accessToken,
-                    user: {
-                        id: user._id,
-                        name: user.name,
-                        username: user.username,
-                        email: user.email,
-                        role: user.role,
-                        credits: user.credits,
-                        rating: user.rating,
-                        emailVerified: user.emailVerified,
-                        onboardingCompleted: user.onboardingCompleted
-                    }
-                }
+            return res.status(409).json({
+                success: false,
+                message: "Email is already verified. Please sign in with your password."
             });
         }
 
@@ -201,8 +190,8 @@ export const verifyEmail = async (req, res, next) => {
         }
 
         // Validate hash
-        const providedHash = hashOtp(otp);
-        if (providedHash !== user.emailOtpHash) {
+        const providedHash = hashOtpValue(otp);
+        if (!otpHashMatches(providedHash, user.emailOtpHash)) {
             user.emailOtpAttempts = (user.emailOtpAttempts || 0) + 1;
             await user.save();
 
@@ -307,7 +296,7 @@ export const resendOtp = async (req, res, next) => {
         }
 
         const otpCode = generate6DigitOtp();
-        user.emailOtpHash = hashOtp(otpCode);
+        user.emailOtpHash = hashOtpValue(otpCode);
         user.emailOtpExpires = new Date(now + 10 * 60 * 1000); // 10 minutes
         user.emailOtpAttempts = 0;
         user.emailOtpLastSentAt = new Date();
@@ -361,6 +350,13 @@ export const login = async (req, res, next) => {
             return res.status(403).json({
                 success: false,
                 message: "Your account has been suspended by an administrator."
+            });
+        }
+
+        if (!user.emailVerified) {
+            return res.status(403).json({
+                success: false,
+                message: "Please verify your email address before signing in."
             });
         }
 
@@ -449,7 +445,7 @@ export const requestLoginOtp = async (req, res, next) => {
         }
 
         const otpCode = generate6DigitOtp();
-        user.emailOtpHash = hashOtp(otpCode);
+        user.emailOtpHash = hashOtpValue(otpCode);
         user.emailOtpExpires = new Date(now + 10 * 60 * 1000);
         user.emailOtpAttempts = 0;
         user.emailOtpLastSentAt = new Date();
@@ -520,7 +516,7 @@ export const verifyLoginOtp = async (req, res, next) => {
             });
         }
 
-        const providedHash = hashOtp(otp);
+        const providedHash = hashOtpValue(otp);
         if (providedHash !== user.emailOtpHash) {
             user.emailOtpAttempts = (user.emailOtpAttempts || 0) + 1;
             await user.save();
@@ -584,29 +580,19 @@ export const refresh = async (req, res, next) => {
     try {
         const token = req.cookies?.refreshToken || req.body?.refreshToken;
         if (!token) {
-            return res.status(401).json({
-                success: false,
-                message: "Refresh token is required"
-            });
+            return res.status(401).json({ success: false, message: "Refresh token is required" });
         }
 
         const decoded = verifyRefreshToken(token);
         if (!decoded?.sub || decoded.type !== "refresh") {
-            return res.status(401).json({
-                success: false,
-                message: "Invalid refresh token"
-            });
+            return res.status(401).json({ success: false, message: "Invalid refresh token" });
         }
 
-        const user = await User.findById(decoded.sub).select("+refreshTokenHash");
-        if (!user) {
-            return res.status(401).json({
-                success: false,
-                message: "User not found"
-            });
+        const existingUser = await User.findById(decoded.sub).select("+refreshTokenHash");
+        if (!existingUser) {
+            return res.status(401).json({ success: false, message: "Invalid or revoked refresh token" });
         }
-
-        if (user.status === "banned") {
+        if (existingUser.status === "banned") {
             return res.status(403).json({
                 success: false,
                 message: "Your account has been suspended by an administrator."
@@ -614,22 +600,23 @@ export const refresh = async (req, res, next) => {
         }
 
         const incomingTokenHash = hashRefreshToken(token);
-        if (!user.refreshTokenHash || user.refreshTokenHash !== incomingTokenHash) {
-            // Token reuse / revoked token detected: invalidate session
-            user.refreshTokenHash = null;
-            await user.save();
+        const newRefreshToken = createRefreshToken(existingUser._id.toString());
+        const updatedUser = await User.findOneAndUpdate(
+            { _id: existingUser._id, refreshTokenHash: incomingTokenHash, status: { $ne: "banned" } },
+            { $set: { refreshTokenHash: hashRefreshToken(newRefreshToken) } },
+            { new: true }
+        );
+
+        // Compare-and-swap rotation: concurrent refreshes cannot overwrite a newer
+        // token or revoke it as a side effect of a stale request.
+        if (!updatedUser) {
             return res.status(401).json({
                 success: false,
-                message: "Invalid or revoked refresh token. Please sign in again."
+                message: "Invalid or already rotated refresh token. Please sign in again."
             });
         }
 
-        const newAccessToken = createAccessToken(user._id.toString());
-        const newRefreshToken = createRefreshToken(user._id.toString());
-
-        user.refreshTokenHash = hashRefreshToken(newRefreshToken);
-        await user.save();
-
+        const newAccessToken = createAccessToken(updatedUser._id.toString());
         res.cookie("refreshToken", newRefreshToken, refreshCookieOptions);
 
         return res.status(200).json({
@@ -638,14 +625,14 @@ export const refresh = async (req, res, next) => {
             data: {
                 accessToken: newAccessToken,
                 user: {
-                    id: user._id,
-                    name: user.name,
-                    username: user.username,
-                    email: user.email,
-                    role: user.role,
-                    credits: user.credits,
-                    rating: user.rating,
-                    onboardingCompleted: user.onboardingCompleted
+                    id: updatedUser._id,
+                    name: updatedUser.name,
+                    username: updatedUser.username,
+                    email: updatedUser.email,
+                    role: updatedUser.role,
+                    credits: updatedUser.credits,
+                    rating: updatedUser.rating,
+                    onboardingCompleted: updatedUser.onboardingCompleted
                 }
             }
         });

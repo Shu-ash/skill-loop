@@ -6,13 +6,56 @@ import Notification from '../models/notification.js';
 import { hashPassword, comparePassword } from '../utils/password.js';
 import { createAccessToken, createRefreshToken } from '../utils/jwt.js';
 import { generate6DigitOtp, sendOtpEmail } from '../utils/emailService.js';
+import { env } from '../config/env.js';
 
 const hashRefreshToken = (token) => {
   return crypto.createHash('sha256').update(token).digest('hex');
 };
 
-const hashOtpValue = (code) => {
-  return crypto.createHash('sha256').update(String(code).trim()).digest('hex');
+// A server-secret HMAC prevents a database-only leak from enabling offline
+// brute-force of the six-digit OTP space.
+const hashOtpValue = (code) => crypto
+  .createHmac('sha256', env.JWT_ACCESS_SECRET)
+  .update(String(code).trim())
+  .digest('hex');
+
+const consumeOtp = async (email, purpose, code) => {
+  const now = new Date();
+  const record = await Otp.findOne({ email, purpose });
+  if (!record || !record.expiresAt || record.expiresAt <= now) {
+    return { ok: false, status: 400, message: 'Invalid or expired code. Please request a new one.' };
+  }
+  if (record.attempts >= 5) {
+    await Otp.deleteOne({ _id: record._id });
+    return { ok: false, status: 429, message: 'Too many incorrect attempts. Please request a new code.' };
+  }
+
+  const expected = Buffer.from(record.otp, 'hex');
+  const supplied = Buffer.from(hashOtpValue(code), 'hex');
+  const matches = expected.length === supplied.length && crypto.timingSafeEqual(expected, supplied);
+  if (!matches) {
+    const updated = await Otp.findOneAndUpdate(
+      { _id: record._id, attempts: { $lt: 5 }, expiresAt: { $gt: now } },
+      { $inc: { attempts: 1 } },
+      { new: true }
+    );
+    if (!updated || updated.attempts >= 5) {
+      await Otp.deleteOne({ _id: record._id, attempts: { $gte: 5 } });
+      return { ok: false, status: 429, message: 'Too many incorrect attempts. Please request a new code.' };
+    }
+    return { ok: false, status: 400, message: 'Incorrect code. Please try again.' };
+  }
+
+  // Atomic consume makes each valid OTP single-use even under concurrent requests.
+  const consumed = await Otp.findOneAndDelete({
+    _id: record._id,
+    otp: record.otp,
+    attempts: { $lt: 5 },
+    expiresAt: { $gt: now }
+  });
+  return consumed
+    ? { ok: true }
+    : { ok: false, status: 400, message: 'Invalid or expired code. Please request a new one.' };
 };
 
 const refreshCookieOptions = {
@@ -29,8 +72,11 @@ const refreshCookieOptions = {
 export const sendAuthOtp = async (req, res, next) => {
   try {
     const { email, purpose = 'register', name } = req.body;
-    if (!email) {
+    if (typeof email !== 'string' || !email.trim()) {
       return res.status(400).json({ success: false, message: 'Valid email address is required' });
+    }
+    if (!['register', 'login'].includes(purpose)) {
+      return res.status(400).json({ success: false, message: 'Invalid OTP purpose' });
     }
 
     const normalizedEmail = email.toLowerCase().trim();
@@ -90,34 +136,18 @@ export const sendAuthOtp = async (req, res, next) => {
 export const verifyRegisterOtp = async (req, res, next) => {
   try {
     const { firstName, lastName, email, password, otp } = req.body;
-    if (!email || !otp || !password) {
+    if (typeof email !== 'string' || !email.trim() || typeof otp !== 'string' || typeof password !== 'string') {
       return res.status(400).json({ success: false, message: 'Email, password, and OTP are required' });
+    }
+    if (password.length < 6 || password.length > 128) {
+      return res.status(400).json({ success: false, message: 'Password must be between 6 and 128 characters long' });
     }
 
     const normalizedEmail = email.toLowerCase().trim();
 
-    const validOtpRecord = await Otp.findOne({
-      email: normalizedEmail,
-      purpose: 'register'
-    });
-
-    if (!validOtpRecord) {
-      return res.status(400).json({ success: false, message: 'Invalid or expired OTP code. Please request a new one.' });
-    }
-
-    if (validOtpRecord.attempts >= 5) {
-      await Otp.deleteMany({ email: normalizedEmail, purpose: 'register' });
-      return res.status(429).json({ success: false, message: 'Too many incorrect attempts. Please request a new OTP.' });
-    }
-
-    if (validOtpRecord.otp !== hashOtpValue(otp)) {
-      validOtpRecord.attempts = (validOtpRecord.attempts || 0) + 1;
-      await validOtpRecord.save();
-      const remaining = 5 - validOtpRecord.attempts;
-      return res.status(400).json({
-        success: false,
-        message: `Incorrect OTP code. ${remaining > 0 ? `${remaining} attempts remaining.` : 'Code invalidated. Please request a new one.'}`
-      });
+    const otpResult = await consumeOtp(normalizedEmail, 'register', otp);
+    if (!otpResult.ok) {
+      return res.status(otpResult.status).json({ success: false, message: otpResult.message });
     }
 
     const existingUser = await User.findOne({ email: normalizedEmail });
@@ -189,34 +219,15 @@ export const verifyRegisterOtp = async (req, res, next) => {
 export const verifyLoginOtp = async (req, res, next) => {
   try {
     const { email, otp } = req.body;
-    if (!email || !otp) {
+    if (typeof email !== 'string' || !email.trim() || typeof otp !== 'string') {
       return res.status(400).json({ success: false, message: 'Email and OTP are required' });
     }
 
     const normalizedEmail = email.toLowerCase().trim();
 
-    const validOtpRecord = await Otp.findOne({
-      email: normalizedEmail,
-      purpose: 'login'
-    });
-
-    if (!validOtpRecord) {
-      return res.status(400).json({ success: false, message: 'Invalid or expired OTP code. Please request a new one.' });
-    }
-
-    if (validOtpRecord.attempts >= 5) {
-      await Otp.deleteMany({ email: normalizedEmail, purpose: 'login' });
-      return res.status(429).json({ success: false, message: 'Too many incorrect attempts. Please request a new OTP.' });
-    }
-
-    if (validOtpRecord.otp !== hashOtpValue(otp)) {
-      validOtpRecord.attempts = (validOtpRecord.attempts || 0) + 1;
-      await validOtpRecord.save();
-      const remaining = 5 - validOtpRecord.attempts;
-      return res.status(400).json({
-        success: false,
-        message: `Incorrect OTP code. ${remaining > 0 ? `${remaining} attempts remaining.` : 'Code invalidated. Please request a new one.'}`
-      });
+    const otpResult = await consumeOtp(normalizedEmail, 'login', otp);
+    if (!otpResult.ok) {
+      return res.status(otpResult.status).json({ success: false, message: otpResult.message });
     }
 
     const user = await User.findOne({ email: normalizedEmail });
@@ -269,13 +280,17 @@ export const forgotPassword = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Please enter your registered email' });
     }
 
+    if (typeof email !== 'string' || !email.trim()) {
+      return res.status(400).json({ success: false, message: 'A valid email address is required.' });
+    }
     const normalizedEmail = email.toLowerCase().trim();
     const user = await User.findOne({ email: normalizedEmail });
 
+    // Avoid disclosing whether an email address has an account.
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'No account registered with this email address.'
+      return res.status(200).json({
+        success: true,
+        message: 'If an account exists for that address, a password reset code has been sent.'
       });
     }
 
@@ -322,34 +337,18 @@ export const resetPasswordWithOtp = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Email, OTP, and new password are required' });
     }
 
-    if (newPassword.length < 6) {
-      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters long' });
+    if (typeof newPassword !== 'string' || newPassword.length < 6 || newPassword.length > 128) {
+      return res.status(400).json({ success: false, message: 'Password must be between 6 and 128 characters long' });
     }
 
+    if (typeof email !== 'string' || !email.trim()) {
+      return res.status(400).json({ success: false, message: 'A valid email address is required.' });
+    }
     const normalizedEmail = email.toLowerCase().trim();
 
-    const validOtpRecord = await Otp.findOne({
-      email: normalizedEmail,
-      purpose: 'forgot_password'
-    });
-
-    if (!validOtpRecord) {
-      return res.status(400).json({ success: false, message: 'Invalid or expired reset code. Please request a new one.' });
-    }
-
-    if (validOtpRecord.attempts >= 5) {
-      await Otp.deleteMany({ email: normalizedEmail, purpose: 'forgot_password' });
-      return res.status(429).json({ success: false, message: 'Too many incorrect attempts. Please request a new reset code.' });
-    }
-
-    if (validOtpRecord.otp !== hashOtpValue(otp)) {
-      validOtpRecord.attempts = (validOtpRecord.attempts || 0) + 1;
-      await validOtpRecord.save();
-      const remaining = 5 - validOtpRecord.attempts;
-      return res.status(400).json({
-        success: false,
-        message: `Incorrect OTP code. ${remaining > 0 ? `${remaining} attempts remaining.` : 'Code invalidated. Please request a new one.'}`
-      });
+    const otpResult = await consumeOtp(normalizedEmail, 'forgot_password', otp);
+    if (!otpResult.ok) {
+      return res.status(otpResult.status).json({ success: false, message: otpResult.message });
     }
 
     const user = await User.findOne({ email: normalizedEmail });
@@ -386,82 +385,11 @@ export const resetPasswordWithOtp = async (req, res, next) => {
  * POST /api/auth/social-login
  * Seamless Google and Microsoft Authentication
  */
-export const socialLogin = async (req, res, next) => {
-  try {
-    const { provider, email, name, avatar } = req.body;
-    if (!email) {
-      return res.status(400).json({ success: false, message: 'Social account email is required' });
-    }
-
-    const normalizedEmail = email.toLowerCase().trim();
-    let user = await User.findOne({ email: normalizedEmail });
-
-    // Block social login takeover of administrative accounts
-    if (user && (user.role === 'admin' || user.role === 'superadmin' || user.email === 'admin@skillloop.com')) {
-      return res.status(403).json({
-        success: false,
-        message: 'Administrative accounts cannot use one-click social login. Please sign in via the admin portal with your credentials.'
-      });
-    }
-
-    if (!user) {
-      // Auto-register new social user
-      const fName = name ? name.split(' ')[0] : (provider === 'microsoft' ? 'Microsoft' : 'Google');
-      const lName = name ? name.split(' ').slice(1).join(' ') : 'User';
-      const dummyPassword = await hashPassword(`social_${Date.now()}_${crypto.randomBytes(16).toString('hex')}`);
-
-      user = await User.create({
-        firstName: fName,
-        lastName: lName,
-        name: name || `${fName} ${lName}`.trim(),
-        username: `${fName.toLowerCase()}_${Date.now().toString().slice(-4)}`,
-        email: normalizedEmail,
-        password: dummyPassword,
-        profilePhotoUrl: avatar || '',
-        role: 'user',
-        credits: 10,
-        emailVerified: true,
-        onboardingCompleted: true
-      });
-
-      await Notification.create({
-        user: user._id,
-        title: `🎉 Welcome via ${provider === 'microsoft' ? 'Microsoft' : 'Google'}!`,
-        text: 'Your social account is linked! You have received 10 starter credits.',
-        type: 'system',
-        link: '/profile'
-      });
-    }
-
-    if (user.status === 'banned') {
-      return res.status(403).json({ success: false, message: 'Your account has been suspended by an administrator.' });
-    }
-
-    const accessToken = createAccessToken(user._id.toString());
-    const refreshToken = createRefreshToken(user._id.toString());
-    user.refreshTokenHash = hashRefreshToken(refreshToken);
-    await user.save();
-
-    res.cookie('refreshToken', refreshToken, refreshCookieOptions);
-
-    return res.status(200).json({
-      success: true,
-      message: `Signed in with ${provider === 'microsoft' ? 'Microsoft' : 'Google'} successfully!`,
-      data: {
-        accessToken,
-        user: {
-          id: user._id,
-          name: user.name,
-          username: user.username,
-          email: user.email,
-          role: user.role,
-          credits: user.credits,
-          rating: user.rating,
-          profilePhotoUrl: user.profilePhotoUrl
-        }
-      }
-    });
-  } catch (error) {
-    next(error);
-  }
+export const socialLogin = async (req, res) => {
+  // Client-supplied profile fields are not proof of identity. Until provider
+  // ID-token verification is configured, fail closed rather than minting a session.
+  return res.status(501).json({
+    success: false,
+    message: "Social sign-in is temporarily unavailable. Use email verification or password sign-in."
+  });
 };

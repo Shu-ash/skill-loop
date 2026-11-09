@@ -46,19 +46,18 @@ app.use(
   })
 );
 
-const allowedOrigins = [
-  "https://skill-loop2-0.onrender.com",
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
-  "http://localhost:3000",
-  "http://127.0.0.1:3000"
-];
+const allowedOrigins = ["https://skill-loop2-0.onrender.com"];
 if (env.CLIENT_URL) {
   try {
-    allowedOrigins.push(new URL(env.CLIENT_URL).origin);
+    const clientOrigin = new URL(env.CLIENT_URL).origin;
+    const isLocalOrigin = ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000", "http://127.0.0.1:3000"].includes(clientOrigin);
+    if (env.NODE_ENV !== "production" || !isLocalOrigin) allowedOrigins.push(clientOrigin);
   } catch (_) {
-    allowedOrigins.push(env.CLIENT_URL);
+    if (env.NODE_ENV !== "production") allowedOrigins.push(env.CLIENT_URL);
   }
+}
+if (env.NODE_ENV !== "production") {
+  allowedOrigins.push("http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000", "http://127.0.0.1:3000");
 }
 
 app.use(
@@ -68,14 +67,16 @@ app.use(
       if (!origin) return callback(null, true);
 
       try {
-        const originUrl = new URL(origin);
-        const isAllowed =
-          allowedOrigins.includes(origin) ||
-          originUrl.hostname === "localhost" ||
-          originUrl.hostname === "127.0.0.1" ||
-          originUrl.hostname.endsWith(".onrender.com");
+        // Credentialed requests must come only from explicitly trusted origins.
+        // Local development origins are allowed only outside production.
+        const isLocalDevelopment =
+          env.NODE_ENV !== "production" &&
+          (origin === "http://localhost:5173" ||
+            origin === "http://127.0.0.1:5173" ||
+            origin === "http://localhost:3000" ||
+            origin === "http://127.0.0.1:3000");
 
-        if (isAllowed) {
+        if (allowedOrigins.includes(origin) || isLocalDevelopment) {
           return callback(null, true);
         }
       } catch (_) {}

@@ -36,7 +36,7 @@ const envSchema = z.object({
 
   JWT_ACCESS_EXPIRES: z
     .string()
-    .default("30d"),
+    .default("15m"),
 
   JWT_REFRESH_EXPIRES: z
     .string()
