@@ -72,3 +72,59 @@ test("destructive seeders require explicit non-production opt-in", async () => {
     assert.match(seeder, /ALLOW_DESTRUCTIVE_SEED !== "true"/);
   }
 });
+
+
+test("session credit settlement is transactional across state, balances, and ledger", async () => {
+  const session = await source("controllers/session.controller.js");
+  const helper = session.slice(session.indexOf("const settleSessionCredits"), session.indexOf("const notifySessionSettlement"));
+  assert.match(helper, /withTransaction/);
+  assert.match(helper, /credits: \{ \$gte: 1 \}/);
+  assert.match(helper, /CreditLedger\.create\(\[/);
+  assert.match(helper, /session: dbSession/);
+});
+
+test("dispute awards debit the funding participant and credit the recipient transactionally", async () => {
+  const admin = await source("controllers/admin.controller.js");
+  const handler = admin.slice(admin.indexOf("export const resolveSessionDispute"), admin.indexOf("// GET /api/admin/credits"));
+  assert.match(handler, /withTransaction/);
+  assert.match(handler, /credits: \{ \$gte: 1 \}/);
+  assert.match(handler, /CreditLedger\.create\(\[/);
+  assert.match(handler, /status: "disputed"/);
+});
+
+test("all OTP verification flows enforce expiry and atomically consume a single-use code", async () => {
+  const otp = await source("controllers/otp.controller.js");
+  assert.match(otp, /createHmac\('sha256'/);
+  assert.match(otp, /timingSafeEqual/);
+  assert.match(otp, /expiresAt: \{ \$gt: now \}/);
+  assert.match(otp, /findOneAndDelete/);
+  for (const purpose of ["register", "login", "forgot_password"]) {
+    assert.match(otp, new RegExp(`consumeOtp\\(normalizedEmail, ['"]${purpose}['"]`));
+  }
+});
+
+test("password reset enforces the shared maximum password length", async () => {
+  const otp = await source("controllers/otp.controller.js");
+  const reset = otp.slice(otp.indexOf("export const resetPasswordWithOtp"), otp.indexOf("export const socialLogin"));
+  assert.match(reset, /newPassword\.length > 128/);
+});
+
+test("refresh token rotation uses atomic compare-and-swap without clearing a newer token", async () => {
+  const auth = await source("controllers/auth.controller.js");
+  const refresh = auth.slice(auth.indexOf("export const refresh"), auth.indexOf("export const logout"));
+  assert.match(refresh, /findOneAndUpdate/);
+  assert.match(refresh, /refreshTokenHash: incomingTokenHash/);
+  assert.doesNotMatch(refresh, /refreshTokenHash = null/);
+});
+
+test("destructive dummy seeder has no duplicate env binding", async () => {
+  const seeder = await source("seeders/cleanDummyData.js");
+  const matches = seeder.match(/import \{ env \} from/g) || [];
+  assert.equal(matches.length, 1);
+});
+
+test("CI blocks moderate-or-higher dependency vulnerabilities and syntax errors", async () => {
+  const workflow = await readFile(path.resolve(here, "../../.github/workflows/security-regression.yml"), "utf8");
+  assert.match(workflow, /npm audit --audit-level=moderate/);
+  assert.match(workflow, /node --check/);
+});
