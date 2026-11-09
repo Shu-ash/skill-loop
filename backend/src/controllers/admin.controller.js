@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import User from "../models/user.js";
 import Session from "../models/session.js";
 import Category from "../models/category.js";
@@ -258,65 +259,89 @@ export const getAdminSessions = async (req, res) => {
 
 // PATCH /api/admin/sessions/:sessionId/dispute - Resolve Dispute & Credit Settlement
 export const resolveSessionDispute = async (req, res) => {
+  const { sessionId } = req.params;
+  const { resolution, awardTo } = req.body || {};
+
+  if (!["teacher", "learner", "none"].includes(awardTo)) {
+    return res.status(400).json({ success: false, message: "A valid awardTo value is required." });
+  }
+  if (resolution !== undefined && (typeof resolution !== "string" || resolution.length > 1000)) {
+    return res.status(400).json({ success: false, message: "Resolution must be a string of at most 1000 characters." });
+  }
+
+  const dbSession = await mongoose.startSession();
+  let resolvedSession = null;
   try {
-    const { sessionId } = req.params;
-    const { resolution, awardTo } = req.body;
-
-    if (!["teacher", "learner", "none"].includes(awardTo)) {
-      return res.status(400).json({ success: false, message: "A valid awardTo value is required." });
-    }
-
-    const session = await Session.findOneAndUpdate(
-      { _id: sessionId, status: "disputed" },
-      {
-        $set: {
-          status: "completed",
-          disputeDetails: {
-            resolution: resolution || "Resolved by Admin",
-            resolvedBy: req.user._id,
-            resolvedAt: new Date()
+    await dbSession.withTransaction(async () => {
+      resolvedSession = await Session.findOneAndUpdate(
+        { _id: sessionId, status: "disputed" },
+        {
+          $set: {
+            status: "completed",
+            disputeDetails: {
+              resolution: resolution?.trim() || "Resolved by Admin",
+              resolvedBy: req.user._id,
+              resolvedAt: new Date()
+            }
           }
-        }
-      },
-      { new: true }
-    );
+        },
+        { new: true, session: dbSession }
+      );
 
-    if (!session) {
+      if (!resolvedSession) return;
+      if (awardTo === "none") return;
+
+      const senderId = awardTo === "teacher" ? resolvedSession.learner : resolvedSession.teacher;
+      const receiverId = awardTo === "teacher" ? resolvedSession.teacher : resolvedSession.learner;
+      if (!senderId || !receiverId) throw new Error("Both session participants are required for credit settlement.");
+
+      const debit = await User.findOneAndUpdate(
+        { _id: senderId, credits: { $gte: 1 } },
+        { $inc: { credits: -1 } },
+        { new: true, session: dbSession }
+      );
+      if (!debit) {
+        const error = new Error("The participant funding this dispute settlement does not have enough credits.");
+        error.code = "INSUFFICIENT_CREDITS";
+        throw error;
+      }
+
+      const credit = await User.findByIdAndUpdate(
+        receiverId,
+        { $inc: { credits: 1 } },
+        { new: true, session: dbSession }
+      );
+      if (!credit) throw new Error("The participant receiving the dispute settlement was not found.");
+
+      await CreditLedger.create([{
+        sender: senderId,
+        receiver: receiverId,
+        session: resolvedSession._id,
+        amount: 1,
+        transactionType: "dispute_refund",
+        description: `Dispute resolved in favor of ${awardTo}: ${resolution?.trim() || "Resolved"}`
+      }], { session: dbSession });
+    });
+
+    if (!resolvedSession) {
       return res.status(409).json({
         success: false,
         message: "Only an unresolved disputed session can be settled."
       });
     }
 
-    if (awardTo === "teacher" && session.teacher) {
-      await User.findByIdAndUpdate(session.teacher, { $inc: { credits: 1 } });
-      await CreditLedger.create({
-        sender: session.learner,
-        receiver: session.teacher,
-        session: session._id,
-        amount: 1,
-        transactionType: "dispute_refund",
-        description: `Dispute resolved in favor of teacher: ${resolution || "Resolved"}`
-      });
-    } else if (awardTo === "learner" && session.learner) {
-      await User.findByIdAndUpdate(session.learner, { $inc: { credits: 1 } });
-      await CreditLedger.create({
-        sender: session.teacher,
-        receiver: session.learner,
-        session: session._id,
-        amount: 1,
-        transactionType: "dispute_refund",
-        description: `Dispute resolved in favor of learner: ${resolution || "Resolved"}`
-      });
-    }
-
     return res.status(200).json({
       success: true,
-      message: `Dispute resolved: ${resolution || "Settled"}`,
-      data: { session }
+      message: `Dispute resolved: ${resolution?.trim() || "Settled"}`,
+      data: { session: resolvedSession }
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    if (error.code === "INSUFFICIENT_CREDITS") {
+      return res.status(409).json({ success: false, message: error.message });
+    }
+    return res.status(500).json({ success: false, message: "Unable to resolve dispute." });
+  } finally {
+    await dbSession.endSession();
   }
 };
 
