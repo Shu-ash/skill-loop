@@ -15,6 +15,7 @@ import {
     hashOtp,
     sendOtpEmail
 } from "../utils/emailService.js";
+import { env } from "../config/env.js";
 
 const hashOtpValue = (otp) => crypto
     .createHmac("sha256", env.JWT_ACCESS_SECRET)
