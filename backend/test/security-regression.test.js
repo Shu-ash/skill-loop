@@ -128,3 +128,17 @@ test("CI blocks moderate-or-higher dependency vulnerabilities and syntax errors"
   assert.match(workflow, /npm audit --audit-level=moderate/);
   assert.match(workflow, /node --check/);
 });
+
+
+test("legacy email OTP flows use keyed hashes and constant-time comparisons", async () => {
+  const auth = await source("controllers/auth.controller.js");
+  assert.match(auth, /createHmac\("sha256", env\.JWT_ACCESS_SECRET\)/);
+  assert.match(auth, /timingSafeEqual/);
+  assert.doesNotMatch(auth, /hashOtp\(/);
+});
+
+test("email service neither exposes OTP in the subject nor returns it to callers", async () => {
+  const email = await source("utils/emailService.js");
+  assert.doesNotMatch(email, /subject:.*\$\{otp\}/);
+  assert.doesNotMatch(email, /return \{ success: true, otp \}/);
+});
