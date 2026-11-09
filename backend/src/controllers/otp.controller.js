@@ -335,6 +335,9 @@ export const resetPasswordWithOtp = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Password must be between 6 and 128 characters long' });
     }
 
+    if (typeof email !== 'string' || !email.trim()) {
+      return res.status(400).json({ success: false, message: 'A valid email address is required.' });
+    }
     const normalizedEmail = email.toLowerCase().trim();
 
     const otpResult = await consumeOtp(normalizedEmail, 'forgot_password', otp);
