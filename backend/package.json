@@ -22,7 +22,7 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "dev": "nodemon src/server.js",
+    "dev": "node --watch src/server.js",
     "build": "node scripts/build.js",
     "start": "node src/server.js",
     "db:seed": "node src/seeders/seedAllDatabase.js",
@@ -43,8 +43,5 @@
     "morgan": "^1.11.0",
     "nodemailer": "^9.0.6",
     "zod": "^4.4.3"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.14"
   }
 }
